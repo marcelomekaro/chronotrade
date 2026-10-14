@@ -1,3 +1,33 @@
+# Chrono Trade
+
+Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA para analisar ações.
+É um fork do [TradingAgents](https://github.com/TauricResearch/TradingAgents), da Tauric Research, mantido sob a mesma licença Apache 2.0.
+
+## O que tem
+
+- **Portal**: patrimônio, proventos dos últimos 12 meses e uma linha do tempo até a sua meta de renda mensal.
+- **Inventário**: cadastro da carteira (ticker, quantidade, preço médio), importação de planilha CSV e raio-x com dividend yield, yield on cost e preço teto Bazin.
+- **Tesouro**: proventos mês a mês, número mágico de cada ativo e constância dos pagamentos ano a ano.
+- **Linha do Tempo**: projeção com aportes, reinvestimento e cenários pessimista, base e otimista, com os marcos da jornada.
+- **Oráculo**: ficha rápida de cada ação (Bazin, Graham, P/L, P/VP, checklist) e o conselho completo dos agentes de IA do TradingAgents.
+
+Os dados de mercado vêm do Yahoo Finance (gratuito). A carteira fica em `~/.chronotrade/carteira.json`, fora do repositório.
+
+## Como rodar
+
+```powershell
+.venv\Scripts\Activate.ps1
+pip install -e .
+chronotrade
+```
+
+O navegador abre em `http://localhost:8501`. Para a IA, configure o provedor no `.env` (por exemplo `TRADINGAGENTS_LLM_PROVIDER=google` e `GOOGLE_API_KEY`).
+Para ver o app sem internet, ligue o **Modo demonstração** na barra lateral: os números passam a ser fictícios.
+
+> Ferramenta de estudo. Não é recomendação de investimento.
+
+---
+
 <p align="center">
   <img src="tradingagents/assets/tauric-logo.svg" width="60%" alt="Tauric Research">
 </p>

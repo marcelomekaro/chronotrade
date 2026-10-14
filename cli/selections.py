@@ -106,19 +106,19 @@ def _prompt_selections(prefs, flags):
         welcome_ascii = f.read()
 
     welcome_content = f"{welcome_ascii}\n"
-    welcome_content += "[bold green]TradingAgents: Multi-Agents LLM Financial Trading Framework - CLI[/bold green]\n\n"
+    welcome_content += "[bold yellow]Chrono Trade: análise de ações com agentes de IA[/bold yellow]\n\n"
     welcome_content += "[bold]Workflow Steps:[/bold]\n"
     welcome_content += "I. Analyst Team → II. Research Team → III. Trader → IV. Risk Management → V. Portfolio Management\n\n"
     welcome_content += (
-        "[dim]Built by [Tauric Research](https://github.com/TauricResearch)[/dim]"
+        "[dim]Baseado no TradingAgents, da [Tauric Research](https://github.com/TauricResearch)[/dim]"
     )
 
     welcome_box = Panel(
         welcome_content,
-        border_style="green",
+        border_style="yellow",
         padding=(1, 2),
-        title="Welcome to TradingAgents",
-        subtitle="Multi-Agents LLM Financial Trading Framework",
+        title="Chrono Trade",
+        subtitle="Interface web: comando chronotrade",
     )
     console.print(Align.center(welcome_box))
     console.print()

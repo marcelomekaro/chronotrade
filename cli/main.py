@@ -23,8 +23,8 @@ else:
     _NO_CONSOLE_ERRORS = ()
 
 app = typer.Typer(
-    name="TradingAgents",
-    help="TradingAgents CLI: Multi-Agents LLM Financial Trading Framework",
+    name="Chrono Trade",
+    help="Chrono Trade (baseado no TradingAgents): análise de ações com agentes de IA",
     add_completion=True,  # Enable shell completion
 )
 

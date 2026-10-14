@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tradingagents"
+name = "chronotrade"
 dynamic = ["version"]
-description = "TradingAgents: Multi-Agents LLM Financial Trading Framework"
+description = "Chrono Trade: carteira buy and hold da B3 com agentes de IA, baseado no TradingAgents"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -26,6 +26,8 @@ dependencies = [
     "stockstats>=0.6.5",
     "typing-extensions>=4.14.0",
     "yfinance>=1.7.0",
+    "streamlit>=1.50",
+    "plotly>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -42,12 +44,13 @@ bedrock = [
 
 [project.scripts]
 tradingagents = "cli.main:app"
+chronotrade = "chronotrade.lancador:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "tradingagents.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["tradingagents*", "cli*"]
+include = ["tradingagents*", "cli*", "chronotrade*"]
 
 [tool.setuptools.package-data]
 cli = ["static/*"]
@@ -80,6 +83,7 @@ ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]   # intentional re-exports
+"chronotrade/**" = ["C408"]   # dict(...) is the idiomatic Plotly style
 
 [tool.ruff.lint.isort]
 # Keep multiple aliased names from one module in a single combined import block
