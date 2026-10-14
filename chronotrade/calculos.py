@@ -325,7 +325,8 @@ def dividir_aporte(candidatos: pd.DataFrame, dinheiro: float, metas_classe: dict
     potencial e situacao. Regras, em ordem:
       1. Cada classe recebe dinheiro na proporção do que falta para a sua meta (%).
       2. Dentro da classe, só entram ativos abaixo do preço justo; quem está na zona
-         de compra pesa o dobro, e o peso cresce com o potencial até o alvo.
+         de compra pesa o dobro, e o peso cresce com o potencial até o alvo. Se houver
+         a coluna ``fator_tecnico``, ela multiplica o peso (momento técnico).
       3. As cotas são inteiras; a sobra compra mais cotas de quem tem maior peso e,
          se ainda sobrar, fica em caixa.
     Devolve a tabela de compras e o dinheiro que sobrou.
@@ -339,6 +340,8 @@ def dividir_aporte(candidatos: pd.DataFrame, dinheiro: float, metas_classe: dict
     c["peso_decisao"] = 0.0
     c.loc[c["elegivel"], "peso_decisao"] = c.loc[c["elegivel"], "potencial"].clip(lower=0.01) * \
         c.loc[c["elegivel"], "situacao"].map({ZONA_COMPRA: 2.0, ABAIXO_JUSTO: 1.0})
+    if "fator_tecnico" in c.columns:  # momento técnico: favorável pesa mais, esticado pesa menos
+        c.loc[c["elegivel"], "peso_decisao"] *= c.loc[c["elegivel"], "fator_tecnico"].fillna(1.0)
 
     total_meta = sum(v for v in metas_classe.values() if v > 0) or 1.0
     futuro = float(c.drop_duplicates("ativo")["valor"].sum()) + dinheiro

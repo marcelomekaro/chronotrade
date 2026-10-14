@@ -9,7 +9,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from chronotrade import carteira as cart, contas
+from chronotrade import carteira as cart, contas, planos
+from chronotrade.calculos import brl
 from chronotrade.mercado import DadosAtivo, carregar_ativo
 
 
@@ -80,21 +81,27 @@ def sair() -> None:
         st.session_state.pop(chave, None)
 
 
-def plano_completo() -> bool:
-    """No modo pessoal tudo é liberado; no servidor, depende da assinatura da conta."""
+def permite(recurso: str) -> bool:
+    """Se a pessoa conectada pode usar o recurso. No modo pessoal tudo é liberado."""
     if not servidor():
         return True
+    if visitante():  # o visitante conhece tudo com dados fictícios, menos o que gasta IA ou mexe em conta real
+        return recurso not in ("oraculo", "corretora", "avisos_email", "avisos_whatsapp")
     u = usuario()
-    return bool(u and u.plano_completo())
+    return bool(u and u.libera(recurso))
+
+
+def plano_atual() -> str:
+    if not servidor():
+        return "premium"
+    u = usuario()
+    return u.plano_efetivo if u else "basico"
 
 
 def limite_ativos() -> int | None:
-    if plano_completo():
+    if not servidor():
         return None
-    try:
-        return int(config_loja().get("limite_gratuito", "5"))
-    except ValueError:
-        return 5
+    return planos.LIMITES[plano_atual()].ativos
 
 
 def pasta() -> Path | None:
@@ -109,26 +116,26 @@ def pasta() -> Path | None:
     return destino
 
 
-def exigir_plano_completo(recurso: str) -> None:
-    """Para a página quando o plano não cobre o recurso, mostrando o convite para assinar."""
+def exigir(recurso: str) -> None:
+    """Para a página quando o plano não cobre o recurso, mostrando o convite para mudar de plano."""
     if not liberado(recurso):
         st.stop()
 
 
 def liberado(recurso: str) -> bool:
-    """True se o plano cobre o recurso; senão mostra o convite para assinar e devolve False."""
-    if plano_completo():
+    """True se o plano cobre o recurso; senão mostra o convite e devolve False."""
+    if permite(recurso):
         return True
     from chronotrade import tema
 
-    preco = config_loja().get("preco_mensal", "")
-    preco_txt = f" por R$ {preco.replace('.', ',')} ao mês" if preco else ""
-    tema.fala(f"<b>{recurso}</b> faz parte do plano Completo{preco_txt}. Com ele você também acompanha "
-              "quantos ativos quiser, usa o Oráculo de IA e gera relatórios para imprimir.")
+    minimo = planos.plano_minimo(recurso)
+    valor = planos.preco_mensal(config_loja(), minimo)
+    tema.fala(f"<b>{planos.NOMES_RECURSOS[recurso]}</b> faz parte do plano <b>{planos.NOMES[minimo]}</b>, "
+              f"a partir de {brl(valor)} por mês.")
     if visitante():
-        st.caption("Crie a sua conta na tela de entrada (botão Sair, na barra lateral).")
+        st.caption("Crie a sua conta na tela de entrada (botão na barra lateral).")
     else:
-        st.page_link("paginas/conta.py", label="Ver planos e assinar", icon="💳")
+        st.page_link("paginas/conta.py", label="Ver planos e mudar de plano", icon="💳")
     return False
 
 
@@ -218,3 +225,57 @@ def avisar_fontes(dados: dict[str, DadosAtivo]) -> None:
     if faltando:
         tema.aviso("Sem cotação para " + ", ".join(faltando) +
                    ". Usei o preço médio no lugar. Confira o ticker ou a sua internet.")
+
+
+# ---------------------------------------------------------------------------
+# Avisos e agente Sentinela
+# ---------------------------------------------------------------------------
+
+
+@st.cache_resource
+def caixa_avisos():
+    from chronotrade.avisos import CaixaDeAvisos
+
+    return CaixaDeAvisos(cart.pasta_dados() / "contas.db")
+
+
+def email_avisos() -> str:
+    """De quem são os avisos desta sessão."""
+    if not servidor():
+        from chronotrade.agentes.sentinela import EMAIL_LOCAL
+
+        return EMAIL_LOCAL
+    u = usuario()
+    if u is not None:
+        return u.email
+    if "id_visitante" not in st.session_state:
+        import uuid
+
+        st.session_state.id_visitante = uuid.uuid4().hex[:12]
+    return f"visitante:{st.session_state.id_visitante}"
+
+
+def rodar_sentinela_agora() -> dict:
+    """Pede ao Sentinela uma dica já, com a carteira aberta na tela (mesmo a de exemplo)."""
+    from chronotrade.agentes import sentinela
+
+    c = carteira()
+    if not (c.posicoes or c.observar):
+        return {"dicas": 0}
+    plano = plano_atual() if not visitante() else "medio"
+    dica = sentinela.montar_dica(c, ativo, usar_tecnica=permite("tecnica"))
+    texto = sentinela.redigir_com_ia(dica) if (not visitante() and planos.nivel(plano) >= 1) else None
+    u = usuario() if servidor() else None
+    pessoa = sentinela.Pessoa(email_avisos(), u.nome if u else "", plano, pasta() or cart.pasta_dados(),
+                              u.whatsapp if u else "", bool(u and u.aviso_email), bool(u and u.aviso_whatsapp))
+    sentinela._entregar(caixa_avisos(), pessoa, "sentinela", dica.titulo, texto or dica.texto,
+                        canais=u is not None)
+    return {"dicas": 1}
+
+
+@st.cache_resource
+def iniciar_agente() -> bool:
+    """Liga o Sentinela em segundo plano uma vez por servidor (desligue com CHRONOTRADE_AGENTE_AUTOMATICO=0)."""
+    from chronotrade.agentes import sentinela
+
+    return sentinela.iniciar_automatico()

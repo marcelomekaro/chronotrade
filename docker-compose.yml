@@ -32,8 +32,8 @@ services:
       - ollama
 
   # --- Chrono Trade online -------------------------------------------------
-  # docker compose up -d chronotrade            (app na porta 8501)
-  # docker compose --profile https up -d chronotrade caddy   (app + HTTPS com o seu domínio)
+  # docker compose up -d chronotrade agente     (app na porta 8501 + agente)
+  # docker compose --profile https up -d chronotrade agente caddy   (com HTTPS no seu domínio)
   chronotrade:
     build:
       context: .
@@ -42,6 +42,18 @@ services:
       - .env
     ports:
       - "8501:8501"
+    volumes:
+      - chronotrade_data:/data
+    restart: unless-stopped
+
+  # Agente Sentinela sempre ligado (dicas, datas com, pagamentos, ordens simuladas)
+  agente:
+    build:
+      context: .
+      dockerfile: Dockerfile.chronotrade
+    env_file:
+      - .env
+    command: ["chronotrade-agente", "loop"]
     volumes:
       - chronotrade_data:/data
     restart: unless-stopped

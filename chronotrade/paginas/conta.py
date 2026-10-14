@@ -5,7 +5,7 @@ import shutil
 
 import streamlit as st
 
-from chronotrade import contas, estado, loja, tema
+from chronotrade import contas, estado, loja, planos, tema
 from chronotrade.calculos import brl
 from chronotrade.carteira import pasta_dados
 
@@ -25,7 +25,7 @@ if u.senha_temporaria:
 dias = u.dias_restantes()
 col1, col2, col3 = st.columns(3)
 with col1:
-    nome_plano = "Administrador" if u.admin else ("A escolher" if u.status == "pendente" else contas.PLANOS[u.plano])
+    nome_plano = "Administrador" if u.admin else ("A escolher" if u.status == "pendente" else contas.PLANOS[u.plano_efetivo])
     tema.janela("Plano", nome_plano, u.email, ouro=True)
 with col2:
     curto = {"pendente": "Pendente", "ativo": "Ativo", "bloqueado": "Bloqueado"}
@@ -41,28 +41,50 @@ with col3:
     else:
         tema.janela("Validade", "—", "Aguardando a primeira liberação")
 
-# --- Pagamento ---------------------------------------------------------------------
+# --- Plano e pagamento ---------------------------------------------------------------
 if not u.admin:
     if u.status == "pendente":
         st.subheader("Falta pouco")
         tema.fala(f"Recebemos o seu cadastro, {u.nome.split()[0]}. Escolha o plano e pague pelo PIX: "
-                  "assim que o pagamento for conferido, a sua conta é liberada.")
+                  "a conta é liberada assim que o pagamento for confirmado.")
         loja.painel_pagamento(u.email, u.nome)
     elif u.status == "bloqueado":
         tema.fala("Esta conta está bloqueada. Fale com o suporte para entender o motivo.")
-    elif u.vencido() or u.plano == "gratuito":
-        st.subheader("Assinar o plano Completo" if u.plano == "gratuito" else "Renovar a assinatura")
-        loja.painel_pagamento(u.email, u.nome)
+    elif u.vencido():
+        st.subheader("Renovar a assinatura")
+        loja.painel_pagamento(u.email, u.nome, u.plano)
     else:
-        with st.expander("Renovar antes de vencer"):
-            st.caption("Os dias novos são somados à validade atual.")
-            loja.painel_pagamento(u.email, u.nome)
+        with st.expander("Mudar de plano ou renovar antes de vencer"):
+            st.caption("Os dias novos são somados à validade atual. Ao mudar de plano, o novo vale a partir do pagamento.")
+            loja.painel_pagamento(u.email, u.nome, u.plano)
+    with st.expander("O que cada plano inclui"):
+        loja.comparativo()
     pagos = estado.banco().pagamentos(u.email)
     if pagos:
         with st.expander("Meus pagamentos"):
             for p in pagos:
                 st.markdown(f"{p['registrado_em'][:10]}: {brl(p['valor'])}, {p['dias']} dias, plano "
-                            f"{contas.PLANOS.get(p['plano'], p['plano'])}".replace("$", "\\$"))
+                            f"{contas.PLANOS.get(planos.normalizar(p['plano']), p['plano'])}".replace("$", "\\$"))
+
+# --- Avisos do agente Sentinela ----------------------------------------------------------
+if u.pode_usar():
+    st.subheader("Avisos do agente Sentinela")
+    lim = u.limites
+    st.markdown(f"Frequência no seu plano: **{'todo dia' if lim.sentinela == 'diario' else 'toda semana'}**. "
+                "A dica sempre aparece aqui no app; escolha também onde mais quer receber.")
+    with st.form("avisos"):
+        por_email = st.checkbox("Receber por e-mail", value=u.aviso_email, disabled=not u.libera("avisos_email"),
+                                help=None if u.libera("avisos_email") else "Disponível a partir do plano Médio.")
+        por_whats = st.checkbox("Receber por WhatsApp", value=u.aviso_whatsapp, disabled=not u.libera("avisos_whatsapp"),
+                                help=None if u.libera("avisos_whatsapp") else "Disponível no plano Premium.")
+        numero = st.text_input("Número do WhatsApp com DDD", value=u.whatsapp)
+        if st.form_submit_button("Salvar preferências"):
+            estado.banco().preferencias(u.email, True, por_email and u.libera("avisos_email"),
+                                        por_whats and u.libera("avisos_whatsapp"), numero)
+            st.success("Preferências salvas.")
+    if lim.analises_ia_mes:
+        usadas = estado.banco().uso_mes(u.email, "oraculo")
+        st.caption(f"Análises do Oráculo de IA neste mês: {usadas} de {lim.analises_ia_mes}.")
 
 # --- Senha ---------------------------------------------------------------------------
 st.subheader("Trocar a senha")

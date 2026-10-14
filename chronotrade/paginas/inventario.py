@@ -17,7 +17,7 @@ def _limitar_plano_gratuito() -> list[str]:
         return []
     cortados = [p.ticker for p in c.posicoes[limite:]]
     c.posicoes = c.posicoes[:limite]
-    return [f"O plano Gratuito acompanha até {limite} ativos. "
+    return [f"O plano Básico acompanha até {limite} ativos; o Médio e o Premium não têm limite. "
             f"Ficaram de fora: {', '.join(cortados)}."]
 
 

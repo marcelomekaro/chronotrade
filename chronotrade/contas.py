@@ -23,8 +23,10 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from chronotrade import planos
+
 ADMIN_PADRAO = "marcelomekaro@gmail.com"
-PLANOS = {"gratuito": "Gratuito", "completo": "Completo"}
+PLANOS = planos.NOMES
 STATUS = {"pendente": "Aguardando liberação", "ativo": "Ativo", "bloqueado": "Bloqueado"}
 TENTATIVAS_MAX = 5
 BLOQUEIO_MINUTOS = 15
@@ -33,13 +35,14 @@ _ITERACOES = 240_000
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 CONFIG_PADRAO = {
-    "preco_mensal": "19.90",
-    "preco_anual": "199.00",
-    "pix_chave": "",
-    "pix_nome": "",
-    "pix_cidade": "SAO PAULO",
-    "whatsapp_admin": "",
-    "limite_gratuito": "5",
+    "preco_basico": planos.PRECOS_PADRAO["basico"],
+    "preco_medio": planos.PRECOS_PADRAO["medio"],
+    "preco_premium": planos.PRECOS_PADRAO["premium"],
+    "desconto_anual": "20",
+    "pix_chave": ADMIN_PADRAO,
+    "pix_nome": "CHRONO TRADE",
+    "pix_cidade": "BRASIL",
+    "whatsapp_admin": "19999650436",
     "nome_loja": "Chrono Trade",
 }
 
@@ -109,14 +112,24 @@ CREATE TABLE IF NOT EXISTS usuarios (
     whatsapp TEXT DEFAULT '',
     senha_hash TEXT,
     status TEXT NOT NULL DEFAULT 'pendente',
-    plano TEXT NOT NULL DEFAULT 'gratuito',
+    plano TEXT NOT NULL DEFAULT 'basico',
     validade TEXT,
     senha_temporaria INTEGER NOT NULL DEFAULT 0,
     tentativas INTEGER NOT NULL DEFAULT 0,
     bloqueado_ate TEXT,
     criado_em TEXT NOT NULL,
     ultimo_acesso TEXT,
-    observacao TEXT DEFAULT ''
+    observacao TEXT DEFAULT '',
+    aviso_app INTEGER NOT NULL DEFAULT 1,
+    aviso_email INTEGER NOT NULL DEFAULT 1,
+    aviso_whatsapp INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS uso (
+    email TEXT NOT NULL,
+    mes TEXT NOT NULL,
+    recurso TEXT NOT NULL,
+    qtd INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (email, mes, recurso)
 );
 CREATE TABLE IF NOT EXISTS pagamentos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,6 +165,9 @@ class Usuario:
     criado_em: datetime
     ultimo_acesso: datetime | None
     observacao: str
+    aviso_app: bool = True
+    aviso_email: bool = True
+    aviso_whatsapp: bool = False
 
     @property
     def admin(self) -> bool:
@@ -175,8 +191,17 @@ class Usuario:
     def pode_usar(self, hoje: date | None = None) -> bool:
         return self.status == "ativo" and not self.vencido(hoje)
 
-    def plano_completo(self, hoje: date | None = None) -> bool:
-        return self.admin or (self.pode_usar(hoje) and self.plano == "completo")
+    @property
+    def plano_efetivo(self) -> str:
+        return "premium" if self.admin else planos.normalizar(self.plano)
+
+    def libera(self, recurso: str, hoje: date | None = None) -> bool:
+        """Se a conta pode usar o recurso agora (plano certo e assinatura em dia)."""
+        return self.admin or (self.pode_usar(hoje) and planos.libera(self.plano, recurso))
+
+    @property
+    def limites(self) -> planos.Limites:
+        return planos.LIMITES[self.plano_efetivo]
 
 
 def _data(texto: str | None) -> date | None:
@@ -195,6 +220,10 @@ class Contas:
         self.caminho.parent.mkdir(parents=True, exist_ok=True)
         with self._con() as con:
             con.executescript(_ESQUEMA)
+            colunas = {linha["name"] for linha in con.execute("PRAGMA table_info(usuarios)")}
+            for coluna, padrao in (("aviso_app", 1), ("aviso_email", 1), ("aviso_whatsapp", 0)):
+                if coluna not in colunas:  # bancos criados por versões anteriores
+                    con.execute(f"ALTER TABLE usuarios ADD COLUMN {coluna} INTEGER NOT NULL DEFAULT {padrao}")
 
     @contextmanager
     def _con(self):
@@ -216,6 +245,8 @@ class Contas:
             status=linha["status"], plano=linha["plano"], validade=_data(linha["validade"]),
             senha_temporaria=bool(linha["senha_temporaria"]), criado_em=_quando(linha["criado_em"]),
             ultimo_acesso=_quando(linha["ultimo_acesso"]), observacao=linha["observacao"] or "",
+            aviso_app=bool(linha["aviso_app"]), aviso_email=bool(linha["aviso_email"]),
+            aviso_whatsapp=bool(linha["aviso_whatsapp"]),
         )
 
     def buscar(self, email: str) -> Usuario | None:
@@ -251,7 +282,7 @@ class Contas:
         validar_senha(senha)
         if self.buscar(email):
             raise ErroConta("Este e-mail já tem cadastro. Use Entrar, ou peça uma senha nova ao suporte.")
-        status, plano = ("ativo", "completo") if email == email_admin() else ("pendente", "gratuito")
+        status, plano = ("ativo", "premium") if email == email_admin() else ("pendente", "basico")
         with self._con() as con:
             con.execute(
                 "INSERT INTO usuarios (email, nome, whatsapp, senha_hash, status, plano, criado_em) "
@@ -339,8 +370,7 @@ class Contas:
         u = self.buscar(email)
         if u is None:
             raise ErroConta("Conta não encontrada.")
-        if plano not in PLANOS:
-            raise ErroConta("Plano desconhecido.")
+        plano = planos.normalizar(plano)
         hoje = hoje or date.today()
         base = u.validade if u.validade and u.validade >= hoje else hoje
         validade = base + timedelta(days=dias)
@@ -386,6 +416,28 @@ class Contas:
             con.execute("DELETE FROM usuarios WHERE email = ?", (email,))
             con.execute("DELETE FROM sessoes WHERE email = ?", (email,))
 
+    def preferencias(self, email: str, app: bool, email_: bool, whatsapp: bool, numero: str | None = None) -> None:
+        with self._con() as con:
+            con.execute("UPDATE usuarios SET aviso_app = ?, aviso_email = ?, aviso_whatsapp = ? WHERE email = ?",
+                        (int(app), int(email_), int(whatsapp), email))
+            if numero is not None:
+                con.execute("UPDATE usuarios SET whatsapp = ? WHERE email = ?", (re.sub(r"\D", "", numero), email))
+
+    # -- uso dos recursos com cota ------------------------------------------
+
+    def uso_mes(self, email: str, recurso: str, hoje: date | None = None) -> int:
+        mes = (hoje or date.today()).strftime("%Y-%m")
+        with self._con() as con:
+            linha = con.execute("SELECT qtd FROM uso WHERE email = ? AND mes = ? AND recurso = ?",
+                                (email, mes, recurso)).fetchone()
+        return linha["qtd"] if linha else 0
+
+    def registrar_uso(self, email: str, recurso: str, hoje: date | None = None) -> None:
+        mes = (hoje or date.today()).strftime("%Y-%m")
+        with self._con() as con:
+            con.execute("INSERT INTO uso VALUES (?, ?, ?, 1) ON CONFLICT(email, mes, recurso) "
+                        "DO UPDATE SET qtd = qtd + 1", (email, mes, recurso))
+
     # -- configurações da loja ----------------------------------------------
 
     def config(self) -> dict[str, str]:
@@ -408,9 +460,12 @@ class Contas:
         ativos = [u for u in usuarios if u.pode_usar(hoje)]
         mes = hoje.strftime("%Y-%m")
         receita_mes = sum(p["valor"] for p in self.pagamentos() if p["registrado_em"].startswith(mes))
+        cfg = self.config()
+        por_plano = {p: sum(1 for u in ativos if planos.normalizar(u.plano) == p) for p in planos.ORDEM}
         return {
             "ativos": len(ativos),
-            "completos": sum(1 for u in ativos if u.plano == "completo"),
+            "por_plano": por_plano,
+            "receita_recorrente": sum(planos.preco_mensal(cfg, p) * n for p, n in por_plano.items()),
             "pendentes": sum(1 for u in usuarios if u.status == "pendente"),
             "vencendo": [u for u in ativos if (u.dias_restantes(hoje) or 99) <= 7],
             "vencidos": [u for u in usuarios if u.status == "ativo" and u.vencido(hoje)],

@@ -47,6 +47,7 @@ bedrock = [
 tradingagents = "cli.main:app"
 chronotrade = "chronotrade.lancador:main"
 chronotrade-admin = "chronotrade.contas:main"
+chronotrade-agente = "chronotrade.agentes.sentinela:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "tradingagents.__version__"}

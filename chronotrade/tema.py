@@ -272,3 +272,11 @@ def mostrar(fig: go.Figure) -> None:
 def legenda(texto: str) -> None:
     """Legenda pequena sob um gráfico ou tabela. Escapa o $ para o Streamlit não ler como fórmula."""
     st.caption(texto.replace("$", "\\$"))
+
+
+from chronotrade.legal import AVISO_LEGAL  # noqa: E402
+
+
+def aviso_legal() -> None:
+    """O aviso legal em letra pequena, no fim das telas que mostram números de investimento."""
+    legenda(AVISO_LEGAL)

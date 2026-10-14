@@ -8,7 +8,7 @@ import streamlit.components.v1 as componentes
 from chronotrade import estado, relatorio, tema
 
 st.title("Compartilhar")
-estado.exigir_plano_completo("O relatório para imprimir e compartilhar")
+estado.exigir("compartilhar")
 c = estado.carteira()
 if not c.posicoes:
     tema.fala("Cadastre a carteira no Inventário para gerar o relatório.")

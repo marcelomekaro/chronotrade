@@ -103,7 +103,7 @@ with ficha:
 # Conselho dos agentes: o TradingAgents completo
 # ---------------------------------------------------------------------------
 with conselho:
-    if estado.liberado("O conselho dos agentes de IA"):
+    if estado.liberado("oraculo"):
         st.markdown("Vários agentes de IA analisam o ativo, debatem entre si e um gestor dá o veredito. "
                     "Leva de 5 a 20 minutos com o Gemini gratuito. Fique nesta página até terminar.")
         if estado.modo_demo():
@@ -122,18 +122,28 @@ with conselho:
             usar_carteira = st.checkbox("Considerar a minha carteira", value=bool(c.posicoes),
                                         help="Os agentes sabem quanto você já tem deste ativo e o caixa disponível. "
                                              "No plano gratuito do Gemini, o Google pode ler o que é enviado.")
+            u_form = estado.usuario() if estado.servidor() else None
+            travado = estado.servidor() and not (u_form and u_form.admin)  # quem paga a IA escolhe o modelo
             with st.expander("Modelo de IA"):
                 col3, col4, col5 = st.columns(3)
                 provedor = col3.selectbox("Provedor", ["google", "ollama", "openai", "anthropic", "groq"],
                                           index=["google", "ollama", "openai", "anthropic", "groq"].index(cfg.provedor)
-                                          if cfg.provedor in ("google", "ollama", "openai", "anthropic", "groq") else 0)
-                rapido = col4.text_input("Modelo rápido (analistas)", value=cfg.modelo_rapido)
-                profundo = col5.text_input("Modelo profundo (gestores)", value=cfg.modelo_profundo)
+                                          if cfg.provedor in ("google", "ollama", "openai", "anthropic", "groq") else 0,
+                                          disabled=travado)
+                rapido = col4.text_input("Modelo rápido (analistas)", value=cfg.modelo_rapido, disabled=travado)
+                profundo = col5.text_input("Modelo profundo (gestores)", value=cfg.modelo_profundo, disabled=travado)
                 tema.legenda("Vem do seu arquivo .env. No Gemini gratuito, use modelos Flash ou Flash-Lite; os Pro são pagos.")
             enviar = st.form_submit_button("Consultar o conselho", type="primary")
 
+        u_atual = estado.usuario() if estado.servidor() else None
+        cota = u_atual.limites.analises_ia_mes if u_atual and not u_atual.admin else None
+        usadas = estado.banco().uso_mes(u_atual.email, "oraculo") if cota else 0
+        if cota:
+            st.caption(f"Análises neste mês: {usadas} de {cota}.")
         if enviar:
-            if not analistas:
+            if cota is not None and usadas >= cota:
+                st.error(f"Você já usou as {cota} análises do mês. A cota renova no dia 1º.")
+            elif not analistas:
                 st.error("Escolha pelo menos um analista.")
             elif not motor_ia.chave_configurada(provedor):
                 st.error(f"Falta a chave do provedor {provedor} no arquivo .env. Para o Gemini, preencha GOOGLE_API_KEY.")
@@ -158,6 +168,8 @@ with conselho:
                         caixa.update(label=f"Veredito: {motor_ia.ROTULOS.get(res.rating, res.rating)}",
                                      state="complete", expanded=False)
                         st.session_state.ultima_analise = res.pasta.name
+                        if u_atual is not None:
+                            estado.banco().registrar_uso(u_atual.email, "oraculo")
                     except Exception as erro:  # mostra o erro em linguagem simples
                         caixa.update(label="A análise parou no meio", state="error")
                         st.error(f"{type(erro).__name__}: {erro}")

@@ -48,6 +48,7 @@ class DadosAtivo:
     vpa: float | None = None          # valor patrimonial por ação
     historico: pd.Series = field(default_factory=lambda: pd.Series(dtype=float))
     dividendos: pd.Series = field(default_factory=lambda: pd.Series(dtype=float))
+    proximo_provento: tuple | None = None  # (data com, valor) quando já anunciado
     fonte: str = "yahoo"              # "yahoo", "demo" ou "indisponivel"
     erro: str = ""
 
@@ -98,11 +99,18 @@ def carregar_ativo(ticker: str, demo: bool = False) -> DadosAtivo:
             vpa=_numero(info.get("bookValue")),
             historico=fechamento,
             dividendos=dividendos,
+            proximo_provento=_proximo(info),
             fonte="yahoo",
         )
     except Exception as exc:
         return DadosAtivo(ticker=ticker, fonte="indisponivel",
                           erro=f"Não foi possível buscar os dados ({type(exc).__name__}).")
+
+
+def _proximo(info: dict):
+    from chronotrade.agenda import proxima_data_anunciada
+
+    return proxima_data_anunciada(info)
 
 
 def carregar_indice(ticker: str = "^BVSP", demo: bool = False) -> pd.Series:

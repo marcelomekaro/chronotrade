@@ -27,14 +27,18 @@ st.set_page_config(page_title="Chrono Trade", page_icon="⏳", layout="wide",
 tema.aplicar()
 
 _P = Path(__file__).parent / "paginas"
+AVISOS = st.Page(_P / "avisos.py", title="Avisos", icon="🛡️")
 APP = [
     st.Page(_P / "portal.py", title="Portal", icon="🌀", default=True),
     st.Page(_P / "inventario.py", title="Inventário", icon="🎒"),
     st.Page(_P / "tesouro.py", title="Tesouro", icon="💰"),
+    st.Page(_P / "agenda.py", title="Agenda de proventos", icon="📅"),
     st.Page(_P / "aporte.py", title="Próximo Aporte", icon="🧭"),
     st.Page(_P / "linha_do_tempo.py", title="Linha do Tempo", icon="⏳"),
     st.Page(_P / "oraculo.py", title="Oráculo", icon="🔮"),
+    st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
     st.Page(_P / "compartilhar.py", title="Compartilhar", icon="📜"),
+    AVISOS,
 ]
 CONTA = st.Page(_P / "conta.py", title="Minha conta", icon="👤")
 ADMIN = st.Page(_P / "admin.py", title="Painel do admin", icon="🛡️")
@@ -97,13 +101,23 @@ if paginas[0] is not PORTARIA:
                     unsafe_allow_html=True)
         _cartao_usuario()
         st.write("")
+        nao_lidos = estado.caixa_avisos().nao_lidos(estado.email_avisos()) if AVISOS in paginas else 0
         for pagina in paginas:
-            st.page_link(pagina)
+            if pagina is AVISOS and nao_lidos:
+                st.page_link(pagina, label=f"Avisos ({nao_lidos})")
+            else:
+                st.page_link(pagina)
         st.divider()
         if APP[0] in paginas:
             estado.modo_demo()  # garante o valor inicial antes do botão
             st.toggle("Modo demonstração", key="demo", disabled=estado.visitante(),
                       help="Usa cotações e proventos fictícios. Útil para conhecer o app sem internet.")
-        st.caption("Ferramenta de estudo. Não é recomendação de investimento.")
+        st.caption("Ferramenta de estudo. Não é recomendação de investimento. "
+                   "As decisões e os riscos dos aportes são do investidor.")
 
+if AVISOS in paginas:  # pop-up dos avisos novos (dica do Sentinela, data com, pagamento confirmado)
+    for aviso in estado.caixa_avisos().para_mostrar(estado.email_avisos())[:3]:
+        st.toast(f"**{aviso.titulo}**  \nVeja em Avisos.", icon="🛡️")
+
+estado.iniciar_agente()
 navegacao.run()

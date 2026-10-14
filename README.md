@@ -14,6 +14,11 @@ Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA p
 - **Compartilhar**: relatório para imprimir ou salvar em PDF, com opção de ocultar valores, e resumo para WhatsApp.
 - **Contas e assinaturas** (modo servidor): cadastro por e-mail, aprovação pelo administrador, cobrança por PIX com QR Code e painel com receita, renovações e cobranças.
 - **Celular**: telas ajustadas para Android e ícone para adicionar à tela inicial.
+- **Agenda de proventos**: próximas datas com (confirmadas e previstas) e quanto deve cair por mês.
+- **Análise técnica no aporte**: tendência pelas médias de 50 e 200 dias, IFR e momento de compra.
+- **Agente Sentinela**: vigia a carteira sozinho e manda a dica do próximo aporte no app, por e-mail ou WhatsApp.
+- **Planos Básico, Médio e Premium**, com PIX e liberação automática pelo Mercado Pago.
+- **Corretora**: carteira simulada com ordens e conexão com MetaTrader 5, numa estrutura pronta para outras corretoras.
 
 Os dados de mercado vêm do Yahoo Finance (gratuito). A carteira fica em `~/.chronotrade/carteira.json`, fora do repositório.
 
