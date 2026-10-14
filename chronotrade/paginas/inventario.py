@@ -3,12 +3,22 @@
 import pandas as pd
 import streamlit as st
 
-from chronotrade import estado, tema
+from chronotrade import estado, licenca, tema
 from chronotrade.calculos import brl, pct
 from chronotrade.carteira import CLASSES, ler_csv
 
 st.title("Inventário")
 c = estado.carteira()
+
+
+def _limitar_plano_gratuito() -> list[str]:
+    if estado.plano_completo() or len(c.posicoes) <= licenca.LIMITE_ATIVOS_GRATUITO:
+        return []
+    cortados = [p.ticker for p in c.posicoes[licenca.LIMITE_ATIVOS_GRATUITO:]]
+    c.posicoes = c.posicoes[:licenca.LIMITE_ATIVOS_GRATUITO]
+    return [f"O plano gratuito acompanha até {licenca.LIMITE_ATIVOS_GRATUITO} ativos. "
+            f"Ficaram de fora: {', '.join(cortados)}."]
+
 
 tema.fala("Cadastre cada ativo com a <b>quantidade</b> e o <b>preço médio</b> que aparecem na sua corretora. "
           "Escreva o ticker sem o .SA (por exemplo PETR4 ou HGLG11). "
@@ -47,16 +57,20 @@ with botao:
     if st.button("Salvar carteira", type="primary"):
         avisos = c.atualizar_de_tabela(editada)
         c.aporte_mensal, c.meta_renda_mensal, c.caixa, c.taxa_bazin = aporte, meta, caixa, taxa / 100
-        estado.salvar()
+        avisos += _limitar_plano_gratuito()
         for a in avisos:
             st.warning(a)
-        st.success(f"Carteira salva com {len(c.posicoes)} posições.")
+        if estado.salvar():
+            st.success(f"Carteira salva com {len(c.posicoes)} posições.")
+        else:
+            st.info("No plano gratuito a carteira vale até você fechar o navegador. "
+                    "Assine o plano completo para guardar.")
 with importar:
     arquivo = st.file_uploader("Importar planilha CSV", type=["csv"],
                                help="Colunas: ticker; quantidade; preço médio; classe (as duas últimas são opcionais).")
     if arquivo is not None and st.button("Usar esta planilha"):
         try:
-            avisos = c.atualizar_de_tabela(ler_csv(arquivo.getvalue()))
+            avisos = c.atualizar_de_tabela(ler_csv(arquivo.getvalue())) + _limitar_plano_gratuito()
             estado.salvar()
             st.success(f"Importei {len(c.posicoes)} posições.")
             for a in avisos:

@@ -283,3 +283,102 @@ def pct(valor: float | None, casas: int = 1, sinal: bool = False) -> str:
         return "—"
     formato = f"{{:{'+' if sinal else ''}.{casas}f}}"
     return formato.format(valor * 100).replace(".", ",") + "%"
+
+
+# ---------------------------------------------------------------------------
+# Próximo aporte: preço justo, preço de entrada e divisão do dinheiro
+# ---------------------------------------------------------------------------
+
+ZONA_COMPRA = "Zona de compra"
+ABAIXO_JUSTO = "Abaixo do preço justo"
+ACIMA_JUSTO = "Acima do preço justo"
+SEM_DADOS = "Sem dados para calcular"
+
+
+def avaliar_preco(preco: float | None, teto_bazin: float | None, graham: float | None,
+                  margem: float = 0.10) -> dict:
+    """Preço justo (alvo), preço de entrada e situação de um ativo.
+
+    O preço justo é a média dos métodos disponíveis (Bazin e Graham). O preço de
+    entrada é o preço justo menos a margem de segurança escolhida pelo usuário.
+    """
+    metodos = {nome: v for nome, v in (("Bazin", teto_bazin), ("Graham", graham)) if v and v > 0}
+    if not metodos or not preco:
+        return {"alvo": None, "entrada": None, "potencial": None, "situacao": SEM_DADOS,
+                "metodos": ", ".join(metodos) or "—"}
+    alvo = sum(metodos.values()) / len(metodos)
+    entrada = alvo * (1 - margem)
+    if preco <= entrada:
+        situacao = ZONA_COMPRA
+    elif preco <= alvo:
+        situacao = ABAIXO_JUSTO
+    else:
+        situacao = ACIMA_JUSTO
+    return {"alvo": alvo, "entrada": entrada, "potencial": alvo / preco - 1,
+            "situacao": situacao, "metodos": " e ".join(metodos)}
+
+
+def dividir_aporte(candidatos: pd.DataFrame, dinheiro: float, metas_classe: dict[str, float]) -> tuple[pd.DataFrame, float]:
+    """Divide o dinheiro do aporte em cotas inteiras.
+
+    ``candidatos`` precisa das colunas: ativo, classe, preco, valor (quanto já tem),
+    potencial e situacao. Regras, em ordem:
+      1. Cada classe recebe dinheiro na proporção do que falta para a sua meta (%).
+      2. Dentro da classe, só entram ativos abaixo do preço justo; quem está na zona
+         de compra pesa o dobro, e o peso cresce com o potencial até o alvo.
+      3. As cotas são inteiras; a sobra compra mais cotas de quem tem maior peso e,
+         se ainda sobrar, fica em caixa.
+    Devolve a tabela de compras e o dinheiro que sobrou.
+    """
+    colunas = ["ativo", "classe", "preco", "cotas", "valor_compra", "peso_decisao"]
+    if candidatos.empty or dinheiro <= 0:
+        return pd.DataFrame(columns=colunas), max(dinheiro, 0.0)
+
+    c = candidatos.copy()
+    c["elegivel"] = c["situacao"].isin([ZONA_COMPRA, ABAIXO_JUSTO]) & c["preco"].gt(0)
+    c["peso_decisao"] = 0.0
+    c.loc[c["elegivel"], "peso_decisao"] = c.loc[c["elegivel"], "potencial"].clip(lower=0.01) * \
+        c.loc[c["elegivel"], "situacao"].map({ZONA_COMPRA: 2.0, ABAIXO_JUSTO: 1.0})
+
+    total_meta = sum(v for v in metas_classe.values() if v > 0) or 1.0
+    futuro = float(c.drop_duplicates("ativo")["valor"].sum()) + dinheiro
+    classes_com_opcao = set(c.loc[c["elegivel"], "classe"])
+    faltas = {}
+    for classe, meta in metas_classe.items():
+        if meta <= 0 or classe not in classes_com_opcao:
+            continue
+        atual = float(c.loc[c["classe"] == classe, "valor"].sum())
+        faltas[classe] = max(meta / total_meta * futuro - atual, 0.0)
+    if not faltas:
+        return pd.DataFrame(columns=colunas), dinheiro
+    soma = sum(faltas.values())
+    if soma <= 0:  # todas as classes já passaram da meta: divide pela própria meta
+        faltas = {k: metas_classe[k] for k in faltas}
+        soma = sum(faltas.values())
+
+    c["orcamento"] = 0.0
+    for classe, falta in faltas.items():
+        verba = dinheiro * falta / soma
+        grupo = c["elegivel"] & (c["classe"] == classe)
+        pesos = c.loc[grupo, "peso_decisao"]
+        c.loc[grupo, "orcamento"] = verba * pesos / pesos.sum()
+
+    c["cotas"] = 0
+    c.loc[c["elegivel"], "cotas"] = (c.loc[c["elegivel"], "orcamento"] // c.loc[c["elegivel"], "preco"]).astype(int)
+    sobra = dinheiro - float((c["cotas"] * c["preco"]).sum())
+
+    # A sobra compra mais cotas, começando por quem tem maior peso.
+    ordem = c[c["elegivel"]].sort_values("peso_decisao", ascending=False).index
+    comprou = True
+    while comprou:
+        comprou = False
+        for i in ordem:
+            if c.at[i, "preco"] <= sobra:
+                c.at[i, "cotas"] += 1
+                sobra -= c.at[i, "preco"]
+                comprou = True
+                break
+
+    c["valor_compra"] = c["cotas"] * c["preco"]
+    compras = c[c["cotas"] > 0].sort_values("valor_compra", ascending=False)
+    return compras[colunas].reset_index(drop=True), round(sobra, 2)

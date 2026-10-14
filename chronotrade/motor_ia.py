@@ -73,8 +73,8 @@ def chave_configurada(provedor: str) -> bool:
     return variavel is None or bool(os.environ.get(variavel))
 
 
-def pasta_analises() -> Path:
-    pasta = pasta_dados() / "oraculo"
+def pasta_analises(base: Path | None = None) -> Path:
+    pasta = (base or pasta_dados()) / "oraculo"
     pasta.mkdir(parents=True, exist_ok=True)
     return pasta
 
@@ -90,7 +90,8 @@ class Resultado:
 
 def analisar(ticker: str, data: str, analistas: list[str], cfg: Configuracao,
              carteira=None, rodadas: int = 1,
-             ao_progredir: Callable[[str, str], None] | None = None) -> Resultado:
+             ao_progredir: Callable[[str, str], None] | None = None,
+             base: Path | None = None) -> Resultado:
     """Roda a análise completa. ``ao_progredir(etapa, texto)`` recebe cada avanço."""
     from tradingagents.agents.rating import run_rating
     from tradingagents.default_config import build_default_config
@@ -107,6 +108,8 @@ def analisar(ticker: str, data: str, analistas: list[str], cfg: Configuracao,
         "max_risk_discuss_rounds": rodadas,
         "benchmark_ticker": None,
     })
+    if base is not None:  # cada assinante com a sua própria memória de decisões
+        config["memory_log_path"] = str(base / "memoria" / "trading_memory.md")
     if not os.environ.get("TRADINGAGENTS_LLM_MAX_RETRIES") and cfg.provedor == "google":
         config["llm_max_retries"] = 10   # o plano gratuito limita pedidos por minuto
 
@@ -143,7 +146,7 @@ def analisar(ticker: str, data: str, analistas: list[str], cfg: Configuracao,
 
     grafo.record_decision(ticker, data, final)
     rating = run_rating(final)
-    pasta = pasta_analises() / f"{ticker_curto(ticker)}_{datetime.now():%Y%m%d_%H%M%S}"
+    pasta = pasta_analises(base) / f"{ticker_curto(ticker)}_{datetime.now():%Y%m%d_%H%M%S}"
     grafo.save_reports(final, ticker, save_path=pasta, html=True)
     (pasta / "chronotrade.json").write_text(json.dumps({
         "ticker": ticker, "data": data, "rating": rating, "analistas": ordem,
@@ -177,9 +180,9 @@ class AnaliseSalva:
         return arquivo if arquivo.exists() else None
 
 
-def analises_salvas() -> list[AnaliseSalva]:
+def analises_salvas(base: Path | None = None) -> list[AnaliseSalva]:
     itens = []
-    for meta in pasta_analises().glob("*/chronotrade.json"):
+    for meta in pasta_analises(base).glob("*/chronotrade.json"):
         try:
             dados = json.loads(meta.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):

@@ -41,6 +41,10 @@ class Carteira:
     aporte_mensal: float = 1000.0
     meta_renda_mensal: float = 3000.0
     taxa_bazin: float = 0.06
+    margem_seguranca: float = 0.10
+    metas_classe: dict[str, float] = field(
+        default_factory=lambda: {"Ação": 50.0, "FII": 40.0, "ETF": 10.0, "BDR": 0.0, "Outro": 0.0})
+    observar: list[str] = field(default_factory=list)  # ativos que você ainda não tem e quer acompanhar
 
     # -- persistência -------------------------------------------------------
 
@@ -234,4 +238,5 @@ EXEMPLO = Carteira(
     caixa=850.0,
     aporte_mensal=1500.0,
     meta_renda_mensal=5000.0,
+    observar=["BBSE3.SA", "KNRI11.SA", "VALE3.SA"],
 )

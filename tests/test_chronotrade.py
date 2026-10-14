@@ -116,3 +116,84 @@ def test_tabela_e_resumo_em_modo_demo():
     assert r.patrimonio == pytest.approx(tabela["valor"].sum() + 100)
     assert tabela["peso"].sum() == pytest.approx(1.0)
     assert r.renda_12m > 0
+
+
+def test_avaliar_preco():
+    a = calculos.avaliar_preco(30.0, 40.0, 50.0, margem=0.10)  # justo 45, entrada 40,5
+    assert a["alvo"] == pytest.approx(45.0) and a["entrada"] == pytest.approx(40.5)
+    assert a["situacao"] == calculos.ZONA_COMPRA
+    assert calculos.avaliar_preco(44.0, 40.0, 50.0)["situacao"] == calculos.ABAIXO_JUSTO
+    assert calculos.avaliar_preco(60.0, 40.0, None)["situacao"] == calculos.ACIMA_JUSTO
+    assert calculos.avaliar_preco(10.0, None, None)["situacao"] == calculos.SEM_DADOS
+
+
+def _candidatos():
+    return pd.DataFrame([
+        {"ativo": "AAA3", "classe": "Ação", "preco": 10.0, "valor": 1000.0, "potencial": 0.30,
+         "situacao": calculos.ZONA_COMPRA},
+        {"ativo": "BBB4", "classe": "Ação", "preco": 20.0, "valor": 3000.0, "potencial": -0.10,
+         "situacao": calculos.ACIMA_JUSTO},
+        {"ativo": "CCCC11", "classe": "FII", "preco": 100.0, "valor": 0.0, "potencial": 0.10,
+         "situacao": calculos.ABAIXO_JUSTO},
+    ])
+
+
+def test_dividir_aporte_respeita_metas_e_precos():
+    compras, sobra = calculos.dividir_aporte(_candidatos(), 1000.0, {"Ação": 50, "FII": 50})
+    assert "BBB4" not in set(compras["ativo"])          # acima do preço justo não entra
+    assert (compras["valor_compra"].sum() + sobra) == pytest.approx(1000.0)
+    assert sobra < 10.0                                   # a sobra não compra nem a cota mais barata
+    fii = compras.loc[compras["ativo"] == "CCCC11", "valor_compra"].sum()
+    assert fii >= 500.0                                   # a classe mais longe da meta recebe mais
+
+
+def test_dividir_aporte_sem_opcoes_guarda_em_caixa():
+    c = _candidatos()
+    c["situacao"] = calculos.ACIMA_JUSTO
+    compras, sobra = calculos.dividir_aporte(c, 800.0, {"Ação": 100})
+    assert compras.empty and sobra == 800.0
+
+
+# --- Assinaturas e relatório -------------------------------------------------
+
+from datetime import date  # noqa: E402
+
+from chronotrade import licenca, relatorio  # noqa: E402
+
+SEGREDO = b"x" * 40
+
+
+def test_chave_valida_e_adulterada():
+    chave = licenca.gerar_chave("Ana@Exemplo.com", date(2026, 12, 31), SEGREDO)
+    lic = licenca.verificar_chave(chave, SEGREDO, hoje=date(2026, 10, 14))
+    assert lic.email == "ana@exemplo.com" and lic.dias_restantes(date(2026, 10, 14)) == 78
+    adulterada = chave[:-2] + ("A" if chave[-2] != "A" else "B") + chave[-1]
+    with pytest.raises(licenca.ChaveInvalida):
+        licenca.verificar_chave(adulterada, SEGREDO, hoje=date(2026, 10, 14))
+    with pytest.raises(licenca.ChaveInvalida):
+        licenca.verificar_chave(chave, b"y" * 40, hoje=date(2026, 10, 14))
+
+
+def test_chave_vencida():
+    chave = licenca.gerar_chave("ana@exemplo.com", date(2026, 1, 1), SEGREDO)
+    with pytest.raises(licenca.ChaveInvalida, match="venceu"):
+        licenca.verificar_chave(chave, SEGREDO, hoje=date(2026, 10, 14))
+
+
+def test_mesmo_email_mesma_pasta():
+    a = licenca.Licenca("Ana@exemplo.com ", date(2027, 1, 1))
+    b = licenca.Licenca("ana@exemplo.com", date(2026, 1, 1))
+    assert a.id_usuario == b.id_usuario
+
+
+def test_relatorio_oculta_valores():
+    c = Carteira(posicoes=[Posicao("TAEE11.SA", 100, 30.0), Posicao("MXRF11.SA", 200, 10.0, "FII")])
+    dados = {p.ticker: carregar_ativo(p.ticker, demo=True) for p in c.posicoes}
+    tabela = montar_tabela(c, dados)
+    r = resumir(tabela)
+    oculto = relatorio.gerar(c, tabela, r, ocultar_valores=True)
+    aberto = relatorio.gerar(c, tabela, r, ocultar_valores=False)
+    assert "R$" not in oculto
+    assert calculos.brl(r.patrimonio, 0) in aberto
+    assert "window.print()" in oculto
+    assert "R$" not in relatorio.resumo_texto(c, tabela, r, ocultar_valores=True)

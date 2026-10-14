@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import copy
 import os
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from chronotrade import carteira as cart
+from chronotrade import carteira as cart, licenca
 from chronotrade.mercado import DadosAtivo, carregar_ativo
 
 
@@ -18,18 +19,89 @@ def modo_demo() -> bool:
     return st.session_state.demo
 
 
+# ---------------------------------------------------------------------------
+# Plano de acesso
+# ---------------------------------------------------------------------------
+
+
+def licenca_atual() -> licenca.Licenca | None:
+    return st.session_state.get("licenca")
+
+
+def plano_completo() -> bool:
+    """No modo pessoal tudo é liberado; no modo assinatura, só com chave válida."""
+    return not licenca.assinatura_ativa() or licenca_atual() is not None
+
+
+def pasta() -> Path | None:
+    """Onde os dados deste usuário ficam. None = não guardar (plano gratuito)."""
+    if not licenca.assinatura_ativa():
+        return cart.pasta_dados()
+    lic = licenca_atual()
+    if lic is None:
+        return None
+    destino = cart.pasta_dados() / "assinantes" / lic.id_usuario
+    destino.mkdir(parents=True, exist_ok=True)
+    return destino
+
+
+def exigir_plano_completo(recurso: str) -> None:
+    """Para a página quando o plano não cobre o recurso, mostrando o convite para assinar."""
+    if not liberado(recurso):
+        st.stop()
+
+
+def liberado(recurso: str) -> bool:
+    """True se o plano cobre o recurso; senão mostra o convite para assinar e devolve False."""
+    if plano_completo():
+        return True
+    from chronotrade import tema
+
+    preco = licenca.preco_divulgado()
+    tema.fala(f"<b>{recurso}</b> faz parte do plano completo"
+              f"{' (' + preco + ')' if preco else ''}. Com ele você também guarda a carteira, "
+              "usa o Oráculo de IA e gera relatórios para imprimir.")
+    if licenca.link_pagamento():
+        st.link_button("Assinar o plano completo", licenca.link_pagamento(), type="primary")
+    st.caption("Já assinou? Cole a sua chave de acesso na barra lateral.")
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Carteira
+# ---------------------------------------------------------------------------
+
+
+def _arquivo_carteira() -> Path | None:
+    destino = pasta()
+    return destino / "carteira.json" if destino else None
+
+
 def carteira() -> cart.Carteira:
     if "carteira" not in st.session_state:
-        st.session_state.carteira = cart.Carteira.carregar()
+        arquivo = _arquivo_carteira()
+        st.session_state.carteira = cart.Carteira.carregar(arquivo) if arquivo else cart.Carteira()
     return st.session_state.carteira
+
+
+def recarregar_carteira() -> None:
+    st.session_state.pop("carteira", None)
 
 
 def usar_exemplo() -> None:
     st.session_state.carteira = copy.deepcopy(cart.EXEMPLO)
 
 
-def salvar() -> None:
-    carteira().salvar()
+def pode_salvar() -> bool:
+    return _arquivo_carteira() is not None
+
+
+def salvar() -> bool:
+    arquivo = _arquivo_carteira()
+    if arquivo is None:
+        return False
+    carteira().salvar(arquivo)
+    return True
 
 
 class _SemDados(Exception):

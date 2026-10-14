@@ -103,78 +103,79 @@ with ficha:
 # Conselho dos agentes: o TradingAgents completo
 # ---------------------------------------------------------------------------
 with conselho:
-    st.markdown("Vários agentes de IA analisam o ativo, debatem entre si e um gestor dá o veredito. "
-                "Leva de 5 a 20 minutos com o Gemini gratuito. Fique nesta página até terminar.")
-    if estado.modo_demo():
-        tema.aviso("O conselho sempre usa dados reais da internet, mesmo com o modo demonstração ligado.")
+    if estado.liberado("O conselho dos agentes de IA"):
+        st.markdown("Vários agentes de IA analisam o ativo, debatem entre si e um gestor dá o veredito. "
+                    "Leva de 5 a 20 minutos com o Gemini gratuito. Fique nesta página até terminar.")
+        if estado.modo_demo():
+            tema.aviso("O conselho sempre usa dados reais da internet, mesmo com o modo demonstração ligado.")
 
-    cfg = motor_ia.configuracao_do_ambiente()
-    with st.form("conselho"):
-        col1, col2 = st.columns(2)
-        ticker = col1.text_input("Ticker", value=sugestao)
-        dia = col2.date_input("Data da análise", value=date.today() - timedelta(days=1),
-                              max_value=date.today(), format="DD/MM/YYYY")
-        analistas = st.multiselect("Analistas", options=list(motor_ia.ANALISTAS),
-                                   default=["market", "fundamentals"],
-                                   format_func=motor_ia.ANALISTAS.get,
-                                   help="Menos analistas = análise mais rápida e menos pedidos à IA.")
-        usar_carteira = st.checkbox("Considerar a minha carteira", value=bool(c.posicoes),
-                                    help="Os agentes sabem quanto você já tem deste ativo e o caixa disponível. "
-                                         "No plano gratuito do Gemini, o Google pode ler o que é enviado.")
-        with st.expander("Modelo de IA"):
-            col3, col4, col5 = st.columns(3)
-            provedor = col3.selectbox("Provedor", ["google", "ollama", "openai", "anthropic", "groq"],
-                                      index=["google", "ollama", "openai", "anthropic", "groq"].index(cfg.provedor)
-                                      if cfg.provedor in ("google", "ollama", "openai", "anthropic", "groq") else 0)
-            rapido = col4.text_input("Modelo rápido (analistas)", value=cfg.modelo_rapido)
-            profundo = col5.text_input("Modelo profundo (gestores)", value=cfg.modelo_profundo)
-            tema.legenda("Vem do seu arquivo .env. No Gemini gratuito, use modelos Flash ou Flash-Lite; os Pro são pagos.")
-        enviar = st.form_submit_button("Consultar o conselho", type="primary")
+        cfg = motor_ia.configuracao_do_ambiente()
+        with st.form("conselho"):
+            col1, col2 = st.columns(2)
+            ticker = col1.text_input("Ticker", value=sugestao)
+            dia = col2.date_input("Data da análise", value=date.today() - timedelta(days=1),
+                                  max_value=date.today(), format="DD/MM/YYYY")
+            analistas = st.multiselect("Analistas", options=list(motor_ia.ANALISTAS),
+                                       default=["market", "fundamentals"],
+                                       format_func=motor_ia.ANALISTAS.get,
+                                       help="Menos analistas = análise mais rápida e menos pedidos à IA.")
+            usar_carteira = st.checkbox("Considerar a minha carteira", value=bool(c.posicoes),
+                                        help="Os agentes sabem quanto você já tem deste ativo e o caixa disponível. "
+                                             "No plano gratuito do Gemini, o Google pode ler o que é enviado.")
+            with st.expander("Modelo de IA"):
+                col3, col4, col5 = st.columns(3)
+                provedor = col3.selectbox("Provedor", ["google", "ollama", "openai", "anthropic", "groq"],
+                                          index=["google", "ollama", "openai", "anthropic", "groq"].index(cfg.provedor)
+                                          if cfg.provedor in ("google", "ollama", "openai", "anthropic", "groq") else 0)
+                rapido = col4.text_input("Modelo rápido (analistas)", value=cfg.modelo_rapido)
+                profundo = col5.text_input("Modelo profundo (gestores)", value=cfg.modelo_profundo)
+                tema.legenda("Vem do seu arquivo .env. No Gemini gratuito, use modelos Flash ou Flash-Lite; os Pro são pagos.")
+            enviar = st.form_submit_button("Consultar o conselho", type="primary")
 
-    if enviar:
-        if not analistas:
-            st.error("Escolha pelo menos um analista.")
-        elif not motor_ia.chave_configurada(provedor):
-            st.error(f"Falta a chave do provedor {provedor} no arquivo .env. Para o Gemini, preencha GOOGLE_API_KEY.")
-        else:
-            config = motor_ia.Configuracao(provedor, rapido.strip(), profundo.strip())
-            etapas = dict(motor_ia.ETAPAS)
-            feitas: list[str] = []
-            with st.status("O conselho está reunido…", expanded=True) as caixa:
-                quadro = st.empty()
+        if enviar:
+            if not analistas:
+                st.error("Escolha pelo menos um analista.")
+            elif not motor_ia.chave_configurada(provedor):
+                st.error(f"Falta a chave do provedor {provedor} no arquivo .env. Para o Gemini, preencha GOOGLE_API_KEY.")
+            else:
+                config = motor_ia.Configuracao(provedor, rapido.strip(), profundo.strip())
+                etapas = dict(motor_ia.ETAPAS)
+                feitas: list[str] = []
+                with st.status("O conselho está reunido…", expanded=True) as caixa:
+                    quadro = st.empty()
 
-                def progresso(etapa: str, texto: str) -> None:
-                    if etapa not in feitas:
-                        feitas.append(etapa)
-                    linhas = [f"{'✅' if k in feitas[:-1] else ('⏳' if k == feitas[-1] else '⬜')} {nome}"
-                              for k, nome in motor_ia.ETAPAS]
-                    quadro.markdown("\n\n".join(linhas) + f"\n\n_{texto}_")
+                    def progresso(etapa: str, texto: str) -> None:
+                        if etapa not in feitas:
+                            feitas.append(etapa)
+                        linhas = [f"{'✅' if k in feitas[:-1] else ('⏳' if k == feitas[-1] else '⬜')} {nome}"
+                                  for k, nome in motor_ia.ETAPAS]
+                        quadro.markdown("\n\n".join(linhas) + f"\n\n_{texto}_")
 
-                try:
-                    res = motor_ia.analisar(normalizar_ticker(ticker), dia.isoformat(), analistas, config,
-                                            carteira=c if usar_carteira and c.posicoes else None,
-                                            ao_progredir=progresso)
-                    caixa.update(label=f"Veredito: {motor_ia.ROTULOS.get(res.rating, res.rating)}",
-                                 state="complete", expanded=False)
-                    st.session_state.ultima_analise = res.pasta.name
-                except Exception as erro:  # mostra o erro em linguagem simples
-                    caixa.update(label="A análise parou no meio", state="error")
-                    st.error(f"{type(erro).__name__}: {erro}")
-                    st.info("Se o erro fala em limite (429 ou RESOURCE_EXHAUSTED), espere um minuto e tente de novo "
-                            "com menos analistas.")
+                    try:
+                        res = motor_ia.analisar(normalizar_ticker(ticker), dia.isoformat(), analistas, config,
+                                                carteira=c if usar_carteira and c.posicoes else None,
+                                                ao_progredir=progresso, base=estado.pasta())
+                        caixa.update(label=f"Veredito: {motor_ia.ROTULOS.get(res.rating, res.rating)}",
+                                     state="complete", expanded=False)
+                        st.session_state.ultima_analise = res.pasta.name
+                    except Exception as erro:  # mostra o erro em linguagem simples
+                        caixa.update(label="A análise parou no meio", state="error")
+                        st.error(f"{type(erro).__name__}: {erro}")
+                        st.info("Se o erro fala em limite (429 ou RESOURCE_EXHAUSTED), espere um minuto e tente de novo "
+                                "com menos analistas.")
 
-    salvas = motor_ia.analises_salvas()
-    ultima = next((a for a in salvas if a.pasta.name == st.session_state.get("ultima_analise")), None)
-    if ultima:
-        cor = CORES_RATING.get(ultima.rating, tema.CORES["suave"])
-        st.markdown(tema.selo(motor_ia.ROTULOS.get(ultima.rating, ultima.rating), cor), unsafe_allow_html=True)
-        st.markdown(ultima.decisao)
+        salvas = motor_ia.analises_salvas(estado.pasta())
+        ultima = next((a for a in salvas if a.pasta.name == st.session_state.get("ultima_analise")), None)
+        if ultima:
+            cor = CORES_RATING.get(ultima.rating, tema.CORES["suave"])
+            st.markdown(tema.selo(motor_ia.ROTULOS.get(ultima.rating, ultima.rating), cor), unsafe_allow_html=True)
+            st.markdown(ultima.decisao)
 
 # ---------------------------------------------------------------------------
 # Análises guardadas
 # ---------------------------------------------------------------------------
 with pergaminhos:
-    salvas = motor_ia.analises_salvas()
+    salvas = motor_ia.analises_salvas(estado.pasta()) if estado.pasta() else []
     if not salvas:
         st.info("Nenhuma análise guardada ainda. Rode uma no Conselho dos agentes.")
     else:
