@@ -2,5 +2,11 @@
 # Aponte o domínio para o IP do servidor e defina CHRONOTRADE_DOMINIO no .env.
 {$CHRONOTRADE_DOMINIO} {
     encode gzip
-    reverse_proxy chronotrade:8501
+    # Conector do PC (MetaTrader 5 / Profit) fala com a API
+    handle /api/* {
+        reverse_proxy api:8502
+    }
+    handle {
+        reverse_proxy chronotrade:8501
+    }
 }

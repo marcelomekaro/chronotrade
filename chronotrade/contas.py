@@ -44,6 +44,11 @@ CONFIG_PADRAO = {
     "pix_cidade": "BRASIL",
     "whatsapp_admin": "19999650436",
     "nome_loja": "Chrono Trade",
+    "tv_pregao": "https://www.youtube.com/live/XddD29d2j6w",
+    "fontes_noticias": "",
+    "canais_youtube": "",
+    "url_publica": "",
+    "openjarvis_url": "",
 }
 
 
@@ -145,6 +150,13 @@ CREATE TABLE IF NOT EXISTS sessoes (
     token_hash TEXT PRIMARY KEY,
     email TEXT NOT NULL,
     expira_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS tokens_api (
+    token_hash TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    criado_em TEXT NOT NULL,
+    ultimo_uso TEXT
 );
 CREATE TABLE IF NOT EXISTS config (
     chave TEXT PRIMARY KEY,
@@ -361,6 +373,10 @@ class Contas:
     def encerrar_todas(self, email: str) -> None:
         with self._con() as con:
             con.execute("DELETE FROM sessoes WHERE email = ?", (email,))
+            con.execute("DELETE FROM tokens_api WHERE email = ?", (email,))
+            for tabela in ("presenca", "perfis_pregao"):  # dados do Pregão (LGPD), se as tabelas existirem
+                if con.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (tabela,)).fetchone():
+                    con.execute(f"DELETE FROM {tabela} WHERE email = ?", (email,))
 
     # -- administração ------------------------------------------------------
 
@@ -422,6 +438,39 @@ class Contas:
                         (int(app), int(email_), int(whatsapp), email))
             if numero is not None:
                 con.execute("UPDATE usuarios SET whatsapp = ? WHERE email = ?", (re.sub(r"\D", "", numero), email))
+
+    # -- tokens do Conector do PC (ponte) ---------------------------------------
+
+    def gerar_token(self, email: str, nome: str = "Conector do PC") -> str:
+        """Um token novo para a ponte. Aparece uma vez; o banco guarda só o hash."""
+        token = "ct_" + secrets.token_urlsafe(32)
+        with self._con() as con:
+            con.execute("INSERT INTO tokens_api VALUES (?, ?, ?, ?, NULL)",
+                        (hashlib.sha256(token.encode()).hexdigest(), email, nome,
+                         datetime.now().isoformat(timespec="seconds")))
+        return token
+
+    def dono_do_token(self, token: str) -> Usuario | None:
+        if not token or not token.startswith("ct_"):
+            return None
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        with self._con() as con:
+            ln = con.execute("SELECT email FROM tokens_api WHERE token_hash = ?", (digest,)).fetchone()
+            if ln is None:
+                return None
+            con.execute("UPDATE tokens_api SET ultimo_uso = ? WHERE token_hash = ?",
+                        (datetime.now().isoformat(timespec="seconds"), digest))
+        return self.buscar(ln["email"])
+
+    def tokens(self, email: str) -> list[dict]:
+        with self._con() as con:
+            linhas = con.execute("SELECT nome, criado_em, ultimo_uso, token_hash FROM tokens_api WHERE email = ? "
+                                 "ORDER BY criado_em DESC", (email,)).fetchall()
+        return [dict(ln) for ln in linhas]
+
+    def revogar_token(self, email: str, token_hash: str) -> None:
+        with self._con() as con:
+            con.execute("DELETE FROM tokens_api WHERE email = ? AND token_hash = ?", (email, token_hash))
 
     # -- uso dos recursos com cota ------------------------------------------
 

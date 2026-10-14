@@ -19,12 +19,17 @@ Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA p
 - **Agente Sentinela**: vigia a carteira sozinho e manda a dica do próximo aporte no app, por e-mail ou WhatsApp.
 - **Planos Básico, Médio e Premium**, com PIX e liberação automática pelo Mercado Pago.
 - **Corretora**: carteira simulada com ordens e conexão com MetaTrader 5, numa estrutura pronta para outras corretoras.
+- **Conexões**: assistente para MetaTrader 5 e Profit (ProfitDLL) com teste, prévia, sincronização automática e cofre de senhas; Conector do PC para a versão online.
+- **Pregão ao vivo**: sala em pixel art com os investidores online, salas temáticas, TV ao vivo e moderação.
+- **Notícias e vídeos**: B3, negócios e canais do YouTube por RSS, filtrados pela carteira.
+- **WhatsApp**: compartilhar qualquer ideia com amigos e consultores em um toque.
+- **Jarvis**: comandos de voz em português com o [OpenJarvis](https://github.com/open-jarvis/OpenJarvis), e um servidor MCP (`chronotrade-mcp`) para o OpenJarvis consultar a carteira.
 
 Os dados de mercado vêm do Yahoo Finance (gratuito). A carteira fica em `~/.chronotrade/carteira.json`, fora do repositório.
 
 ## Como rodar
 
-No Windows, dê dois cliques em `instalar_windows.bat` e depois use o atalho da área de trabalho. Para colocar online e vender assinaturas, siga o [GUIA_CHRONOTRADE.md](GUIA_CHRONOTRADE.md).
+No Windows, dê dois cliques em `instalar_windows.bat` e depois use o atalho da área de trabalho. Para colocar online e vender assinaturas, siga o [GUIA_CHRONOTRADE.md](GUIA_CHRONOTRADE.md). As telas estão em [TELAS_E_FLUXOS.md](TELAS_E_FLUXOS.md) e o discurso de venda em [PITCH.md](PITCH.md).
 
 Pelo terminal:
 

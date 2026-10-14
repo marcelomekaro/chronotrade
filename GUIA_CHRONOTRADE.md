@@ -83,8 +83,10 @@ docker compose exec chronotrade chronotrade-admin senha marcelomekaro@gmail.com
 | Portal, Tesouro, Agenda, Linha do Tempo, Ficha rápida | ✅ | ✅ | ✅ |
 | Próximo Aporte com análise técnica, Compartilhar, Carteira simulada | | ✅ | ✅ |
 | Agente Sentinela | semanal, no app | semanal, app e e-mail | diário, app, e-mail e WhatsApp |
+| Pregão ao vivo, Notícias e vídeos, contatos do WhatsApp | ✅ | ✅ | ✅ |
+| Jarvis (comando de voz com OpenJarvis) | | ✅ | ✅ |
 | Oráculo de IA | | | 30 análises por mês |
-| Corretora real (MetaTrader 5) | | | ✅ |
+| Corretora real (MetaTrader 5 e Profit) e Conector do PC | | | ✅ |
 
 A tabela de recursos fica em `chronotrade/planos.py`; mudar um plano é mudar ali.
 
@@ -129,12 +131,78 @@ mesmos números, sempre com o aviso legal). Para rodar na hora: **Painel do admi
 
 A situação de cada integração aparece em **Painel do admin → Loja e integrações**.
 
-### Corretora
-- **Carteira simulada** (Médio e Premium): R$ 100.000 de mentira para treinar ordens a mercado e limitadas.
-- **MetaTrader 5** (Premium): funciona com o app **instalado no computador Windows** do cliente, com o
-  terminal MT5 da corretora aberto. Traz as posições reais para o Inventário. Ordens reais só com
-  `CHRONOTRADE_PERMITIR_ORDENS_REAIS=1` no `.env` daquele computador, e cada ordem pede confirmação.
-- Outras corretoras: crie uma classe em `chronotrade/corretoras/` seguindo `base.py`.
+### Corretora: MetaTrader 5 e Profit (tela Conexões)
+A tela **Conexões → Plataformas** é um assistente de três passos: escolher a plataforma, preencher e
+**Testar conexão**. O teste mostra uma prévia do que muda no Inventário (🆕 entra, ✏️ muda, ✅ igual,
+⚠️ só no app) e só aplica quando a pessoa toca em **Trazer para o Inventário**. Com o botão **Auto**, o
+Sentinela sincroniza sozinho a cada ciclo.
+
+- **MetaTrader 5 (o mais fácil, gratuito):** várias corretoras da B3 oferecem o MT5 sem custo. No
+  Windows: instale o terminal, entre com a conta (fica logado) e, no Chrono Trade, `pip install MetaTrader5`
+  (o `instalar_windows.bat` já pode rodar isso). Com o terminal aberto e logado, **conta e senha são
+  opcionais**: é só tocar em Testar conexão.
+- **Profit (Nelogica):** o Profit não tem API aberta; o caminho oficial é a **ProfitDLL**, uma licença
+  paga à parte, contratada com a Nelogica (ela fornece a chave de ativação e o `ProfitDLL64.dll`, só para
+  Windows). O Chrono Trade usa o conector comunitário `pip install profitdll-wrapper`. Preencha o
+  caminho da DLL, a chave, usuário e senha da Nelogica e teste. **Valide primeiro no simulador da
+  Nelogica**: o conector é novo e o adaptador avisa claramente se algum método faltar.
+- **Senhas:** no app instalado, a opção "Lembrar as senhas" guarda num cofre criptografado
+  (`cofre.bin` + `.chave_cofre`, na pasta do usuário). Na versão online, nenhuma senha de corretora é
+  guardada no servidor.
+- **Ordens reais:** desligadas por padrão. Só com `CHRONOTRADE_PERMITIR_ORDENS_REAIS=1` no `.env`
+  daquele computador e confirmação a cada ordem. As ordens por voz (Jarvis) vão só para a carteira simulada.
+- Outra corretora: crie uma classe em `chronotrade/corretoras/` seguindo `base.py` e registre em
+  `chronotrade/conexoes.py`.
+
+### Conector do PC (versão online + MT5/Profit)
+O MT5 e a ProfitDLL rodam no Windows do cliente, e o servidor online não alcança esse PC. Por isso:
+1. O cliente Premium abre **Conexões → Conector do PC**, escolhe a plataforma e toca em
+   **Gerar meu atalho do Conector**. Baixa o `conector_chronotrade.bat` (já vem com um token pessoal).
+2. Salva o atalho na pasta do Chrono Trade instalado no PC e dá dois cliques. A cada 15 minutos ele lê as
+   posições e envia para `https://seu-dominio/api/ponte/posicoes`. Ele **só lê**; não envia ordens.
+3. O cliente vê "Última sincronização" na mesma tela e pode **revogar** o atalho quando quiser.
+
+No servidor: suba o serviço `api` junto (`docker compose up -d chronotrade agente api`, ou com
+`--profile https ... caddy`), e o Caddy já encaminha `/api/*` para ele. Preencha o endereço público em
+**Painel do admin → Comunidade** (ou `CHRONOTRADE_URL` no `.env`).
+
+### Pregão ao vivo, Notícias e WhatsApp
+- **Pregão:** salão em pixel art com as pessoas online, mesas, telão, letreiro de cotações e balões de
+  fala; quatro salas (geral, dividendos, FIIs, primeiros aportes); `$TAEE11` vira etiqueta do ativo.
+  Regras: 1 mensagem a cada 3 s, até 500 caracteres. Qualquer um denuncia; o admin apaga e silencia
+  (na própria conversa ou em **Painel do admin → Comunidade**). A **TV do Pregão** toca o vídeo ou live
+  do YouTube escolhido pelo admin.
+- **Notícias e vídeos:** feeds RSS gratuitos (Google Notícias por ativo da carteira, InfoMoney, Money
+  Times, buscas sobre B3 e negócios) e canais do YouTube (o admin sugere; cada pessoa adiciona os seus).
+  O admin edita as fontes em **Comunidade**, uma por linha: `Nome | endereço` ou `Nome | google:termo`.
+- **WhatsApp:** em notícias, Pregão, Jarvis e relatórios há o botão **💬 WhatsApp**: abre o WhatsApp com a
+  mensagem pronta (e o aviso de que não é recomendação) para um contato salvo (amigo, consultor,
+  família) ou qualquer conversa. Os contatos ficam em **Conexões → Contatos do WhatsApp**. Gratuito: usa
+  o link `wa.me`, sem API paga.
+
+### Jarvis: comando de voz com o OpenJarvis
+O [OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (Stanford, código aberto) é um assistente de IA
+que roda no computador da pessoa. O Chrono Trade conversa com ele de dois jeitos:
+1. **O app usa o OpenJarvis:** a tela **Jarvis** grava a voz no navegador, manda para
+   `/v1/speech/transcribe` (Whisper local), entende o comando em português e responde com voz
+   (`/v1/speech/synthesize`, ou a voz do navegador). Conversas livres vão para `/v1/chat/completions`
+   com a trava legal (nunca recomenda compra ou venda).
+2. **O OpenJarvis usa o Chrono Trade:** o comando `chronotrade-mcp` é um servidor MCP com as ferramentas
+   `resumo_carteira`, `proximos_proventos`, `dica_aporte`, `cotacao` e `noticias_ativo`. Cole no
+   `~/.openjarvis/config.toml`:
+   ```toml
+   [tools.mcp]
+   enabled = true
+   servers = '[{"name": "chronotrade", "command": "chronotrade-mcp", "args": []}]'
+   ```
+
+Instalar o OpenJarvis no Windows (PowerShell): `irm https://open-jarvis.github.io/OpenJarvis/install.ps1 | iex`,
+depois `jarvis serve --port 8000`. No `.env`: `OPENJARVIS_URL=http://localhost:8000`. Sem OpenJarvis, a
+voz ainda funciona se houver `GOOGLE_API_KEY` (o Gemini transcreve) e os comandos podem ser digitados.
+
+Comandos de exemplo: "cotação da Taesa", "como está o Ibovespa", "qual a dica do aporte?", "próximos
+dividendos", "quanto vale minha carteira", "notícias da WEG", "abrir o pregão", "comprar 100 TAEE11 a
+35 reais" (carteira simulada, com confirmação), "manda a cotação do Itaú no WhatsApp".
 
 ### Backup
 Tudo fica no volume `chronotrade_data` (`contas.db`, carteiras e análises). Para copiar:

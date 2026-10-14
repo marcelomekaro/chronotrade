@@ -49,6 +49,36 @@ flowchart LR
     S --> P6[Executa ordens limitadas da carteira simulada]
 ```
 
+## Conectar a plataforma de negociação
+
+```mermaid
+flowchart TD
+    A[Conexões → Plataformas] --> B{Qual plataforma?}
+    B -- MetaTrader 5 --> C[Terminal da corretora aberto e logado no Windows]
+    B -- Profit --> D[ProfitDLL da Nelogica: caminho da DLL, chave, usuário e senha]
+    C --> E[Testar conexão]
+    D --> E
+    E --> F{Deu certo?}
+    F -- Não --> G[Mensagem clara do que falta] --> E
+    F -- Sim --> H[Prévia: entra, muda, igual, só no app]
+    H --> I[Trazer para o Inventário]
+    I --> J[Auto ligado: o Sentinela sincroniza sozinho]
+    K[Versão online] --> L[Conector do PC: baixa o .bat com token] --> M[Dois cliques no PC] --> N[Posições chegam na conta a cada 15 min]
+```
+
+## Jarvis: da voz à resposta
+
+```mermaid
+flowchart LR
+    A[Fala no microfone] --> B[OpenJarvis transcreve<br/>ou Gemini, plano B]
+    B --> C{Comando do app?}
+    C -- Sim --> D[Cotação, dica, proventos, patrimônio, notícias, abrir tela, ordem simulada, WhatsApp]
+    C -- Não --> E[Modelo do OpenJarvis com dados da carteira e trava legal]
+    D --> F[Resposta em texto e voz]
+    E --> F
+    G[OpenJarvis no PC] -. MCP: chronotrade-mcp .-> H[Ferramentas da carteira]
+```
+
 ## Telas
 
 | Tela | Para que serve | Plano |
@@ -67,6 +97,19 @@ flowchart LR
 | ![](docs/telas/08_proximo_aporte.png) **Próximo Aporte** | Radar de preços, análise técnica com gráfico e divisão do aporte em cotas | Médio |
 | ![](docs/telas/10_avisos_sentinela.png) **Avisos** | Dicas do Sentinela, datas com e confirmações; pedir uma dica agora | Básico (e-mail no Médio, WhatsApp no Premium) |
 | ![](docs/telas/11_corretora_simulada.png) **Corretora** | Carteira simulada com ordens; MetaTrader 5 no Premium | Médio / Premium |
+| ![](docs/telas/16_pregao_ao_vivo.png) **Pregão ao vivo** | Salão em pixel art com quem está online, telão, letreiro e balões de fala | Básico |
+| ![](docs/telas/17_pregao_conversa.png) **Pregão: conversa** | Mensagens com etiqueta do ativo, compartilhar, denunciar; avatar e apelido | Básico |
+| ![](docs/telas/25_pregao_celular.png) **Pregão no celular** | Salão em duas colunas, conversa e campo de mensagem | Básico |
+| ![](docs/telas/18_noticias.png) **Notícias e vídeos** | Notícias por ativo da carteira, mercado e negócios, canais do YouTube; WhatsApp e "Levar ao Pregão" | Básico |
+| ![](docs/telas/27_conexoes_mt5_assistente.png) **Conexões: MetaTrader 5** | Assistente: passos, campos, cofre de senhas e teste com mensagem clara | Premium |
+| ![](docs/telas/28_conexoes_profit.png) **Conexões: Profit** | Mesmo assistente para a ProfitDLL da Nelogica | Premium |
+| ![](docs/telas/19_conexoes_plataformas.png) **Conexões: minhas conexões** | Status, Testar, Auto (sincronização), prévia do que muda e Trazer para o Inventário | Premium (simulada no Médio) |
+| ![](docs/telas/20_conexoes_contatos.png) **Contatos do WhatsApp** | Amigo, consultor, família: aparecem em todos os botões de compartilhar | Todos |
+| ![](docs/telas/21_conector_do_pc.png) **Conector do PC** | Gera o atalho .bat com token, mostra a última sincronização, revoga | Premium (online) |
+| ![](docs/telas/22_conexoes_openjarvis.png) **OpenJarvis** | Endereço, teste, instalação e o trecho MCP para o OpenJarvis | Médio |
+| ![](docs/telas/23_jarvis.png) **Jarvis (voz)** | Microfone, sugestões, respostas faladas, ordem simulada com confirmação, WhatsApp | Médio |
+| ![](docs/telas/26_jarvis_celular.png) **Jarvis no celular** | O mesmo, no Android | Médio |
+| ![](docs/telas/24_admin_comunidade.png) **Admin: Comunidade** | Online agora, moderação de denúncias, TV do Pregão, fontes de notícias, canais, endereço público e OpenJarvis | Admin |
 | ![](docs/telas/15_compartilhar.png) **Compartilhar** | Relatório para imprimir ou PDF, com opção de ocultar valores | Médio |
 
 O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) é do plano Premium, com 30 análises por mês.
@@ -75,5 +118,7 @@ O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) �
 - Cadastro só com duas confirmações: termos de uso e "o Chrono Trade não faz recomendação; as decisões e os riscos são meus".
 - Aviso legal no fim das telas com números de investimento, na vitrine e na barra lateral.
 - Toda dica do Sentinela termina com o aviso, inclusive quando escrita pela IA (o app confere e acrescenta se faltar).
-- Ordens pedem confirmação explícita; ordens reais ficam desligadas por padrão.
+- Ordens pedem confirmação explícita; ordens reais ficam desligadas por padrão; ordens por voz só na carteira simulada.
+- O Jarvis recusa pedidos de recomendação ("devo comprar?") e acrescenta o aviso quando o modelo fala em comprar ou vender.
+- Pregão e compartilhamentos levam o aviso de que são opiniões pessoais; regras de conduta nos termos (sem promessa de ganho, sem consultoria sem registro na CVM).
 - Termos com Resoluções CVM 19 e 20, aviso de risco, direito de arrependimento e LGPD (modelo para revisar com advogado).

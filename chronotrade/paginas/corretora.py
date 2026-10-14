@@ -1,4 +1,4 @@
-"""Corretora: carteira simulada para treinar e conexão com a corretora real (MetaTrader 5)."""
+"""Corretora: carteira simulada para treinar e conexão com a corretora real (MetaTrader 5; Profit em Conexões)."""
 
 import pandas as pd
 import streamlit as st
@@ -97,6 +97,8 @@ with simulada:
 # --- Real --------------------------------------------------------------------------------
 with real:
     if estado.liberado("corretora"):
+        st.page_link("paginas/conexoes.py", label="Jeito mais fácil: assistente em Conexões (MetaTrader 5 e Profit, "
+                     "com teste, prévia e sincronização automática)", icon="🔗")
         tema.fala("Conecte a sua corretora pelo <b>MetaTrader 5</b> para trazer as posições reais para o "
                   "Inventário e, se você ligar, enviar ordens. Funciona com o app instalado no seu computador "
                   "Windows, com o terminal MT5 da corretora aberto e logado.")

@@ -58,7 +58,7 @@ def _formulario_liberar(email: str, chave: str, rotulo: str, plano_atual: str = 
             st.rerun()
 
 
-abas = st.tabs(["Pendentes", "Assinantes", "Cobrança", "Pagamentos", "Agente", "Loja e integrações"])
+abas = st.tabs(["Pendentes", "Assinantes", "Cobrança", "Pagamentos", "Agente", "Loja e integrações", "Comunidade"])
 
 # --- Pendentes ------------------------------------------------------------------------
 with abas[0]:
@@ -250,9 +250,55 @@ with abas[5]:
         ("Mercado Pago (liberação automática)", pagamentos.automatico(), "MERCADOPAGO_ACCESS_TOKEN"),
         ("E-mail (SMTP)", avisos.email_configurado(), "CHRONOTRADE_SMTP_HOST, _USUARIO, _SENHA"),
         ("WhatsApp Cloud API", avisos.whatsapp_configurado(), "WHATSAPP_TOKEN, WHATSAPP_PHONE_ID"),
+        ("OpenJarvis (voz)", bool(cfg.get("openjarvis_url") or os.environ.get("OPENJARVIS_URL")),
+         "OPENJARVIS_URL ou o campo na aba Comunidade"),
+        ("Conector do PC (API)", bool(cfg.get("url_publica") or os.environ.get("CHRONOTRADE_URL")),
+         "serviço api do docker-compose + endereço público na aba Comunidade"),
         (f"IA ({ia.provedor}, {ia.modelo_rapido})", chave_configurada(ia.provedor), "chave do provedor de IA"),
     ]
     st.dataframe(pd.DataFrame([{"Integração": n, "Situação": "✅ Ligada" if ok else "⬜ Desligada",
                                 "Como ligar (no .env do servidor)": como} for n, ok, como in status]),
                  hide_index=True, width="stretch")
     st.caption("O passo a passo de cada integração está no GUIA_CHRONOTRADE.md.")
+
+# --- Comunidade: Pregão, notícias, vídeos e Jarvis ---------------------------------------------
+with abas[6]:
+    from chronotrade import noticias as _noticias
+
+    pregao_db = estado.pregao()
+    online = pregao_db.online()
+    tema.janela("Online no Pregão agora", str(len(online)), ", ".join(p.apelido for p in online[:8]) or "ninguém")
+    st.subheader("Moderação")
+    denuncias = pregao_db.denunciadas()
+    if not denuncias:
+        st.info("Nenhuma mensagem denunciada.")
+    for m in denuncias:
+        with st.container(border=True):
+            st.markdown(f"**{m.apelido}** ({m.email}), {m.criado_em:%d/%m %H:%M}, {m.denuncias} denúncia(s)  \n{m.texto}")
+            b1, b2 = st.columns(2)
+            if b1.button("Apagar mensagem", key=f"adm_apg{m.id}"):
+                pregao_db.remover(m.id)
+                st.rerun()
+            if b2.button("Silenciar 24h", key=f"adm_sil{m.id}"):
+                pregao_db.silenciar(m.email)
+                st.toast(f"{m.apelido} silenciado por 24 horas.")
+
+    st.subheader("Conteúdo e conexões")
+    fontes_atuais = cfg.get("fontes_noticias") or "\n".join(f"{n} | {u}" for n, u in _noticias.FONTES_PADRAO)
+    with st.form("comunidade"):
+        tv_ = st.text_input("Vídeo da TV do Pregão (link do YouTube, pode ser uma live)", cfg.get("tv_pregao", ""))
+        fontes_ = st.text_area("Fontes de notícias, uma por linha: Nome | endereço do RSS (ou google:termo de busca)",
+                               fontes_atuais, height=150)
+        canais_ = st.text_area("Canais do YouTube sugeridos a todos, um por linha: Nome | link ou ID do canal (UC...)",
+                               cfg.get("canais_youtube", ""), height=100)
+        url_ = st.text_input("Endereço público do app (usado no atalho do Conector do PC)", cfg.get("url_publica", ""),
+                             placeholder="https://chronotrade.seudominio.com.br")
+        oj_ = st.text_input("Endereço do OpenJarvis padrão", cfg.get("openjarvis_url", ""), placeholder="http://localhost:8000")
+        if st.form_submit_button("Salvar comunidade", type="primary"):
+            banco.salvar_config({"tv_pregao": tv_.strip(), "fontes_noticias": fontes_.strip(),
+                                 "canais_youtube": canais_.strip(), "url_publica": url_.strip(),
+                                 "openjarvis_url": oj_.strip()})
+            st.success("Salvo.")
+            st.rerun()
+    st.caption("Notícias e vídeos vêm de feeds RSS públicos e gratuitos. Respeite os direitos de cada site: o app "
+               "mostra título, resumo e link para a matéria original.")

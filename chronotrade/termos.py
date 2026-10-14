@@ -27,23 +27,37 @@ atraso, falhas ou erros. Datas e valores "previstos" repetem o histórico e pode
 Confira na sua corretora e no site de relações com investidores da empresa antes de operar.
 
 **4. Corretoras e ordens.** A carteira simulada não usa dinheiro real. A conexão com corretora
-(MetaTrader 5) roda no seu computador, com a sua conta; ordens reais ficam desligadas até você ligá-las
-e cada uma pede confirmação. Você é responsável pelas ordens enviadas.
+(MetaTrader 5 ou Profit/ProfitDLL) roda no seu computador, com a sua conta; ordens reais ficam desligadas
+até você ligá-las e cada uma pede confirmação. A ProfitDLL é licenciada pela Nelogica e o MetaTrader 5 é
+fornecido pela sua corretora: termos, custos e disponibilidade são deles. Senhas de corretora não são
+guardadas no servidor; no app instalado, ficam num cofre criptografado no seu PC, se você escolher.
+O Conector do PC só envia posições (ativo, quantidade e preço médio). Você é responsável pelas ordens enviadas.
 
-**5. Assinatura.** Os planos Básico, Médio e Premium são pagos antecipadamente por PIX e liberam o acesso
+**5. Pregão, notícias, WhatsApp e Jarvis.** No Pregão, as mensagens são opiniões pessoais de cada
+participante e não recomendações de investimento. É proibido prometer ganhos, oferecer serviços de
+consultoria ou gestão sem registro na CVM, divulgar dados pessoais, fazer propaganda, ofender ou
+combinar operações para manipular preços. Mensagens podem ser denunciadas, apagadas pelo administrador,
+e quem descumprir as regras pode ser silenciado ou bloqueado. Notícias e vídeos vêm de fontes públicas
+de terceiros (RSS e YouTube), que respondem pelo próprio conteúdo. O compartilhamento no WhatsApp só abre o
+aplicativo com o texto pronto: o {loja} não lê nem guarda as suas conversas. O Jarvis (voz) usa o
+OpenJarvis instalado no seu computador ou, se você configurar, o Gemini do Google para transcrever o áudio;
+ordens por voz vão apenas para a carteira simulada, com confirmação.
+
+**6. Assinatura.** Os planos Básico, Médio e Premium são pagos antecipadamente por PIX e liberam o acesso
 pelo período contratado (mensal ou anual). Não há renovação automática nem cobrança recorrente. Você pode
 desistir em até 7 dias após o pagamento e receber o valor de volta (direito de arrependimento, art. 49
 do Código de Defesa do Consumidor).
 
-**6. Seus dados (LGPD).** Guardamos nome, e-mail, WhatsApp, senha (só em forma criptografada, que
+**7. Seus dados (LGPD).** Guardamos nome, e-mail, WhatsApp, senha (só em forma criptografada, que
 ninguém consegue ler), a carteira que você cadastra e os avisos enviados. Eles servem para o app
 funcionar, para enviar os avisos que você escolher (no app, por e-mail ou WhatsApp) e para falar com
 você sobre a assinatura. Não vendemos nem compartilhamos com terceiros, exceto os prestadores
 necessários: o provedor de IA (recebe os ativos analisados e, se você permitir, a carteira), o
-Mercado Pago (pagamentos) e os serviços de e-mail e WhatsApp. Você pode baixar os seus dados, mudar as
+Mercado Pago (pagamentos) e os serviços de e-mail e WhatsApp. No Pregão, os outros participantes veem o
+seu apelido, o avatar e as mensagens que você enviar. Você pode baixar os seus dados, mudar as
 preferências de aviso ou excluir a conta a qualquer momento em **Minha conta**.
 
-**7. Contato.** {contato}{f", WhatsApp {whatsapp}" if whatsapp else ""}
+**8. Contato.** {contato}{f", WhatsApp {whatsapp}" if whatsapp else ""}
 
 **Aviso de risco.** {AVISO_LEGAL}
 

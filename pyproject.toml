@@ -29,6 +29,9 @@ dependencies = [
     "streamlit>=1.50",
     "plotly>=6.0",
     "segno>=1.6",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "cryptography>=42",
 ]
 
 [project.optional-dependencies]
@@ -48,6 +51,9 @@ tradingagents = "cli.main:app"
 chronotrade = "chronotrade.lancador:main"
 chronotrade-admin = "chronotrade.contas:main"
 chronotrade-agente = "chronotrade.agentes.sentinela:main"
+chronotrade-api = "chronotrade.api:main"
+chronotrade-ponte = "chronotrade.ponte:main"
+chronotrade-mcp = "chronotrade.mcp_servidor:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "tradingagents.__version__"}

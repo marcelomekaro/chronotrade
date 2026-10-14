@@ -28,18 +28,31 @@ tema.aplicar()
 
 _P = Path(__file__).parent / "paginas"
 AVISOS = st.Page(_P / "avisos.py", title="Avisos", icon="🛡️")
-APP = [
-    st.Page(_P / "portal.py", title="Portal", icon="🌀", default=True),
-    st.Page(_P / "inventario.py", title="Inventário", icon="🎒"),
-    st.Page(_P / "tesouro.py", title="Tesouro", icon="💰"),
-    st.Page(_P / "agenda.py", title="Agenda de proventos", icon="📅"),
-    st.Page(_P / "aporte.py", title="Próximo Aporte", icon="🧭"),
-    st.Page(_P / "linha_do_tempo.py", title="Linha do Tempo", icon="⏳"),
-    st.Page(_P / "oraculo.py", title="Oráculo", icon="🔮"),
-    st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
-    st.Page(_P / "compartilhar.py", title="Compartilhar", icon="📜"),
-    AVISOS,
-]
+SECOES = {
+    "Carteira": [
+        st.Page(_P / "portal.py", title="Portal", icon="🌀", default=True),
+        st.Page(_P / "inventario.py", title="Inventário", icon="🎒"),
+        st.Page(_P / "tesouro.py", title="Tesouro", icon="💰"),
+        st.Page(_P / "agenda.py", title="Agenda de proventos", icon="📅"),
+        st.Page(_P / "aporte.py", title="Próximo Aporte", icon="🧭"),
+        st.Page(_P / "linha_do_tempo.py", title="Linha do Tempo", icon="⏳"),
+    ],
+    "Mercado": [
+        st.Page(_P / "noticias.py", title="Notícias e vídeos", icon="📰"),
+        st.Page(_P / "oraculo.py", title="Oráculo", icon="🔮"),
+        st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
+    ],
+    "Comunidade": [
+        st.Page(_P / "pregao.py", title="Pregão ao vivo", icon="🏛️"),
+        st.Page(_P / "jarvis.py", title="Jarvis (voz)", icon="🎙️"),
+        st.Page(_P / "compartilhar.py", title="Compartilhar", icon="📜"),
+    ],
+    "Ajustes": [
+        st.Page(_P / "conexoes.py", title="Conexões", icon="🔗"),
+        AVISOS,
+    ],
+}
+APP = [p for paginas_secao in SECOES.values() for p in paginas_secao]
 CONTA = st.Page(_P / "conta.py", title="Minha conta", icon="👤")
 ADMIN = st.Page(_P / "admin.py", title="Painel do admin", icon="🛡️")
 TERMOS = st.Page(_P / "termos.py", title="Termos e privacidade", icon="📄")
@@ -102,11 +115,19 @@ if paginas[0] is not PORTARIA:
         _cartao_usuario()
         st.write("")
         nao_lidos = estado.caixa_avisos().nao_lidos(estado.email_avisos()) if AVISOS in paginas else 0
-        for pagina in paginas:
-            if pagina is AVISOS and nao_lidos:
-                st.page_link(pagina, label=f"Avisos ({nao_lidos})")
-            else:
-                st.page_link(pagina)
+        secoes = {nome: [p for p in lista if p in paginas] for nome, lista in SECOES.items()}
+        extras = [p for p in paginas if p not in APP]
+        if extras:
+            secoes["Conta"] = extras
+        for nome, lista in secoes.items():
+            if not lista:
+                continue
+            st.markdown(f'<div class="ct-secao">{nome}</div>', unsafe_allow_html=True)
+            for pagina in lista:
+                if pagina is AVISOS and nao_lidos:
+                    st.page_link(pagina, label=f"Avisos ({nao_lidos})")
+                else:
+                    st.page_link(pagina)
         st.divider()
         if APP[0] in paginas:
             estado.modo_demo()  # garante o valor inicial antes do botão

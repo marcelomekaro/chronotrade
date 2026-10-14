@@ -134,6 +134,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid
 
 [data-testid="stSidebar"] [data-testid="stPageLink"] p {{ font-family: var(--pixel); font-size: 1.02rem; }}
 .ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; line-height: 1.1; margin-bottom: 14px; }}
+.ct-secao {{ font-family: var(--pixel); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); margin: 12px 0 2px; }}
 .ct-marca small {{ display: block; font-family: var(--corpo); font-size: .85rem; color: var(--suave); text-shadow: none; margin-top: 4px; }}
 
 /* Portaria (tela de entrada) */

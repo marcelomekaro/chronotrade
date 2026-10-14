@@ -32,8 +32,8 @@ services:
       - ollama
 
   # --- Chrono Trade online -------------------------------------------------
-  # docker compose up -d chronotrade agente     (app na porta 8501 + agente)
-  # docker compose --profile https up -d chronotrade agente caddy   (com HTTPS no seu domínio)
+  # docker compose up -d chronotrade agente api     (app 8501 + agente + API do Conector do PC 8502)
+  # docker compose --profile https up -d chronotrade agente api caddy   (com HTTPS no seu domínio)
   chronotrade:
     build:
       context: .
@@ -54,6 +54,26 @@ services:
     env_file:
       - .env
     command: ["chronotrade-agente", "loop"]
+    healthcheck:
+      disable: true
+    volumes:
+      - chronotrade_data:/data
+    restart: unless-stopped
+
+  # API do Conector do PC: recebe as posições do MetaTrader 5 / Profit dos assinantes Premium
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.chronotrade
+    env_file:
+      - .env
+    command: ["chronotrade-api"]
+    ports:
+      - "8502:8502"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8502/api/saude')"]
+      interval: 60s
+      timeout: 5s
     volumes:
       - chronotrade_data:/data
     restart: unless-stopped
@@ -70,6 +90,7 @@ services:
       - caddy_data:/data
     depends_on:
       - chronotrade
+      - api
     restart: unless-stopped
     profiles:
       - https

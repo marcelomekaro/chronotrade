@@ -188,7 +188,7 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
             memoria[ticker] = (obter or carregar_ativo)(ticker)
         return memoria[ticker]
 
-    resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0}
+    resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0, "sincronizadas": 0}
 
     # 1. Pagamentos
     if cobrancas is not None and contas is not None:
@@ -207,6 +207,16 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
 
     if so_pagamentos:
         return resumo
+
+    # 1b. Conexões com sincronização automática (só no app instalado: MT5/Profit rodam no próprio PC)
+    from chronotrade.contas import modo_servidor
+
+    if not modo_servidor():
+        try:
+            resumo["sincronizadas"] = sincronizar_conexoes(pasta_dados(), caixa)
+        except Exception as erro:
+            resumo["erros"] += 1
+            log.exception("Sincronização das conexões falhou: %s", erro)
 
     # 2 a 4. Cada pessoa
     for p in _pessoas(contas):
@@ -252,6 +262,34 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
             resumo["erros"] += 1
             log.exception("Sentinela falhou para %s: %s", p.email, erro)
     return resumo
+
+
+def sincronizar_conexoes(pasta: Path, caixa: avisos.CaixaDeAvisos | None = None, fabrica=None) -> int:
+    """Traz as posições das conexões marcadas como "Auto" para o Inventário. Devolve quantas sincronizaram."""
+    from chronotrade import conexoes as cx
+
+    perfis = [p for p in cx.carregar(pasta) if p.auto_sincronizar and p.tipo != "simulada"]
+    if not perfis:
+        return 0
+    arquivo = pasta / "carteira.json"
+    carteira = Carteira.carregar(arquivo)
+    tickers = [p.ticker for p in carteira.posicoes] + list(carteira.observar)
+    cofre = cx.Cofre(pasta)
+    feitas = 0
+    for perfil in perfis:
+        teste = cx.testar(perfil, cofre.ler(perfil.id), pasta, tickers, **({"fabrica": fabrica} if fabrica else {}))
+        cx.marcar(pasta, perfil, teste, sincronizou=teste.ok)
+        if not teste.ok:
+            if caixa is not None and not caixa.ja_avisado(EMAIL_LOCAL, "conexao", f"Conexão {perfil.apelido} com erro"):
+                caixa.criar(EMAIL_LOCAL, "conexao", f"Conexão {perfil.apelido} com erro", teste.mensagem)
+            continue
+        mudou = cx.aplicar(carteira, teste.posicoes)
+        feitas += 1
+        if mudou and caixa is not None:
+            caixa.criar(EMAIL_LOCAL, "conexao", f"Inventário sincronizado com {perfil.apelido}",
+                        f"{mudou} ativo(s) atualizados a partir da plataforma.")
+    carteira.salvar(arquivo)
+    return feitas
 
 
 # ---------------------------------------------------------------------------

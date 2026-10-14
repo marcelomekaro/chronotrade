@@ -81,7 +81,13 @@ with vitrine:
         "- 📅 **Agenda dos dividendos**: as próximas datas com e quanto deve cair na conta.\n"
         "- ⏳ **Linha do tempo até a sua renda**: em quantos anos os proventos pagam as suas contas.\n"
         "- 🔮 **Agentes de IA que debatem uma ação** (otimista, pessimista, risco) antes de você decidir.\n"
-        "- 🔌 **Pronto para a corretora**: carteira simulada para treinar e conexão com MetaTrader 5."
+        "- 🔌 **A sua corretora dentro do app**: MetaTrader 5 e Profit trazem a carteira real sozinhos, "
+        "e a carteira simulada serve para treinar.\n"
+        "- 🏛️ **Pregão ao vivo**: uma sala com os investidores online, salas de dividendos e FIIs, TV ao vivo "
+        "e notícias da B3 e do YouTube.\n"
+        "- 🎙️ **Jarvis, o assistente de voz**: \"cotação da Taesa\", \"próximos dividendos\", com IA rodando no "
+        "seu PC (OpenJarvis).\n"
+        "- 💬 **Ideia no WhatsApp em um toque**: mande a dica para um amigo ou para o seu consultor."
     )
     st.subheader("Quanto vale comprar com desconto")
     col1, col2 = st.columns(2)

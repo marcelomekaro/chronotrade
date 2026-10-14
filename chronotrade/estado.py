@@ -86,7 +86,7 @@ def permite(recurso: str) -> bool:
     if not servidor():
         return True
     if visitante():  # o visitante conhece tudo com dados fictícios, menos o que gasta IA ou mexe em conta real
-        return recurso not in ("oraculo", "corretora", "avisos_email", "avisos_whatsapp")
+        return recurso not in ("oraculo", "corretora", "ponte", "avisos_email", "avisos_whatsapp")
     u = usuario()
     return bool(u and u.libera(recurso))
 
@@ -279,3 +279,38 @@ def iniciar_agente() -> bool:
     from chronotrade.agentes import sentinela
 
     return sentinela.iniciar_automatico()
+
+
+# ---------------------------------------------------------------------------
+# Pregão, contatos e identidade social
+# ---------------------------------------------------------------------------
+
+
+@st.cache_resource
+def pregao():
+    from chronotrade.pregao import Pregao
+
+    return Pregao(cart.pasta_dados() / "contas.db")
+
+
+def identidade() -> tuple[str, str]:
+    """(e-mail interno, nome) de quem está usando agora, para o Pregão e os avisos."""
+    u = usuario() if servidor() else None
+    if u is not None:
+        return u.email, u.nome
+    if servidor():
+        return email_avisos(), "Visitante"
+    return email_avisos(), "Você"
+
+
+def pode_conversar() -> bool:
+    """Postar no Pregão: contas ativas (no servidor) ou o dono (no modo pessoal). Visitante só olha."""
+    if not servidor():
+        return True
+    u = usuario()
+    return bool(u and u.pode_usar())
+
+
+def pasta_social():
+    """Onde guardar contatos e perfis desta pessoa (None = só nesta sessão)."""
+    return pasta()

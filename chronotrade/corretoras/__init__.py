@@ -18,6 +18,7 @@ from chronotrade.corretoras.base import (
 DISPONIVEIS = {
     "simulada": "Carteira simulada (sem dinheiro real)",
     "mt5": "MetaTrader 5 (corretora real, só no Windows)",
+    "profit": "Profit da Nelogica, pela ProfitDLL (corretora real, só no Windows)",
 }
 
 
@@ -30,6 +31,10 @@ def abrir(tipo: str, pasta, **opcoes) -> Corretora:
         from chronotrade.corretoras.mt5 import CorretoraMT5
 
         return CorretoraMT5(**opcoes)
+    if tipo == "profit":
+        from chronotrade.corretoras.profit import CorretoraProfit
+
+        return CorretoraProfit(**opcoes)
     raise ErroCorretora(f"Corretora desconhecida: {tipo}")
 
 
