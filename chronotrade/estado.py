@@ -9,38 +9,102 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from chronotrade import carteira as cart, licenca
+from chronotrade import carteira as cart, contas
 from chronotrade.mercado import DadosAtivo, carregar_ativo
 
 
 def modo_demo() -> bool:
+    if visitante() and not st.session_state.get("demo"):
+        st.session_state.demo = True  # visitante sempre vê dados fictícios
     if "demo" not in st.session_state:
         st.session_state.demo = os.environ.get("CHRONOTRADE_DEMO", "").lower() in ("1", "true", "sim")
     return st.session_state.demo
 
 
 # ---------------------------------------------------------------------------
-# Plano de acesso
+# Contas e plano de acesso
 # ---------------------------------------------------------------------------
 
 
-def licenca_atual() -> licenca.Licenca | None:
-    return st.session_state.get("licenca")
+@st.cache_resource
+def banco() -> contas.Contas:
+    """O banco de contas, aberto uma vez por servidor."""
+    b = contas.Contas(cart.pasta_dados() / "contas.db")
+    b.garantir_admin(os.environ.get("CHRONOTRADE_ADMIN_SENHA"))
+    return b
+
+
+def servidor() -> bool:
+    return contas.modo_servidor()
+
+
+def usuario() -> contas.Usuario | None:
+    """A conta conectada, lida de novo do banco a cada tela para refletir o que o admin mudou."""
+    email = st.session_state.get("email")
+    return banco().buscar(email) if email else None
+
+
+def visitante() -> bool:
+    return bool(st.session_state.get("visitante"))
+
+
+def config_loja() -> dict[str, str]:
+    return banco().config() if servidor() else dict(contas.CONFIG_PADRAO)
+
+
+def conectar(u: contas.Usuario, lembrar: bool) -> None:
+    for chave in ("visitante", "carteira", "demo"):
+        st.session_state.pop(chave, None)
+    st.session_state.email = u.email
+    if lembrar:
+        st.query_params["s"] = banco().criar_sessao(u.email)
+
+
+def restaurar_sessao() -> None:
+    """Entra de novo sozinho quando o endereço tem um token de "manter conectado" válido."""
+    if st.session_state.get("email") or "s" not in st.query_params:
+        return
+    u = banco().sessao(st.query_params["s"])
+    if u is None:
+        del st.query_params["s"]
+        return
+    st.session_state.email = u.email
+
+
+def sair() -> None:
+    token = st.query_params.get("s")
+    if token:
+        banco().encerrar_sessao(token)
+        del st.query_params["s"]
+    for chave in ("email", "visitante", "carteira", "demo", "plano_aporte", "ultima_analise"):
+        st.session_state.pop(chave, None)
 
 
 def plano_completo() -> bool:
-    """No modo pessoal tudo é liberado; no modo assinatura, só com chave válida."""
-    return not licenca.assinatura_ativa() or licenca_atual() is not None
+    """No modo pessoal tudo é liberado; no servidor, depende da assinatura da conta."""
+    if not servidor():
+        return True
+    u = usuario()
+    return bool(u and u.plano_completo())
+
+
+def limite_ativos() -> int | None:
+    if plano_completo():
+        return None
+    try:
+        return int(config_loja().get("limite_gratuito", "5"))
+    except ValueError:
+        return 5
 
 
 def pasta() -> Path | None:
-    """Onde os dados deste usuário ficam. None = não guardar (plano gratuito)."""
-    if not licenca.assinatura_ativa():
+    """Onde os dados deste usuário ficam. None = não guardar (visitante ou conta sem acesso)."""
+    if not servidor():
         return cart.pasta_dados()
-    lic = licenca_atual()
-    if lic is None:
+    u = usuario()
+    if u is None or not u.pode_usar():
         return None
-    destino = cart.pasta_dados() / "assinantes" / lic.id_usuario
+    destino = cart.pasta_dados() / "usuarios" / u.id_pasta
     destino.mkdir(parents=True, exist_ok=True)
     return destino
 
@@ -57,13 +121,14 @@ def liberado(recurso: str) -> bool:
         return True
     from chronotrade import tema
 
-    preco = licenca.preco_divulgado()
-    tema.fala(f"<b>{recurso}</b> faz parte do plano completo"
-              f"{' (' + preco + ')' if preco else ''}. Com ele você também guarda a carteira, "
-              "usa o Oráculo de IA e gera relatórios para imprimir.")
-    if licenca.link_pagamento():
-        st.link_button("Assinar o plano completo", licenca.link_pagamento(), type="primary")
-    st.caption("Já assinou? Cole a sua chave de acesso na barra lateral.")
+    preco = config_loja().get("preco_mensal", "")
+    preco_txt = f" por R$ {preco.replace('.', ',')} ao mês" if preco else ""
+    tema.fala(f"<b>{recurso}</b> faz parte do plano Completo{preco_txt}. Com ele você também acompanha "
+              "quantos ativos quiser, usa o Oráculo de IA e gera relatórios para imprimir.")
+    if visitante():
+        st.caption("Crie a sua conta na tela de entrada (botão Sair, na barra lateral).")
+    else:
+        st.page_link("paginas/conta.py", label="Ver planos e assinar", icon="💳")
     return False
 
 

@@ -7,3 +7,9 @@ textColor = "#EDE6D2"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+enableStaticServing = true
+
+[client]
+toolbarMode = "viewer"

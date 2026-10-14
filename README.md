@@ -10,10 +10,18 @@ Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA p
 - **Tesouro**: proventos mês a mês, número mágico de cada ativo e constância dos pagamentos ano a ano.
 - **Linha do Tempo**: projeção com aportes, reinvestimento e cenários pessimista, base e otimista, com os marcos da jornada.
 - **Oráculo**: ficha rápida de cada ação (Bazin, Graham, P/L, P/VP, checklist) e o conselho completo dos agentes de IA do TradingAgents.
+- **Próximo Aporte**: preço de entrada e preço justo de cada ativo e a divisão do aporte em cotas, respeitando as metas por classe.
+- **Compartilhar**: relatório para imprimir ou salvar em PDF, com opção de ocultar valores, e resumo para WhatsApp.
+- **Contas e assinaturas** (modo servidor): cadastro por e-mail, aprovação pelo administrador, cobrança por PIX com QR Code e painel com receita, renovações e cobranças.
+- **Celular**: telas ajustadas para Android e ícone para adicionar à tela inicial.
 
 Os dados de mercado vêm do Yahoo Finance (gratuito). A carteira fica em `~/.chronotrade/carteira.json`, fora do repositório.
 
 ## Como rodar
+
+No Windows, dê dois cliques em `instalar_windows.bat` e depois use o atalho da área de trabalho. Para colocar online e vender assinaturas, siga o [GUIA_CHRONOTRADE.md](GUIA_CHRONOTRADE.md).
+
+Pelo terminal:
 
 ```powershell
 .venv\Scripts\Activate.ps1

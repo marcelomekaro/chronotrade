@@ -28,6 +28,7 @@ dependencies = [
     "yfinance>=1.7.0",
     "streamlit>=1.50",
     "plotly>=6.0",
+    "segno>=1.6",
 ]
 
 [project.optional-dependencies]
@@ -45,7 +46,7 @@ bedrock = [
 [project.scripts]
 tradingagents = "cli.main:app"
 chronotrade = "chronotrade.lancador:main"
-chronotrade-licenca = "chronotrade.licenca:main"
+chronotrade-admin = "chronotrade.contas:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "tradingagents.__version__"}
@@ -56,6 +57,7 @@ include = ["tradingagents*", "cli*", "chronotrade*"]
 [tool.setuptools.package-data]
 cli = ["static/*"]
 tradingagents = ["assets/*.svg"]
+chronotrade = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

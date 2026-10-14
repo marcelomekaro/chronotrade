@@ -3,7 +3,7 @@
 import pandas as pd
 import streamlit as st
 
-from chronotrade import estado, licenca, tema
+from chronotrade import estado, tema
 from chronotrade.calculos import brl, pct
 from chronotrade.carteira import CLASSES, ler_csv
 
@@ -12,11 +12,12 @@ c = estado.carteira()
 
 
 def _limitar_plano_gratuito() -> list[str]:
-    if estado.plano_completo() or len(c.posicoes) <= licenca.LIMITE_ATIVOS_GRATUITO:
+    limite = estado.limite_ativos()
+    if limite is None or len(c.posicoes) <= limite:
         return []
-    cortados = [p.ticker for p in c.posicoes[licenca.LIMITE_ATIVOS_GRATUITO:]]
-    c.posicoes = c.posicoes[:licenca.LIMITE_ATIVOS_GRATUITO]
-    return [f"O plano gratuito acompanha até {licenca.LIMITE_ATIVOS_GRATUITO} ativos. "
+    cortados = [p.ticker for p in c.posicoes[limite:]]
+    c.posicoes = c.posicoes[:limite]
+    return [f"O plano Gratuito acompanha até {limite} ativos. "
             f"Ficaram de fora: {', '.join(cortados)}."]
 
 
@@ -63,8 +64,8 @@ with botao:
         if estado.salvar():
             st.success(f"Carteira salva com {len(c.posicoes)} posições.")
         else:
-            st.info("No plano gratuito a carteira vale até você fechar o navegador. "
-                    "Assine o plano completo para guardar.")
+            st.info("No modo visitante a carteira vale até você fechar o navegador. "
+                    "Crie a sua conta para guardar.")
 with importar:
     arquivo = st.file_uploader("Importar planilha CSV", type=["csv"],
                                help="Colunas: ticker; quantidade; preço médio; classe (as duas últimas são opcionais).")

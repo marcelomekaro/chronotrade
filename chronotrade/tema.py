@@ -64,6 +64,7 @@ button, input, textarea, select, label {{ font-family: var(--corpo); }}
   background-attachment: fixed;
 }}
 [data-testid="stHeader"] {{ background: transparent; }}
+[data-testid="stAppDeployButton"] {{ display: none; }}
 [data-testid="stSidebar"] {{ background: var(--ceu-2); border-right: 2px solid rgba(233,225,200,.18); }}
 
 h1, h2, h3 {{ font-family: var(--pixel) !important; color: var(--texto); letter-spacing: .5px; }}
@@ -132,8 +133,27 @@ p, li {{ max-width: 75ch; }}
 button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid var(--portal) !important; outline-offset: 2px; }}
 
 [data-testid="stSidebar"] [data-testid="stPageLink"] p {{ font-family: var(--pixel); font-size: 1.02rem; }}
-.ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; line-height: 1.1; }}
+.ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; line-height: 1.1; margin-bottom: 14px; }}
 .ct-marca small {{ display: block; font-family: var(--corpo); font-size: .85rem; color: var(--suave); text-shadow: none; margin-top: 4px; }}
+
+/* Portaria (tela de entrada) */
+.ct-heroi {{ margin: 8px 0 6px; }}
+.ct-heroi-titulo {{ font-family: var(--pixel); font-size: clamp(2.6rem, 7vw, 4.6rem); color: var(--ouro);
+  line-height: 1; text-shadow: 4px 4px 0 #0A0E26; }}
+.ct-heroi p {{ font-size: clamp(1.05rem, 2.2vw, 1.35rem); color: var(--texto); margin: 14px 0 8px; max-width: 40ch; }}
+
+/* Celular: menos margem, números menores, nada estoura a largura da tela */
+@media (max-width: 640px) {{
+  [data-testid="stMainBlockContainer"], .block-container {{ padding: 2.6rem 0.9rem 3rem !important; }}
+  h1 {{ font-size: 1.65rem !important; }}
+  h2 {{ font-size: 1.2rem !important; }}
+  h3 {{ font-size: 1.02rem !important; }}
+  .ct-janela {{ padding: 12px 14px; margin-bottom: 10px; box-shadow: inset 0 0 0 2px #0B1040, 3px 3px 0 #0A0E26; }}
+  .ct-janela .valor {{ font-size: 1.6rem; }}
+  .ct-fala {{ font-size: 1rem; line-height: 1.5; }}
+  .ct-tempo .marcas {{ font-size: .8rem; }}
+  [data-testid="stHorizontalBlock"] {{ gap: .5rem; }}
+}}
 </style>
 """
 
@@ -141,6 +161,32 @@ button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid
 def aplicar() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
     _registrar_plotly()
+    _instalavel()
+
+
+_CABECALHO = """
+<script>
+(function () {
+  const doc = window.parent.document;
+  if (doc.getElementById("ct-manifest")) return;
+  const add = (tag, attrs) => { const el = doc.createElement(tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); doc.head.appendChild(el); };
+  add("link", {id: "ct-manifest", rel: "manifest", href: "app/static/manifest.json"});
+  add("meta", {name: "theme-color", content: "#121838"});
+  add("meta", {name: "mobile-web-app-capable", content: "yes"});
+  add("meta", {name: "apple-mobile-web-app-capable", content: "yes"});
+  add("meta", {name: "apple-mobile-web-app-title", content: "Chrono Trade"});
+  add("link", {rel: "apple-touch-icon", href: "app/static/icone-192.png"});
+})();
+</script>
+"""
+
+
+def _instalavel() -> None:
+    """Liga o manifesto e o ícone, para o celular oferecer "Adicionar à tela inicial"."""
+    import streamlit.components.v1 as componentes
+
+    componentes.html(_CABECALHO, height=0)
 
 
 def _registrar_plotly() -> None:

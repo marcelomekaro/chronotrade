@@ -1,0 +1,36 @@
+# Chrono Trade online: o app web com contas, pronto para um servidor.
+# Os dados (contas, carteiras, análises) ficam no volume /data: faça backup dele.
+FROM python:3.13-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /build
+COPY . .
+RUN pip install --no-cache-dir .
+
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    CHRONOTRADE_HOME=/data \
+    CHRONOTRADE_MODO=servidor \
+    TRADINGAGENTS_RESULTS_DIR=/data/tradingagents/logs \
+    TRADINGAGENTS_CACHE_DIR=/data/tradingagents/cache
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN useradd --create-home appuser \
+ && install -d -m 0755 -o appuser -g appuser /data
+USER appuser
+WORKDIR /home/appuser/app
+COPY --from=builder --chown=appuser:appuser /build/.streamlit ./.streamlit
+
+VOLUME /data
+EXPOSE 8501
+HEALTHCHECK --interval=60s --timeout=5s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"
+CMD ["chronotrade", "--server.port", "8501", "--server.address", "0.0.0.0", "--server.headless", "true"]

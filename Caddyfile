@@ -1,0 +1,6 @@
+# HTTPS automático para o Chrono Trade online.
+# Aponte o domínio para o IP do servidor e defina CHRONOTRADE_DOMINIO no .env.
+{$CHRONOTRADE_DOMINIO} {
+    encode gzip
+    reverse_proxy chronotrade:8501
+}

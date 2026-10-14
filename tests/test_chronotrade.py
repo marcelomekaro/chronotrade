@@ -154,36 +154,99 @@ def test_dividir_aporte_sem_opcoes_guarda_em_caixa():
     assert compras.empty and sobra == 800.0
 
 
-# --- Assinaturas e relatório -------------------------------------------------
+# --- Contas, PIX e relatório -------------------------------------------------
 
-from datetime import date  # noqa: E402
+from datetime import date, datetime, timedelta  # noqa: E402
 
-from chronotrade import licenca, relatorio  # noqa: E402
-
-SEGREDO = b"x" * 40
+from chronotrade import contas, pix, relatorio  # noqa: E402
 
 
-def test_chave_valida_e_adulterada():
-    chave = licenca.gerar_chave("Ana@Exemplo.com", date(2026, 12, 31), SEGREDO)
-    lic = licenca.verificar_chave(chave, SEGREDO, hoje=date(2026, 10, 14))
-    assert lic.email == "ana@exemplo.com" and lic.dias_restantes(date(2026, 10, 14)) == 78
-    adulterada = chave[:-2] + ("A" if chave[-2] != "A" else "B") + chave[-1]
-    with pytest.raises(licenca.ChaveInvalida):
-        licenca.verificar_chave(adulterada, SEGREDO, hoje=date(2026, 10, 14))
-    with pytest.raises(licenca.ChaveInvalida):
-        licenca.verificar_chave(chave, b"y" * 40, hoje=date(2026, 10, 14))
+@pytest.fixture
+def banco(tmp_path, monkeypatch):
+    monkeypatch.setenv("CHRONOTRADE_ADMIN_EMAIL", "chefe@exemplo.com")
+    return contas.Contas(tmp_path / "contas.db")
 
 
-def test_chave_vencida():
-    chave = licenca.gerar_chave("ana@exemplo.com", date(2026, 1, 1), SEGREDO)
-    with pytest.raises(licenca.ChaveInvalida, match="venceu"):
-        licenca.verificar_chave(chave, SEGREDO, hoje=date(2026, 10, 14))
+def test_cadastro_nasce_pendente_e_senha_nao_fica_em_texto(banco):
+    u = banco.cadastrar("Ana", "Ana@Exemplo.com", "senha123")
+    assert u.email == "ana@exemplo.com" and u.status == "pendente" and not u.pode_usar()
+    assert b"senha123" not in banco.caminho.read_bytes()
+    with pytest.raises(contas.ErroConta):
+        banco.cadastrar("Ana", "ana@exemplo.com", "outra123")
 
 
-def test_mesmo_email_mesma_pasta():
-    a = licenca.Licenca("Ana@exemplo.com ", date(2027, 1, 1))
-    b = licenca.Licenca("ana@exemplo.com", date(2026, 1, 1))
-    assert a.id_usuario == b.id_usuario
+def test_ninguem_se_cadastra_como_admin(banco):
+    with pytest.raises(contas.ErroConta, match="reservado"):
+        banco.cadastrar("Intruso", "chefe@exemplo.com", "senha123")
+    banco.garantir_admin("inicial123")
+    admin = banco.entrar("chefe@exemplo.com", "inicial123")
+    assert admin.admin and admin.plano_completo() and admin.senha_temporaria
+
+
+def test_senha_fraca_e_email_invalido(banco):
+    with pytest.raises(contas.ErroConta):
+        banco.cadastrar("Ana", "ana@exemplo.com", "12345678")
+    with pytest.raises(contas.ErroConta):
+        banco.cadastrar("Ana", "sem-arroba", "senha123")
+
+
+def test_liberar_renovar_e_vencer(banco):
+    banco.cadastrar("Ana", "ana@exemplo.com", "senha123")
+    hoje = date(2026, 10, 14)
+    u = banco.liberar("ana@exemplo.com", "completo", 30, valor=19.9, hoje=hoje)
+    assert u.validade == date(2026, 11, 13) and u.plano_completo(hoje)
+    u = banco.liberar("ana@exemplo.com", "completo", 30, valor=19.9, hoje=hoje)  # renova somando
+    assert u.validade == date(2026, 12, 13)
+    assert u.vencido(date(2026, 12, 14)) and not u.pode_usar(date(2026, 12, 14))
+    assert len(banco.pagamentos("ana@exemplo.com")) == 2
+
+
+def test_bloqueio_apos_tentativas_erradas(banco):
+    banco.cadastrar("Ana", "ana@exemplo.com", "senha123")
+    agora = datetime(2026, 10, 14, 10, 0)
+    for _ in range(contas.TENTATIVAS_MAX):
+        with pytest.raises(contas.ErroConta):
+            banco.entrar("ana@exemplo.com", "errada000", agora=agora)
+    with pytest.raises(contas.ErroConta, match="Muitas tentativas"):
+        banco.entrar("ana@exemplo.com", "senha123", agora=agora)
+    assert banco.entrar("ana@exemplo.com", "senha123", agora=agora + timedelta(minutes=16))
+
+
+def test_senha_temporaria_e_troca(banco):
+    banco.cadastrar("Ana", "ana@exemplo.com", "senha123")
+    temporaria = banco.redefinir_senha("ana@exemplo.com")
+    assert banco.entrar("ana@exemplo.com", temporaria).senha_temporaria
+    banco.trocar_senha("ana@exemplo.com", temporaria, "novaSenha9")
+    assert not banco.entrar("ana@exemplo.com", "novaSenha9").senha_temporaria
+
+
+def test_sessao_lembrada_e_bloqueio_encerra(banco):
+    banco.cadastrar("Ana", "ana@exemplo.com", "senha123")
+    token = banco.criar_sessao("ana@exemplo.com")
+    assert banco.sessao(token).email == "ana@exemplo.com"
+    banco.mudar_status("ana@exemplo.com", "bloqueado")
+    assert banco.sessao(token) is None
+
+
+def test_config_e_indicadores(banco):
+    banco.salvar_config({"preco_mensal": "24.90", "inexistente": "x"})
+    assert banco.config()["preco_mensal"] == "24.90" and "inexistente" not in banco.config()
+    banco.cadastrar("Ana", "ana@exemplo.com", "senha123")
+    banco.cadastrar("Beto", "beto@exemplo.com", "senha123")
+    banco.liberar("ana@exemplo.com", "completo", 5, valor=24.9)
+    ind = banco.indicadores()
+    assert ind["ativos"] == 1 and ind["pendentes"] == 1 and len(ind["vencendo"]) == 1
+    assert ind["receita_mes"] == pytest.approx(24.9)
+
+
+def test_pix_crc_e_campos():
+    assert pix.crc16("123456789") == "29B1"  # vetor de teste do CRC16-CCITT
+    codigo = pix.copia_e_cola("ana@exemplo.com", "Márcelo Mekaro", "São Paulo", 19.9, "CT123")
+    assert codigo.startswith("000201") and "br.gov.bcb.pix" in codigo
+    assert "540519.90" in codigo and "5914MARCELO MEKARO" in codigo and "6009SAO PAULO" in codigo
+    assert codigo[-8:-4] == "6304" and pix.crc16(codigo[:-4]) == codigo[-4:]
+    assert pix.qr_png(codigo)[:4] == b"\x89PNG"
+    assert pix.link_whatsapp("(11) 99999-0000", "oi").startswith("https://wa.me/5511999990000?text=oi")
 
 
 def test_relatorio_oculta_valores():

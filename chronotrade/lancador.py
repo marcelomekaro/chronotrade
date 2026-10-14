@@ -12,6 +12,8 @@ TEMA = {
     "theme.secondaryBackgroundColor": "#1A2150",
     "theme.textColor": "#EDE6D2",
     "browser.gatherUsageStats": "false",
+    "server.enableStaticServing": "true",   # serve o ícone e o manifesto do app
+    "client.toolbarMode": "viewer",         # esconde os menus de desenvolvedor
 }
 
 

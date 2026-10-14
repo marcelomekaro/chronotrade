@@ -31,6 +31,39 @@ services:
     profiles:
       - ollama
 
+  # --- Chrono Trade online -------------------------------------------------
+  # docker compose up -d chronotrade            (app na porta 8501)
+  # docker compose --profile https up -d chronotrade caddy   (app + HTTPS com o seu domínio)
+  chronotrade:
+    build:
+      context: .
+      dockerfile: Dockerfile.chronotrade
+    env_file:
+      - .env
+    ports:
+      - "8501:8501"
+    volumes:
+      - chronotrade_data:/data
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - chronotrade
+    restart: unless-stopped
+    profiles:
+      - https
+
 volumes:
   tradingagents_data:
   ollama_data:
+  chronotrade_data:
+  caddy_data:

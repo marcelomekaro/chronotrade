@@ -1,0 +1,25 @@
+{
+  "name": "Chrono Trade",
+  "short_name": "Chrono Trade",
+  "description": "Carteira de dividendos e buy and hold na B3",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#121838",
+  "theme_color": "#121838",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/app/static/icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/static/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
