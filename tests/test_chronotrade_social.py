@@ -376,7 +376,7 @@ def test_cliente_openjarvis_fala_o_protocolo():
         return _Resp(json.dumps({"choices": [{"message": {"content": " Oi! "}}]}).encode())
 
     c = jarvis.Cliente("http://pc:8000/", chave="k", abrir=abrir)
-    assert c.saude() == {"online": True, "voz": True, "detalhe": "OpenJarvis conectado com voz."}
+    assert c.saude() == {"online": True, "voz": True, "nome": "OpenJarvis", "detalhe": "OpenJarvis conectado com voz."}
     assert c.transcrever(b"AUDIO") == "cotação da taesa"
     multipart = chamadas[-1]
     assert b'name="file"; filename="fala.wav"' in multipart.data and b"AUDIO" in multipart.data
@@ -427,3 +427,46 @@ def test_mcp_protocolo(tmp_path, monkeypatch):
     erro = mcp_servidor.responder({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "x"}})
     assert erro["error"]["code"] == -32602
     assert mcp_servidor.responder({"jsonrpc": "2.0", "id": 8, "method": "resources/list"})["error"]["code"] == -32601
+
+
+# --- Voz local e fala do Jarvis -----------------------------------------------------------------
+
+
+def test_para_fala_deixa_numeros_e_tickers_faladas():
+    assert jarvis.para_fala("TAEE11 está em R$ 36,00, alta de 1,40% no dia.") == \
+        "Taesa onze está em 36 reais, alta de 1 vírgula 4 por cento no dia."
+    assert jarvis.para_fala("Patrimônio R$ 3.700,50") == "Patrimônio 3700 reais e 50 centavos"
+    assert jarvis.para_fala("XPTO3 subiu 2%") == "X P T O três subiu 2 por cento"
+
+
+def test_voz_local_fala_a_api_do_openjarvis():
+    from fastapi.testclient import TestClient
+
+    from chronotrade import voz_local
+
+    class VozFalsa:
+        def pronta(self):
+            return True
+
+        def transcrever(self, audio):
+            return ("jarvis, cotação da taesa" if audio == b"WAV" else "", 1.5)
+
+        def sintetizar(self, texto, velocidade=1.0):
+            return b"RIFF" + texto.encode()
+
+    api = TestClient(voz_local.criar_app(VozFalsa()))
+    assert api.get("/health").json()["servico"] == "chronotrade-voz"
+    assert api.get("/v1/speech/health").json()["available"] is True
+    r = api.post("/v1/speech/transcribe", files={"file": ("fala.wav", b"WAV")}, data={"language": "pt"})
+    assert r.json()["text"] == "jarvis, cotação da taesa"
+    assert api.post("/v1/speech/transcribe").status_code == 400
+    s = api.post("/v1/speech/synthesize", json={"text": "Olá"})
+    assert s.status_code == 200 and s.content == "RIFFOlá".encode() and s.headers["content-type"] == "audio/wav"
+    assert api.post("/v1/speech/synthesize", json={"text": "  "}).status_code == 400
+
+    def abrir(pedido, tempo):
+        cliente_http = api.get if pedido.get_method() == "GET" else None
+        return io.BytesIO(cliente_http(pedido.full_url.replace("http://voz", "")).content)
+
+    saude = jarvis.Cliente("http://voz", abrir=abrir).saude()
+    assert saude["online"] and saude["voz"] and saude["nome"] == "Voz local do Chrono Trade"

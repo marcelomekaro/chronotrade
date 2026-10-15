@@ -196,6 +196,18 @@ que roda no computador da pessoa. O Chrono Trade conversa com ele de dois jeitos
    servers = '[{"name": "chronotrade", "command": "chronotrade-mcp", "args": []}]'
    ```
 
+**Voz local do Chrono Trade (o jeito mais leve):** se você só quer o Jarvis ouvindo e falando em
+português, sem instalar o OpenJarvis inteiro, use o servidor de voz que vem no projeto. Ele implementa as
+mesmas rotas de voz do OpenJarvis, roda 100% offline (Whisper para ouvir, voz brasileira Piper para falar)
+e nada sai do seu computador:
+```
+pip install -e ".[voz]"
+chronotrade-voz baixar      # baixa os modelos uma vez (cerca de 900 MB, do GitHub do sherpa-onnx)
+chronotrade-voz             # fica ligado na porta 8000
+```
+No `.env`: `OPENJARVIS_URL=http://localhost:8000`. A tela Jarvis mostra "Voz local do Chrono Trade
+conectado". Vozes: `CHRONOTRADE_VOZ=jeff` (padrão), `faber` ou `cadu`.
+
 Instalar o OpenJarvis no Windows (PowerShell): `irm https://open-jarvis.github.io/OpenJarvis/install.ps1 | iex`,
 depois `jarvis serve --port 8000`. No `.env`: `OPENJARVIS_URL=http://localhost:8000`. Sem OpenJarvis, a
 voz ainda funciona se houver `GOOGLE_API_KEY` (o Gemini transcreve) e os comandos podem ser digitados.

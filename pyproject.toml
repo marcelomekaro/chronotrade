@@ -35,6 +35,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Voz local do Jarvis (offline): chronotrade-voz baixar && chronotrade-voz
+voz = [
+    "sherpa-onnx>=1.10",
+    "soundfile>=0.12",
+    "numpy",
+]
 dev = [
     "ruff>=0.16",
     "pytest>=8.0",
@@ -54,6 +60,7 @@ chronotrade-agente = "chronotrade.agentes.sentinela:main"
 chronotrade-api = "chronotrade.api:main"
 chronotrade-ponte = "chronotrade.ponte:main"
 chronotrade-mcp = "chronotrade.mcp_servidor:main"
+chronotrade-voz = "chronotrade.voz_local:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "tradingagents.__version__"}

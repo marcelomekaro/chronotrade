@@ -64,14 +64,17 @@ class Cliente:
     def saude(self) -> dict:
         """{"online": bool, "voz": bool, "detalhe": str}"""
         try:
-            json.loads(self._ler(self._pedido("/health"), 3) or b"{}")
+            info = json.loads(self._ler(self._pedido("/health"), 3) or b"{}")
         except Exception as erro:
             return {"online": False, "voz": False, "detalhe": f"OpenJarvis fora do ar em {self.url} ({type(erro).__name__})."}
         try:
             voz = json.loads(self._ler(self._pedido("/v1/speech/health"), 3)).get("available", False)
         except Exception:
             voz = False
-        return {"online": True, "voz": bool(voz), "detalhe": "OpenJarvis conectado" + (" com voz." if voz else ", sem voz.")}
+        nome = "Voz local do Chrono Trade" if isinstance(info, dict) and info.get("servico") == "chronotrade-voz" \
+            else "OpenJarvis"
+        return {"online": True, "voz": bool(voz), "nome": nome,
+                "detalhe": f"{nome} conectado" + (" com voz." if voz else ", sem voz.")}
 
     def transcrever(self, audio: bytes, nome: str = "fala.wav", idioma: str = "pt") -> str:
         limite = uuid.uuid4().hex
@@ -407,6 +410,34 @@ def executar(cmd: Comando, ctx: Contexto, historico: list[dict] | None = None) -
                         "Posso mostrar o preço justo, o preço de entrada e o momento técnico pelas suas regras "
                         "na tela Próximo Aporte. A decisão é sua.", pagina=PAGINAS["aporte"][0])
     return Resposta("Não entendi como comando. " + AJUDA.split(". Outras")[0] + ". Ligue o OpenJarvis para conversas livres.")
+
+
+_NUM_FALADO = {1: "um", 2: "dois", 3: "três", 4: "quatro", 5: "cinco", 6: "seis", 7: "sete", 8: "oito",
+               9: "nove", 10: "dez", 11: "onze", 12: "doze"}
+
+
+def para_fala(texto: str) -> str:
+    """Deixa o texto bom de ouvir: tickers viram nomes, R$ vira reais, % vira por cento."""
+    nomes = {v: k for k, v in EMPRESAS.items() if not v.startswith("^")}
+    from chronotrade.noticias import NOMES_EMPRESAS
+
+    def ticker(m):
+        codigo = m.group(0).upper()
+        if codigo in nomes or codigo[:4] in NOMES_EMPRESAS:
+            nome = NOMES_EMPRESAS.get(codigo[:4]) or nomes[codigo].title()
+            return f"{nome} {_NUM_FALADO.get(int(m.group(2)), m.group(2))}"
+        return " ".join(m.group(1)) + " " + _NUM_FALADO.get(int(m.group(2)), m.group(2))
+
+    def reais(m):
+        inteiro, centavos = m.group(1).replace(".", ""), m.group(2) or "00"
+        falado = f"{inteiro} {'real' if inteiro == '1' else 'reais'}"
+        return falado + (f" e {int(centavos)} centavos" if int(centavos) else "")
+
+    texto = re.sub(r"\bR\$\s?(\d{1,3}(?:\.\d{3})*|\d+)(?:,(\d{2}))?", reais, texto)
+    texto = re.sub(r"\b([A-Z]{4})(\d{1,2})\b", ticker, texto)
+    texto = re.sub(r"(\d),(\d+)\s?%", lambda m: f"{m.group(1)} vírgula {m.group(2).rstrip('0') or '0'} por cento", texto)
+    texto = texto.replace("%", " por cento").replace("^BVSP", "Ibovespa")
+    return re.sub(r"\s+", " ", texto).strip()
 
 
 def falar_no_navegador(texto: str) -> str:

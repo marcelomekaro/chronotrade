@@ -24,7 +24,8 @@ historico: list[dict] = st.session_state.setdefault("jarvis_hist", [])
 col_status, col_voz = st.columns([3, 1], vertical_alignment="center")
 with col_status:
     if saude["online"]:
-        st.markdown(f"🟢 **OpenJarvis conectado** em `{url}`" + (" com voz local." if saude["voz"] else "."))
+        st.markdown(f"🟢 **{saude.get('nome', 'OpenJarvis')} conectado** em `{url}`"
+                    + (", ouvindo e falando." if saude["voz"] else ", sem voz."))
     else:
         st.markdown("🟡 **OpenJarvis desligado.** Os comandos do app funcionam; para voz local e conversa livre, "
                     "ligue o OpenJarvis (veja Conexões → OpenJarvis).")
@@ -142,7 +143,7 @@ for i, m in enumerate(historico):
 ultima = historico[-1] if historico else None
 if falar and ultima and ultima.get("nova"):
     ultima["nova"] = False
-    texto_falado = ultima["content"].split("\n")[0][:600]
+    texto_falado = jarvis.para_fala(ultima["content"].split("\n")[0][:600])
     som = cliente.sintetizar(texto_falado) if saude["online"] and saude["voz"] else None
     if som:
         st.audio(som, format="audio/wav", autoplay=True)
