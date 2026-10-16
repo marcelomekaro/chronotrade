@@ -374,9 +374,11 @@ class Contas:
         with self._con() as con:
             con.execute("DELETE FROM sessoes WHERE email = ?", (email,))
             con.execute("DELETE FROM tokens_api WHERE email = ?", (email,))
-            for tabela in ("presenca", "perfis_pregao"):  # dados do Pregão (LGPD), se as tabelas existirem
+            for tabela, onde in (("presenca", "email = ?"), ("perfis_pregao", "email = ?"), ("reacoes", "email = ?"),
+                                 ("privadas", "de = ? OR para = ?"), ("alertas_preco", "email = ?")):
+                # dados do Pregão e alertas (LGPD), se as tabelas existirem
                 if con.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (tabela,)).fetchone():
-                    con.execute(f"DELETE FROM {tabela} WHERE email = ?", (email,))
+                    con.execute(f"DELETE FROM {tabela} WHERE {onde}", (email,) * onde.count("?"))
 
     # -- administração ------------------------------------------------------
 

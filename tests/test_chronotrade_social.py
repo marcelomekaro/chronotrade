@@ -410,7 +410,7 @@ def test_mcp_protocolo(tmp_path, monkeypatch):
     assert ini["result"]["serverInfo"]["name"] == "chronotrade"
     assert mcp_servidor.responder({"jsonrpc": "2.0", "method": "notifications/initialized"}) is None
     nomes = {f["name"] for f in mcp_servidor.responder({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})["result"]["tools"]}
-    assert nomes == {"resumo_carteira", "proximos_proventos", "dica_aporte", "cotacao", "noticias_ativo"}
+    assert nomes == {"resumo_carteira", "proximos_proventos", "dica_aporte", "cotacao", "noticias_ativo", "criar_alerta"}
     vazia = mcp_servidor.responder({"jsonrpc": "2.0", "id": 3, "method": "tools/call",
                                     "params": {"name": "resumo_carteira", "arguments": {}}})
     assert "vazia" in vazia["result"]["content"][0]["text"]

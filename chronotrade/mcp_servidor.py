@@ -43,6 +43,11 @@ FERRAMENTAS = [
      "inputSchema": {"type": "object", "properties": {}}},
     {"name": "cotacao", "description": "Cotação atual e variação do dia de um ativo da B3 (ex.: PETR4, TAEE11, ^BVSP).",
      "inputSchema": {"type": "object", "properties": {"ticker": {"type": "string"}}, "required": ["ticker"]}},
+    {"name": "criar_alerta", "description": "Cria um alerta de preço: o agente Sentinela avisa quando o ativo ficar "
+     "abaixo ou acima do preço informado.",
+     "inputSchema": {"type": "object", "properties": {"ticker": {"type": "string"},
+                                                      "tipo": {"type": "string", "enum": ["abaixo", "acima"]},
+                                                      "preco": {"type": "number"}}, "required": ["ticker", "tipo", "preco"]}},
     {"name": "noticias_ativo", "description": "Manchetes recentes sobre um ativo ou tema do mercado brasileiro.",
      "inputSchema": {"type": "object", "properties": {"termo": {"type": "string"}}, "required": ["termo"]}},
 ]
@@ -118,7 +123,19 @@ def noticias_ativo(args: dict) -> str:
     return "\n".join(f"- {i.titulo} ({i.fonte}) {i.link}" for i in itens[:6])
 
 
-FUNCOES = {"resumo_carteira": resumo_carteira, "proximos_proventos": proximos_proventos, "dica_aporte": dica_aporte,
+def criar_alerta(args: dict) -> str:
+    from chronotrade.agentes.sentinela import EMAIL_LOCAL
+    from chronotrade.alertas import Alertas, ErroAlerta
+
+    try:
+        a = Alertas(pasta_dados() / "contas.db").criar(EMAIL_LOCAL, str(args.get("ticker", "")), str(args.get("tipo", "")),
+                                                       float(args.get("preco") or 0))
+    except (ErroAlerta, ValueError) as erro:
+        return f"Não criei o alerta: {erro}"
+    return f"Alerta criado: {a.descricao}. O Sentinela avisa no app e nos canais ligados."
+
+
+FUNCOES = {"criar_alerta": criar_alerta, "resumo_carteira": resumo_carteira, "proximos_proventos": proximos_proventos, "dica_aporte": dica_aporte,
            "cotacao": cotacao, "noticias_ativo": noticias_ativo}
 
 

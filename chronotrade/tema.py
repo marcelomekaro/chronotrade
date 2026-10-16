@@ -67,7 +67,8 @@ button, input, textarea, select, label {{ font-family: var(--corpo); }}
 [data-testid="stAppDeployButton"] {{ display: none; }}
 [data-testid="stSidebar"] {{ background: var(--ceu-2); border-right: 2px solid rgba(233,225,200,.18); }}
 
-h1, h2, h3 {{ font-family: var(--pixel) !important; color: var(--texto); letter-spacing: .5px; }}
+h1 {{ font-family: var(--pixel) !important; letter-spacing: .5px; }}
+h2, h3 {{ font-family: var(--corpo) !important; font-weight: 700 !important; color: var(--texto); }}
 h1 {{ font-size: 2.2rem !important; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; }}
 h2 {{ font-size: 1.45rem !important; }}
 h3 {{ font-size: 1.15rem !important; }}
@@ -83,7 +84,7 @@ p, li {{ max-width: 75ch; }}
   margin-bottom: 14px;
 }}
 .ct-janela .rotulo {{ color: var(--suave); font-size: .95rem; }}
-.ct-janela .valor {{ font-family: var(--pixel); font-size: clamp(1.35rem, 1.9vw, 2.1rem); color: var(--texto);
+.ct-janela .valor {{ font-family: var(--corpo); font-weight: 800; font-size: clamp(1.35rem, 1.9vw, 2.1rem); color: var(--texto);
   line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
 .ct-janela .valor.ouro {{ color: var(--ouro); }}
 .ct-janela .detalhe {{ font-size: .95rem; margin-top: 4px; }}
@@ -123,7 +124,7 @@ p, li {{ max-width: 75ch; }}
 
 [data-testid="stMetric"] {{ background: rgba(11,16,64,.55); border: 2px solid rgba(233,225,200,.35);
   border-radius: 6px; padding: 10px 14px; }}
-[data-testid="stMetricValue"] {{ font-family: var(--pixel); }}
+[data-testid="stMetricValue"] {{ font-family: var(--corpo); font-weight: 800; }}
 
 .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
   background: var(--ouro); color: #1B1606; border: 3px solid var(--borda); font-family: var(--pixel);
@@ -132,13 +133,14 @@ p, li {{ max-width: 75ch; }}
 .stButton > button[kind="primary"]:hover {{ filter: brightness(1.08); }}
 button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid var(--portal) !important; outline-offset: 2px; }}
 
-[data-testid="stSidebar"] [data-testid="stPageLink"] p {{ font-family: var(--pixel); font-size: 1.02rem; }}
+[data-testid="stSidebar"] [data-testid="stPageLink"] p {{ font-family: var(--corpo); font-weight: 600; font-size: 1rem; }}
 .ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; line-height: 1.1; margin-bottom: 14px; }}
 .ct-secao {{ font-family: var(--pixel); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); margin: 12px 0 2px; }}
 .ct-marca small {{ display: block; font-family: var(--corpo); font-size: .85rem; color: var(--suave); text-shadow: none; margin-top: 4px; }}
 
 /* Portaria (tela de entrada) */
 .ct-heroi {{ margin: 8px 0 6px; }}
+.ct-slogan {{ font-family: var(--pixel); font-size: clamp(1.2rem, 2.8vw, 1.7rem); color: var(--texto); margin-top: 10px; text-shadow: 2px 2px 0 #0A0E26; }}
 .ct-heroi-titulo {{ font-family: var(--pixel); font-size: clamp(2.6rem, 7vw, 4.6rem); color: var(--ouro);
   line-height: 1; text-shadow: 4px 4px 0 #0A0E26; }}
 .ct-heroi p {{ font-size: clamp(1.05rem, 2.2vw, 1.35rem); color: var(--texto); margin: 14px 0 8px; max-width: 40ch; }}

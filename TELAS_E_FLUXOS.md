@@ -1,5 +1,7 @@
 # Chrono Trade: telas e fluxos
 
+**Buy and hold diário. Prosperidade no longo prazo.**
+
 As imagens estão em `docs/telas/` e foram tiradas com o **modo demonstração** (dados fictícios).
 
 ## Fluxo do cliente (do cadastro à dica do aporte)
@@ -79,6 +81,21 @@ flowchart LR
     G[OpenJarvis no PC] -. MCP: chronotrade-mcp .-> H[Ferramentas da carteira]
 ```
 
+## O salão do Pregão
+
+```mermaid
+flowchart LR
+    A[Entra no Pregão] --> B[Seu avatar aparece no salão]
+    B --> C[Clica no chão ou usa as setas: anda]
+    B --> D[Clica em alguém]
+    D --> E[Mensagem privada]
+    D --> F[Ver o gráfico da pessoa]
+    B --> G[Botão Gráfico ou /grafico TAEE11]
+    G --> H[Monitor na sua mesa + telão + conversa]
+    B --> I[Conversa: responder, reagir, @mencionar, /cotacao]
+    I --> J[Quem foi citado recebe aviso]
+```
+
 ## Telas
 
 | Tela | Para que serve | Plano |
@@ -111,6 +128,19 @@ flowchart LR
 | ![](docs/telas/26_jarvis_celular.png) **Jarvis no celular** | O mesmo, no Android | Médio |
 | ![](docs/telas/24_admin_comunidade.png) **Admin: Comunidade** | Online agora, moderação de denúncias, TV do Pregão, fontes de notícias, canais, endereço público e OpenJarvis | Admin |
 | ![](docs/telas/15_compartilhar.png) **Compartilhar** | Relatório para imprimir ou PDF, com opção de ocultar valores | Médio |
+
+| ![](docs/telas/30_vitrine_slogan.png) **Vitrine nova** | Novo posicionamento: buy and hold diário, prosperidade no longo prazo | Todos |
+| ![](docs/telas/31_portal_primeiros_passos.png) **Primeiros passos** | Checklist no Portal: carteira, corretora ou B3, alerta, perfil e Pregão | Todos |
+| ![](docs/telas/32_perfil_foto.png) **Meu perfil** | Foto (enviar ou câmera, estilo pixel), apelido único, bio e bonequinho | Todos |
+| ![](docs/telas/33_pregao_salao.png) **Salão interativo** | Avatares andando, telão com o último gráfico, monitores nas mesas, balões | Básico |
+| ![](docs/telas/35_menu_avatar.png) **Clique em alguém** | Mensagem privada, ver o gráfico da pessoa, ir até ela | Básico |
+| ![](docs/telas/36_grafico_no_salao.png) **Gráfico compartilhado** | Abre grande dentro do salão, com variação, mínimo, máximo e comentário | Básico |
+| ![](docs/telas/37_chat_bot.png) **Conversa e robô** | Respostas, reações, @menções com aviso, $ativos, comandos /cotacao /grafico /proventos | Básico |
+| ![](docs/telas/38_privadas.png) **Mensagens privadas** | Conversa um a um, aviso de mensagem nova, denúncia | Básico |
+| ![](docs/telas/42_pregao_celular.png) **Salão no celular** | Toque para andar; balões e telão ajustados à tela | Básico |
+| ![](docs/telas/39_alertas.png) **Alertas de preço** | Preço-alvo abaixo ou acima; zona de compra automática; Telegram grátis | Básico (Telegram no Médio) |
+| ![](docs/telas/40_importar_b3.png) **Importar da B3** | Posição de todas as corretoras pela Área do Investidor, com prévia | Todos |
+| ![](docs/telas/41_agenda_ics.png) **Agenda no calendário** | Arquivo .ics com as datas com e lembrete um dia antes | Básico |
 
 O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) é do plano Premium, com 30 análises por mês.
 

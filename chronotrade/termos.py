@@ -41,7 +41,9 @@ e quem descumprir as regras pode ser silenciado ou bloqueado. Notícias e vídeo
 de terceiros (RSS e YouTube), que respondem pelo próprio conteúdo. O compartilhamento no WhatsApp só abre o
 aplicativo com o texto pronto: o {loja} não lê nem guarda as suas conversas. O Jarvis (voz) usa o
 OpenJarvis instalado no seu computador ou, se você configurar, o Gemini do Google para transcrever o áudio;
-ordens por voz vão apenas para a carteira simulada, com confirmação.
+ordens por voz vão apenas para a carteira simulada, com confirmação. A foto e o apelido do seu perfil ficam
+visíveis para os participantes do Pregão; use uma foto sua, e a moderação pode removê-la. Mensagens privadas
+ficam guardadas no servidor e podem ser analisadas pela moderação quando há denúncia.
 
 **6. Assinatura.** Os planos Básico, Médio e Premium são pagos antecipadamente por PIX e liberam o acesso
 pelo período contratado (mensal ou anual). Não há renovação automática nem cobrança recorrente. Você pode

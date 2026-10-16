@@ -171,6 +171,12 @@ def _entregar(caixa: avisos.CaixaDeAvisos, p: Pessoa, tipo: str, titulo: str, te
         envios.append("e-mail: " + avisos.enviar_email(destino_email, f"Chrono Trade: {titulo}", texto))
     if p.aviso_whatsapp and p.whatsapp and planos.libera(p.plano, "avisos_whatsapp"):
         envios.append("WhatsApp: " + avisos.enviar_whatsapp(p.whatsapp, f"{titulo}\n\n{texto}"))
+    if planos.libera(p.plano, "avisos_telegram"):
+        from chronotrade import telegram
+
+        tg = telegram.Telegram(caixa.caminho)
+        if tg.chat_de(p.email):
+            envios.append("Telegram: " + tg.enviar(p.email, f"{titulo}\n\n{texto}"))
     if envios:
         caixa.anotar_envio(id_, "; ".join(envios))
 
@@ -188,7 +194,8 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
             memoria[ticker] = (obter or carregar_ativo)(ticker)
         return memoria[ticker]
 
-    resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0, "sincronizadas": 0}
+    resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0, "sincronizadas": 0,
+              "alertas": 0, "zonas": 0}
 
     # 1. Pagamentos
     if cobrancas is not None and contas is not None:
@@ -218,14 +225,44 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
             resumo["erros"] += 1
             log.exception("Sincronização das conexões falhou: %s", erro)
 
+    # 1c. Quem acabou de ligar o Telegram (mandou /start CÓDIGO ao bot)
+    from chronotrade import alertas as alertas_mod, telegram
+
+    pessoas = _pessoas(contas)
+    if telegram.configurado():
+        try:
+            telegram.Telegram(caixa.caminho).processar_atualizacoes([p.email for p in pessoas])
+        except Exception as erro:
+            log.info("Telegram indisponível: %s", erro)
+    banco_alertas = alertas_mod.Alertas(caixa.caminho)
+
     # 2 a 4. Cada pessoa
-    for p in _pessoas(contas):
+    for p in pessoas:
         if so_email and p.email != so_email:
             continue
+        # alertas de preço valem mesmo sem carteira cadastrada
+        try:
+            for alerta, preco in banco_alertas.verificar(p.email, buscar, agora):
+                _entregar(caixa, p, "alerta", f"Alerta: {alerta.descricao}",
+                          f"{ticker_curto(alerta.ticker)} está em {brl(preco)} agora. Você pediu para ser avisado "
+                          f"quando ficasse {alerta.tipo} de {brl(alerta.preco)}. {AVISO_CURTO}")
+                resumo["alertas"] += 1
+        except Exception as erro:
+            resumo["erros"] += 1
+            log.exception("Alertas falharam para %s: %s", p.email, erro)
         carteira = _carteira_de(p.pasta)
         if carteira is None:
             continue
         try:
+            if planos.libera(p.plano, "aporte"):
+                radar = radar_mod.montar(carteira, buscar, hoje=agora.date())
+                na_zona = list(radar.loc[radar["situacao"] == calculos.ZONA_COMPRA, "ativo"]) if not radar.empty else []
+                for ativo in alertas_mod.zonas_novas(p.pasta, na_zona):
+                    linha = radar[radar["ativo"] == ativo].iloc[0]
+                    _entregar(caixa, p, "zona", f"{ativo} entrou na zona de compra",
+                              f"{ativo} está em {brl(linha['preco'])}, abaixo do preço de entrada que as suas regras "
+                              f"calculam ({brl(linha['entrada'])}). Veja os detalhes em Próximo Aporte. {AVISO_CURTO}")
+                    resumo["zonas"] += 1
             frequencia = FREQUENCIA[planos.LIMITES[p.plano].sentinela]
             ultimo = caixa.ultimo(p.email, "sentinela")
             if forcar or ultimo is None or agora - ultimo >= frequencia:

@@ -210,7 +210,7 @@ with abas[4]:
             cobr = pagamentos.Cobrancas(banco.caminho) if pagamentos.automatico() else None
             resumo = sentinela.ciclo(banco, caixa, cobr, obter=estado.ativo, forcar=True)
         st.success(f"Dicas enviadas: {resumo['dicas']}. Avisos de data com: {resumo['proventos']}. "
-                   f"Ordens executadas: {resumo['ordens']}. Assinaturas liberadas: {resumo['liberadas']}. "
+                   f"Ordens executadas: {resumo['ordens']}. Alertas: {resumo['alertas']}. Zona de compra: {resumo['zonas']}. Assinaturas liberadas: {resumo['liberadas']}. "
                    f"Erros: {resumo['erros']}.")
     st.caption(f"Intervalo: {os.environ.get('CHRONOTRADE_AGENTE_MINUTOS', '60')} minutos "
                "(CHRONOTRADE_AGENTE_MINUTOS no .env).")
@@ -282,6 +282,19 @@ with abas[6]:
             if b2.button("Silenciar 24h", key=f"adm_sil{m.id}"):
                 pregao_db.silenciar(m.email)
                 st.toast(f"{m.apelido} silenciado por 24 horas.")
+
+    fotos = pregao_db.fotos()
+    if fotos:
+        with st.expander(f"Fotos de perfil ({len(fotos)})"):
+            colunas = st.columns(6)
+            for i, f in enumerate(fotos):
+                with colunas[i % 6]:
+                    st.image(f.foto, width=72, caption=f.apelido)
+                    if st.button("Remover", key=f"rmfoto{i}"):
+                        pregao_db.remover_foto(f.email)
+                        estado.avisar(f.email, "admin", "Sua foto do Pregão foi removida",
+                                      "A moderação removeu a foto do seu perfil. Use uma foto sua, adequada ao ambiente.")
+                        st.rerun()
 
     st.subheader("Conteúdo e conexões")
     fontes_atuais = cfg.get("fontes_noticias") or "\n".join(f"{n} | {u}" for n, u in _noticias.FONTES_PADRAO)

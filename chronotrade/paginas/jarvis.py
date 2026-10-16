@@ -58,9 +58,18 @@ def _noticias(ticker):
     return noticias.buscar("google:" + busca, "Google Notícias", limite=5)
 
 
+def _criar_alerta(ticker: str, tipo: str, preco: float):
+    from chronotrade import alertas
+
+    try:
+        return alertas.Alertas(pasta_dados() / "contas.db").criar(estado.email_avisos(), ticker, tipo, preco)
+    except alertas.ErroAlerta as erro:
+        raise ValueError(str(erro)) from erro
+
+
 contexto = jarvis.Contexto(carteira=c, obter=estado.ativo, dica=_dica if (c.posicoes or c.observar) else None,
                            noticias=_noticias, conversar=cliente.conversar if saude["online"] else None,
-                           resumo=_resumo)
+                           resumo=_resumo, criar_alerta=_criar_alerta if estado.permite("alertas") else None)
 
 
 def _ouvir(audio) -> str | None:

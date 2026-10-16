@@ -123,3 +123,48 @@ def img(a: Avatar, tamanho: int = 48, rotulo: str = "") -> str:
     dados = base64.b64encode(svg(a, tamanho, rotulo).encode()).decode()
     return (f'<img src="data:image/svg+xml;base64,{dados}" width="{12 * tamanho / 16:.0f}" height="{tamanho}" '
             f'alt="{_html.escape(rotulo)}" style="image-rendering:pixelated">')
+
+
+def data_uri(a: Avatar, tamanho: int = 64) -> str:
+    import base64
+
+    return "data:image/svg+xml;base64," + base64.b64encode(svg(a, tamanho).encode()).decode()
+
+
+def retrato(avatar_json: str | None, foto: str | None, semente: str, tamanho: int = 48, rotulo: str = "") -> str:
+    """A foto da pessoa (redonda) ou, se não tiver, o bonequinho em pixel art."""
+    import html as _html
+
+    if foto:
+        return (f'<img src="{_html.escape(foto)}" width="{tamanho}" height="{tamanho}" alt="{_html.escape(rotulo)}" '
+                f'style="border-radius:50%;object-fit:cover;border:2px solid #E9E1C8;box-shadow:0 0 0 2px #0B1040">')
+    return img(Avatar.de_json(avatar_json) or sortear(semente), tamanho, rotulo)
+
+
+LADO_FOTO = 192
+
+
+def processar_foto(dados: bytes, estilo_pixel: bool = False, lado: int = LADO_FOTO) -> str:
+    """Recorta a foto em quadrado, reduz, tira metadados (EXIF com localização) e devolve um data URI pequeno."""
+    import base64
+    import io
+
+    from PIL import Image, ImageOps
+
+    try:
+        imagem = Image.open(io.BytesIO(dados))
+        imagem = ImageOps.exif_transpose(imagem).convert("RGB")
+    except Exception as erro:
+        raise ValueError("Não consegui abrir essa imagem. Use JPG ou PNG.") from erro
+    imagem = ImageOps.fit(imagem, (lado, lado), Image.Resampling.LANCZOS)
+    if estilo_pixel:
+        imagem = imagem.resize((28, 28), Image.Resampling.BILINEAR).quantize(24).convert("RGB")
+        imagem = imagem.resize((lado, lado), Image.Resampling.NEAREST)
+    saida = io.BytesIO()
+    if estilo_pixel:
+        imagem.save(saida, "PNG", optimize=True)
+        tipo = "png"
+    else:
+        imagem.save(saida, "JPEG", quality=82, optimize=True)
+        tipo = "jpeg"
+    return f"data:image/{tipo};base64," + base64.b64encode(saida.getvalue()).decode()

@@ -21,8 +21,8 @@ perfis = cx.carregar(pasta) if pasta else st.session_state.setdefault("perfis_vi
 c = estado.carteira()
 tickers = [p.ticker for p in c.posicoes] + list(c.observar)
 
-aba_plat, aba_contatos, aba_ponte, aba_jarvis = st.tabs(
-    ["🔌 Plataformas", "💬 Contatos do WhatsApp", "🖥️ Conector do PC", "🎙️ OpenJarvis"])
+aba_plat, aba_b3, aba_contatos, aba_ponte, aba_jarvis = st.tabs(
+    ["🔌 Plataformas", "📥 Importar da B3", "💬 Contatos do WhatsApp", "🖥️ Conector do PC", "🎙️ OpenJarvis"])
 
 
 def _cofre():
@@ -41,7 +41,7 @@ def _guardar(perfil: cx.Perfil) -> None:
         st.session_state.perfis_visitante = [p for p in perfis if p.id != perfil.id] + [perfil]
 
 
-def _mostrar_teste(perfil: cx.Perfil, teste: cx.Teste) -> None:
+def _mostrar_teste(perfil: cx.Perfil, teste: cx.Teste, registrar: bool = True) -> None:
     if not teste.ok:
         st.error(teste.mensagem)
         return
@@ -58,8 +58,10 @@ def _mostrar_teste(perfil: cx.Perfil, teste: cx.Teste) -> None:
     remover = st.checkbox("Tirar do Inventário o que não está na plataforma", key=f"rem_{perfil.id}")
     if st.button("Trazer para o Inventário", type="primary", key=f"apl_{perfil.id}"):
         mudou = cx.aplicar(c, teste.posicoes, remover)
-        if estado.salvar() and pasta:
+        if estado.salvar() and pasta and registrar:
             cx.marcar(pasta, perfil, sincronizou=True)
+        elif pasta:
+            (pasta / "importou_b3").write_text(perfil.apelido, encoding="utf-8")
         st.session_state.pop(f"teste_{perfil.id}", None)
         st.toast(f"Inventário atualizado: {mudou} ativo(s) mudaram.", icon="✅")
         st.rerun()
@@ -161,6 +163,25 @@ with aba_plat:
                  "até você ligar no seu computador (CHRONOTRADE_PERMITIR_ORDENS_REAIS=1) e confirmar cada uma.")
 
 # --- Contatos ----------------------------------------------------------------------------
+with aba_b3:
+    from chronotrade import b3
+
+    tema.fala("O jeito mais simples e <b>gratuito</b>: a B3 junta as posições de <b>todas as suas corretoras</b>. "
+              "Baixe o Excel em <b>investidor.b3.com.br → Extratos → Posição</b> e solte aqui.")
+    arquivo = st.file_uploader("Arquivo de posição da B3 (Excel ou CSV)", type=["xlsx", "xls", "csv"], key="arq_b3")
+    if arquivo is not None:
+        try:
+            linhas = b3.ler_posicao(arquivo.getvalue(), arquivo.name)
+            posicoes_b3, sem_pm = b3.para_posicoes(linhas, c)
+            st.success(f"{len(linhas)} ativos encontrados no arquivo.")
+            if sem_pm:
+                tema.aviso("A B3 não informa o preço médio. Para " + ", ".join(sem_pm[:12]) +
+                           " usei o preço de fechamento como ponto de partida; ajuste no Inventário.")
+            _mostrar_teste(cx.Perfil("simulada", "B3"), cx.Teste(True, "Arquivo lido.", None, posicoes_b3), registrar=False)
+        except b3.ErroB3 as erro:
+            st.error(str(erro))
+    tema.legenda("O arquivo é lido aqui e não é guardado. Só as quantidades vão para o seu Inventário quando você confirmar.")
+
 with aba_contatos:
     st.markdown("Cadastre quem recebe as suas ideias: um amigo, o seu consultor, a família. Em qualquer tela, o botão "
                 "**💬 WhatsApp** abre a conversa com a mensagem pronta; você revisa e envia.")

@@ -9,7 +9,7 @@ traz a próxima data anunciada, ela entra como "Confirmado".
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import UTC, date
 
 import pandas as pd
 
@@ -96,3 +96,31 @@ def por_mes(eventos: list[Evento]) -> pd.DataFrame:
     df = pd.DataFrame([{"mes": pd.Timestamp(e.data).to_period("M"), "ticker": e.ticker, "total": e.total}
                        for e in eventos])
     return df.groupby(["mes", "ticker"], as_index=False)["total"].sum().sort_values("mes")
+
+
+def ics(eventos: list[Evento], nome: str = "Chrono Trade: proventos") -> str:
+    """Calendário .ics com as datas com (abre no Google Agenda, Outlook e no celular)."""
+    from datetime import datetime as _dt
+
+    from chronotrade.calculos import brl
+    from chronotrade.mercado import ticker_curto
+
+    def esc(t: str) -> str:
+        return t.replace("\\", "\\\\").replace(",", "\\,").replace(";", r"\;").replace("\n", "\\n")
+
+    carimbo = _dt.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    linhas = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Chrono Trade//Agenda de proventos//PT-BR",
+              "CALSCALE:GREGORIAN", f"X-WR-CALNAME:{esc(nome)}"]
+    for e in eventos:
+        ativo = ticker_curto(e.ticker)
+        uid = f"{ativo}-{e.data:%Y%m%d}@chronotrade"
+        resumo = f"Data com {ativo} (~{brl(e.total)})"
+        descricao = (f"Quem tiver {ativo} até esta data recebe cerca de {brl(e.valor_por_cota)} por cota "
+                     f"({e.situacao.lower()}). Com {e.quantidade:.0f} cotas, uns {brl(e.total)}. "
+                     "Valores previstos podem mudar. Não é recomendação de investimento.")
+        linhas += ["BEGIN:VEVENT", f"UID:{uid}", f"DTSTAMP:{carimbo}", f"DTSTART;VALUE=DATE:{e.data:%Y%m%d}",
+                   f"SUMMARY:{esc(resumo)}", f"DESCRIPTION:{esc(descricao)}", "TRANSP:TRANSPARENT",
+                   "BEGIN:VALARM", "TRIGGER:-P1D", "ACTION:DISPLAY", f"DESCRIPTION:{esc(resumo)}", "END:VALARM",
+                   "END:VEVENT"]
+    linhas.append("END:VCALENDAR")
+    return "\r\n".join(linhas) + "\r\n"

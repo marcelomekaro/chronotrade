@@ -142,6 +142,7 @@ PAGINAS = {
     "noticias": ("paginas/noticias.py", ["noticias", "jornal", "videos", "youtube"]),
     "pregao": ("paginas/pregao.py", ["pregao", "sala", "trading floor", "comunidade"]),
     "conexoes": ("paginas/conexoes.py", ["conexoes", "conexao", "metatrader", "profit"]),
+    "perfil": ("paginas/perfil.py", ["meu perfil", "perfil", "foto", "apelido"]),
     "avisos": ("paginas/avisos.py", ["avisos", "notificacoes"]),
     "conta": ("paginas/conta.py", ["minha conta", "assinatura", "plano"]),
 }
@@ -240,6 +241,12 @@ def entender(texto: str) -> Comando:
     compra = re.search(r"\b(compr[ae]r?|compro|compra)\b", t)
     if re.search(r"\b(devo|deveria|vale a pena|recomenda|sugere|indica)\b", t):
         return Comando("conversa", texto, ticker)  # pedido de recomendação: o modelo explica, sem recomendar
+    if ticker and re.search(r"\b(alerta|avise|avisa|me avis\w*|lembre)\b", t):
+        tipo = "acima" if re.search(r"\b(acima|passar de|subir|maior)\b", t) else "abaixo"
+        m = re.search(r"\b(?:de|a|em|para)\s+r?\$?\s*(\d+(?:[.,]\d{1,2})?)\s*(?:reais)?\s*$|"
+                      r"(?:abaixo|acima|passar|cair|subir)\D{0,12}?(\d+(?:[.,]\d{1,2})?)", t)
+        preco = float((m.group(1) or m.group(2)).replace(",", ".")) if m else None
+        return Comando("alerta", texto, ticker, lado=tipo, preco=preco)
     if (venda or compra) and ticker:
         return Comando("ordem", texto, ticker, lado="venda" if venda else "compra",
                        quantidade=achar_quantidade(t), preco=achar_preco(t))
@@ -278,7 +285,7 @@ class Resposta:
     dados: dict = field(default_factory=dict)
 
 
-AJUDA = ("Posso abrir telas (\"abrir agenda\"), dar cotação (\"cotação da Petrobras\"), montar a dica do próximo "
+AJUDA = ("Posso criar alertas (\"me avise quando a Taesa ficar abaixo de 34 reais\"), abrir telas (\"abrir agenda\"), dar cotação (\"cotação da Petrobras\"), montar a dica do próximo "
          "aporte (\"qual a dica do aporte?\"), listar proventos, dizer o patrimônio, trazer notícias de um ativo, "
          "preparar uma ordem na carteira simulada (\"comprar 100 TAEE11\", você confirma antes) e compartilhar "
          "no WhatsApp. Outras perguntas eu respondo com o modelo do OpenJarvis.")
@@ -303,6 +310,7 @@ class Contexto:
     noticias: Callable[[str | None], list] | None = None
     conversar: Callable[[list[dict]], str | None] | None = None
     resumo: Callable[[], dict] | None = None
+    criar_alerta: Callable[[str, str, float], object] | None = None
 
 
 def _resumo_texto(ctx: Contexto) -> str:
@@ -380,6 +388,17 @@ def executar(cmd: Comando, ctx: Contexto, historico: list[dict] | None = None) -
         alvo = f" sobre {cmd.ticker}" if cmd.ticker else ""
         return Resposta(f"Manchetes{alvo}: " + ". ".join(manchetes) + ".", compartilhar="\n".join(
             f"• {i.titulo} {i.link}" for i in itens[:3]))
+    if cmd.acao == "alerta":
+        if not cmd.preco:
+            return Resposta(f"Em qual preço? Diga, por exemplo: me avise quando {cmd.ticker} ficar abaixo de 30 reais.")
+        if ctx.criar_alerta is None:
+            return Resposta("Os alertas precisam de uma conta com o plano que inclui alertas.", pagina=PAGINAS["avisos"][0])
+        try:
+            ctx.criar_alerta(cmd.ticker, cmd.lado or "abaixo", cmd.preco)
+        except ValueError as erro:
+            return Resposta(str(erro))
+        return Resposta(f"Pronto: aviso você quando {cmd.ticker} ficar {cmd.lado} de {_brl(cmd.preco)}.",
+                        pagina=PAGINAS["avisos"][0])
     if cmd.acao == "ordem":
         if not cmd.quantidade:
             return Resposta(f"Quantas {'cotas' if cmd.ticker.endswith('11') else 'ações'} de {cmd.ticker}? "

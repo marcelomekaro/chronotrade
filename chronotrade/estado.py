@@ -314,3 +314,15 @@ def pode_conversar() -> bool:
 def pasta_social():
     """Onde guardar contatos e perfis desta pessoa (None = só nesta sessão)."""
     return pasta()
+
+
+def perfil_atual():
+    """Perfil do Pregão de quem está usando (apelido, avatar, foto, bio)."""
+    eu, nome = identidade()
+    return pregao().perfil_completo(eu, nome)
+
+
+def avisar(email: str, tipo: str, titulo: str, texto: str) -> None:
+    """Aviso dentro do app para outra pessoa (menção, resposta, mensagem privada)."""
+    if email and not email.startswith(("visitante:", "demo-", "bot:")):
+        caixa_avisos().criar(email, tipo, titulo, texto)

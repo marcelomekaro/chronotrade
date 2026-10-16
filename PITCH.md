@@ -1,5 +1,7 @@
 # Chrono Trade: o pitch
 
+**Buy and hold diário. Prosperidade no longo prazo.**
+
 ## Em uma frase
 **O Chrono Trade é o painel do investidor de dividendos da B3: ele junta a sua corretora, as notícias, a
 comunidade e um assistente de voz num lugar só, e todo mês diz, pelas suas próprias regras, onde colocar
@@ -27,11 +29,16 @@ o próximo aporte.**
 |---|---|---|
 | **Conexões** (MT5 e Profit) | A carteira real entra sozinha: testar, ver a prévia, trazer. Botão Auto sincroniza | Acaba a digitação; o app passa a ser o centro |
 | **Sentinela** | Dica do próximo aporte no app, e-mail e WhatsApp: preço justo, momento técnico, cotas | O cliente recebe valor sem abrir o app |
-| **Pregão ao vivo** | Salão em pixel art com quem está online, salas temáticas, telão e TV ao vivo | Comunidade com moderação; o motivo para voltar todo dia |
+| **Pregão ao vivo** | Salão onde o seu avatar (com a sua foto) anda, conversa, manda mensagem privada e mostra gráficos no telão | Comunidade com moderação; o motivo para voltar todo dia |
 | **Notícias e vídeos** | B3, negócios e os canais do YouTube preferidos, filtrados pela carteira | Contexto do mercado ao lado dos números |
 | **Jarvis** (OpenJarvis) | Comando de voz em português; IA local no PC, sem mandar dados para fora | O "uau" da demonstração e acessibilidade |
 
 E, em tudo, o **botão 💬 WhatsApp**: manda a ideia pronta para um amigo ou o consultor.
+
+## Por que "buy and hold diário"
+Buy and hold não é esquecer a carteira: é cuidar um pouco todo dia, sem ansiedade. O Chrono Trade transforma
+isso em hábito: o Sentinela vigia preços, alertas e datas com, o Pregão traz a conversa do dia, e a linha do
+tempo mostra a prosperidade se acumulando no longo prazo.
 
 ## Pontos fortes para vender
 - **Feito para o buy and hold brasileiro:** Bazin, Graham, data com, FIIs, JCP. Não é um app de day trade adaptado.

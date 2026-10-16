@@ -1,5 +1,7 @@
 # Guia do Chrono Trade
 
+**Buy and hold diário. Prosperidade no longo prazo.**
+
 Há dois jeitos de usar o app:
 
 | | Instalação local | Online (servidor) |
@@ -112,7 +114,10 @@ Roda sozinho (o serviço `agente` do Docker, ou junto com o app) de hora em hora
 - manda a **dica do próximo aporte** (semanal no Básico e no Médio, diária no Premium): quais ativos estão
   abaixo do preço justo, o momento técnico, quantas cotas de cada um e os próximos proventos;
 - avisa as **datas com** que chegam em 3 dias;
-- executa as ordens limitadas da carteira simulada.
+- executa as ordens limitadas da carteira simulada;
+- confere os **alertas de preço** que cada pessoa criou ("TAEE11 abaixo de R$ 34") e avisa uma vez quando bate;
+- avisa quando um ativo do radar **entra na zona de compra** pelas regras da própria pessoa (planos Médio e Premium);
+- sincroniza as conexões marcadas como **Auto** (app instalado) e vincula quem ligou o **Telegram**.
 
 Os avisos aparecem como pop-up no app e na tela **Avisos**; por e-mail e WhatsApp, conforme o plano e a
 escolha de cada cliente em **Minha conta**. Nos planos Médio e Premium a dica é redigida pela IA (com os
@@ -126,6 +131,10 @@ mesmos números, sempre com o aviso legal). Para rodar na hora: **Painel do admi
 - **WhatsApp**: exige conta no WhatsApp Business Platform da Meta. Preencha `WHATSAPP_TOKEN`,
   `WHATSAPP_PHONE_ID` e `WHATSAPP_MODELO` (um modelo aprovado com uma variável de texto). A Meta cobra
   por mensagem enviada fora de uma conversa aberta pelo cliente.
+- **Telegram (grátis, recomendado)**: no Telegram, fale com **@BotFather**, crie um bot e copie o token.
+  No `.env`: `TELEGRAM_BOT_TOKEN=...` e `TELEGRAM_BOT_USUARIO=nome_do_bot`. Cada cliente liga em
+  **Avisos → Onde receber**: toca no link, aperta "Começar" no Telegram e o Sentinela vincula sozinho.
+  Diferente do WhatsApp Cloud API, não há custo por mensagem.
 - **IA**: a mesma do TradingAgents (`GOOGLE_API_KEY` e `TRADINGAGENTS_LLM_PROVIDER=google`, por exemplo).
   No servidor, só o administrador escolhe o modelo, porque é ele quem paga.
 
@@ -154,6 +163,16 @@ Sentinela sincroniza sozinho a cada ciclo.
 - Outra corretora: crie uma classe em `chronotrade/corretoras/` seguindo `base.py` e registre em
   `chronotrade/conexoes.py`.
 
+### Importar da B3 (grátis, todas as corretoras)
+Em **Conexões → Importar da B3**: baixe na Área do Investidor (investidor.b3.com.br → Extratos → Posição)
+o Excel da sua posição e solte no app. Ele soma as quantidades de todas as corretoras, mostra a prévia e só
+grava quando você confirma. A B3 não informa o preço médio: o app mantém o que você já tinha e, para ativos
+novos, começa com o preço de fechamento (ajuste no Inventário).
+
+### Agenda no seu calendário
+Em **Agenda de proventos**, o botão **Levar para a minha agenda** baixa um arquivo `.ics`: abra e as datas com
+entram no Google Agenda, Outlook ou celular, com lembrete um dia antes.
+
 ### Conector do PC (versão online + MT5/Profit)
 O MT5 e a ProfitDLL rodam no Windows do cliente, e o servidor online não alcança esse PC. Por isso:
 1. O cliente Premium abre **Conexões → Conector do PC**, escolhe a plataforma e toca em
@@ -166,12 +185,23 @@ No servidor: suba o serviço `api` junto (`docker compose up -d chronotrade agen
 `--profile https ... caddy`), e o Caddy já encaminha `/api/*` para ele. Preencha o endereço público em
 **Painel do admin → Comunidade** (ou `CHRONOTRADE_URL` no `.env`).
 
-### Pregão ao vivo, Notícias e WhatsApp
-- **Pregão:** salão em pixel art com as pessoas online, mesas, telão, letreiro de cotações e balões de
-  fala; quatro salas (geral, dividendos, FIIs, primeiros aportes); `$TAEE11` vira etiqueta do ativo.
-  Regras: 1 mensagem a cada 3 s, até 500 caracteres. Qualquer um denuncia; o admin apaga e silencia
-  (na própria conversa ou em **Painel do admin → Comunidade**). A **TV do Pregão** toca o vídeo ou live
-  do YouTube escolhido pelo admin.
+### Pregão ao vivo, perfil, Notícias e WhatsApp
+- **Salão interativo:** cada pessoa é um avatar (a foto dela ou o bonequinho em pixel art) que **anda pelo
+  salão**: clique no chão ou use as setas do teclado; no celular, toque. Os outros veem você andando em
+  tempo real (a sala atualiza a cada 3 segundos). Clique em alguém para **mandar mensagem privada**, **ver o
+  gráfico** que ela mostrou ou **ir até ela**.
+- **Gráficos compartilhados:** botão **📈 Gráfico** (ou o comando `/grafico TAEE11 1a comentário`). O gráfico
+  aparece num monitor ao lado do seu avatar, no **telão** da sala e na conversa; quem clicar abre o gráfico
+  grande, com a média de 200 dias.
+- **Conversa:** responder (↪), reações 👍 🔥 💡 🤔, **@apelido** avisa a pessoa citada, `$TAEE11` vira
+  etiqueta, apagar a própria mensagem, denunciar. **Mestre do Pregão** (robô): `/cotacao`, `/grafico`,
+  `/proventos`, `/quem`, `/ajuda`.
+- **Mensagens privadas:** aba ✉️ no Pregão; avisos de mensagem nova no app e contador na barra lateral.
+- **Meu perfil:** foto (enviar ou tirar com a câmera; o app recorta, reduz e apaga os dados escondidos da
+  imagem), opção **estilo pixel**, **apelido único**, bio de até 140 letras e o bonequinho.
+- **Moderação:** 1 mensagem a cada 3 s, até 500 caracteres; denúncia de mensagens e de conversas privadas;
+  o admin apaga, silencia e remove fotos em **Painel do admin → Comunidade**. A **TV do Pregão** toca o
+  vídeo ou live do YouTube escolhido pelo admin.
 - **Notícias e vídeos:** feeds RSS gratuitos (Google Notícias por ativo da carteira, InfoMoney, Money
   Times, buscas sobre B3 e negócios) e canais do YouTube (o admin sugere; cada pessoa adiciona os seus).
   O admin edita as fontes em **Comunidade**, uma por linha: `Nome | endereço` ou `Nome | google:termo`.

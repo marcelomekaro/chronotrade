@@ -10,6 +10,7 @@ Dois modos, escolhidos no .env:
 
 from __future__ import annotations
 
+import html
 import sys
 from pathlib import Path
 
@@ -20,7 +21,7 @@ if str(_RAIZ) not in sys.path:
 
 import streamlit as st  # noqa: E402
 
-from chronotrade import contas, estado, tema  # noqa: E402
+from chronotrade import contas, estado, marca, tema  # noqa: E402
 
 st.set_page_config(page_title="Chrono Trade", page_icon="⏳", layout="wide",
                    initial_sidebar_state="auto")
@@ -28,6 +29,8 @@ tema.aplicar()
 
 _P = Path(__file__).parent / "paginas"
 AVISOS = st.Page(_P / "avisos.py", title="Avisos", icon="🛡️")
+PREGAO = st.Page(_P / "pregao.py", title="Pregão ao vivo", icon="🏛️")
+PERFIL = st.Page(_P / "perfil.py", title="Meu perfil", icon="🧑")
 SECOES = {
     "Carteira": [
         st.Page(_P / "portal.py", title="Portal", icon="🌀", default=True),
@@ -43,11 +46,12 @@ SECOES = {
         st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
     ],
     "Comunidade": [
-        st.Page(_P / "pregao.py", title="Pregão ao vivo", icon="🏛️"),
+        PREGAO,
         st.Page(_P / "jarvis.py", title="Jarvis (voz)", icon="🎙️"),
         st.Page(_P / "compartilhar.py", title="Compartilhar", icon="📜"),
     ],
     "Ajustes": [
+        PERFIL,
         st.Page(_P / "conexoes.py", title="Conexões", icon="🔗"),
         AVISOS,
     ],
@@ -76,8 +80,19 @@ def _paginas() -> list[st.Page]:
     return APP + [CONTA, TERMOS]
 
 
+def _retrato_lateral() -> None:
+    from chronotrade.avatar import retrato
+
+    p = estado.perfil_atual()
+    st.html(f'<div style="display:flex;align-items:center;gap:10px;margin:2px 0 6px">'
+            f'{retrato(p.avatar, p.foto, p.email, 40, p.apelido)}<div style="font-size:.9rem;color:var(--suave)">'
+            f'No Pregão: <b style="color:var(--ouro)">{html.escape(p.apelido)}</b></div></div>')
+
+
 def _cartao_usuario() -> None:
     u = estado.usuario()
+    if (not estado.servidor()) or (u is not None and u.pode_usar()):
+        _retrato_lateral()
     if estado.visitante():
         st.markdown("**Modo visitante**  \nDados fictícios, nada é guardado.")
         if st.button("Criar conta ou entrar", type="primary", width="stretch"):
@@ -110,11 +125,12 @@ navegacao = st.navigation(paginas, position="hidden")
 
 if paginas[0] is not PORTARIA:
     with st.sidebar:
-        st.markdown('<div class="ct-marca">Chrono Trade<small>Buy and hold na B3, um ano de cada vez</small></div>',
+        st.markdown(f'<div class="ct-marca">{marca.NOME}<small>{marca.SLOGAN_CURTO}</small></div>',
                     unsafe_allow_html=True)
         _cartao_usuario()
         st.write("")
         nao_lidos = estado.caixa_avisos().nao_lidos(estado.email_avisos()) if AVISOS in paginas else 0
+        privadas = estado.pregao().nao_lidas_privadas(estado.identidade()[0]) if PREGAO in paginas else 0
         secoes = {nome: [p for p in lista if p in paginas] for nome, lista in SECOES.items()}
         extras = [p for p in paginas if p not in APP]
         if extras:
@@ -126,6 +142,8 @@ if paginas[0] is not PORTARIA:
             for pagina in lista:
                 if pagina is AVISOS and nao_lidos:
                     st.page_link(pagina, label=f"Avisos ({nao_lidos})")
+                elif pagina is PREGAO and privadas:
+                    st.page_link(pagina, label=f"Pregão ao vivo ({privadas} ✉️)")
                 else:
                     st.page_link(pagina)
         st.divider()

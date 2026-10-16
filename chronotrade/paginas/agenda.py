@@ -32,6 +32,9 @@ if not eventos:
     st.stop()
 
 proximos_30 = [e for e in eventos if e.data <= hoje + timedelta(days=30)]
+st.download_button("📅 Levar para a minha agenda (Google, Outlook, celular)", agenda.ics(eventos),
+                   file_name="chronotrade_proventos.ics", mime="text/calendar",
+                   help="Baixe e abra o arquivo: as datas com entram no seu calendário, com lembrete um dia antes.")
 total_12m = sum(e.total for e in eventos)
 col1, col2, col3 = st.columns(3)
 with col1:

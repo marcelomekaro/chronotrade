@@ -2,14 +2,14 @@
 
 import streamlit as st
 
-from chronotrade import contas, estado, loja, tema
+from chronotrade import contas, estado, loja, marca, tema
 from chronotrade.calculos import brl
 from chronotrade.legal import AVISO_LEGAL
 
 cfg = estado.config_loja()
 
-st.markdown('<div class="ct-heroi"><div class="ct-heroi-titulo">Chrono Trade</div>'
-            '<p>Sua carteira de dividendos, do primeiro aporte até a renda que paga as contas.</p></div>',
+st.markdown(f'<div class="ct-heroi"><div class="ct-heroi-titulo">{marca.NOME}</div>'
+            f'<div class="ct-slogan">{marca.SLOGAN}</div><p>{marca.PROMESSA}</p></div>',
             unsafe_allow_html=True)
 tema.linha_do_tempo(0.38, "Hoje: R$ 1.140/mês em proventos", "Meta: R$ 3.000/mês")
 tema.legenda("Exemplo da linha do tempo que o app monta com a sua carteira.")
@@ -83,8 +83,10 @@ with vitrine:
         "- 🔮 **Agentes de IA que debatem uma ação** (otimista, pessimista, risco) antes de você decidir.\n"
         "- 🔌 **A sua corretora dentro do app**: MetaTrader 5 e Profit trazem a carteira real sozinhos, "
         "e a carteira simulada serve para treinar.\n"
-        "- 🏛️ **Pregão ao vivo**: uma sala com os investidores online, salas de dividendos e FIIs, TV ao vivo "
-        "e notícias da B3 e do YouTube.\n"
+        "- 🏛️ **Pregão ao vivo**: um salão onde o seu avatar (com a sua foto) anda, conversa, manda mensagem "
+        "privada e mostra os seus gráficos no telão. Com notícias da B3 e do YouTube.\n"
+        "- 🎯 **Alertas que trabalham por você**: preço-alvo, zona de compra e datas com no app, e-mail, "
+        "WhatsApp ou Telegram.\n"
         "- 🎙️ **Jarvis, o assistente de voz**: \"cotação da Taesa\", \"próximos dividendos\", com IA rodando no "
         "seu PC (OpenJarvis).\n"
         "- 💬 **Ideia no WhatsApp em um toque**: mande a dica para um amigo ou para o seu consultor."

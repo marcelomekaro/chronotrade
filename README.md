@@ -1,6 +1,6 @@
 # Chrono Trade
 
-Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA para analisar ações.
+**Buy and hold diário. Prosperidade no longo prazo.** Carteira de buy and hold da B3 com uma interface de RPG retrô, comunidade ao vivo e agentes de IA.
 É um fork do [TradingAgents](https://github.com/TauricResearch/TradingAgents), da Tauric Research, mantido sob a mesma licença Apache 2.0.
 
 ## O que tem
@@ -20,7 +20,9 @@ Carteira de buy and hold da B3 com uma interface de RPG retrô e agentes de IA p
 - **Planos Básico, Médio e Premium**, com PIX e liberação automática pelo Mercado Pago.
 - **Corretora**: carteira simulada com ordens e conexão com MetaTrader 5, numa estrutura pronta para outras corretoras.
 - **Conexões**: assistente para MetaTrader 5 e Profit (ProfitDLL) com teste, prévia, sincronização automática e cofre de senhas; Conector do PC para a versão online.
-- **Pregão ao vivo**: sala em pixel art com os investidores online, salas temáticas, TV ao vivo e moderação.
+- **Pregão ao vivo**: salão onde os avatares (com foto) andam, conversam, mandam mensagens privadas e mostram gráficos no telão; robô com comandos, reações, respostas e menções.
+- **Alertas**: preço-alvo e zona de compra, no app, e-mail, WhatsApp ou Telegram (grátis).
+- **Importar da B3** (Área do Investidor) e **agenda .ics** para o seu calendário.
 - **Notícias e vídeos**: B3, negócios e canais do YouTube por RSS, filtrados pela carteira.
 - **WhatsApp**: compartilhar qualquer ideia com amigos e consultores em um toque.
 - **Jarvis**: comandos de voz em português com o [OpenJarvis](https://github.com/open-jarvis/OpenJarvis), e um servidor MCP (`chronotrade-mcp`) para o OpenJarvis consultar a carteira.

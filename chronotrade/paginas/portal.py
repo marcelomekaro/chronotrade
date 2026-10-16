@@ -4,11 +4,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from chronotrade import calculos, estado, tema
+from chronotrade import calculos, estado, primeiros_passos, tema
 from chronotrade.calculos import brl, pct
 
 st.title("Portal")
 c = estado.carteira()
+primeiros_passos.mostrar()
 
 if not c.posicoes:
     tema.fala("Seu inventário está vazio. Cadastre as ações e fundos que você tem, "

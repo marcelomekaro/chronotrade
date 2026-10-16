@@ -1,7 +1,7 @@
 {
   "name": "Chrono Trade",
   "short_name": "Chrono Trade",
-  "description": "Carteira de dividendos e buy and hold na B3",
+  "description": "Buy and hold diário. Prosperidade no longo prazo.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
