@@ -76,7 +76,37 @@
   .grafico .nota { margin-top:6px; font-size:14px; }
   .grafico .fechar { background:none; border:2px solid var(--creme); color:var(--texto); border-radius:4px; padding:2px 10px; cursor:pointer; font:inherit; }
   .grafico .aviso { font-size:11px; color:#7C84B5; margin-top:6px; }
+  .barra { position:absolute; right:10px; bottom:8px; z-index:450; display:flex; gap:4px; align-items:center;
+    background:rgba(5,7,26,.78); border:1px solid rgba(233,225,200,.35); border-radius:999px; padding:4px 6px;
+    backdrop-filter: blur(6px); max-width:calc(100% - 20px); overflow-x:auto; scrollbar-width:none; }
+  .barra::-webkit-scrollbar { display:none; }
+  .barra button { background:none; border:0; font-size:20px; line-height:1; padding:4px 5px; border-radius:999px; cursor:pointer;
+    transition: transform .15s ease, background .15s ease; color:var(--texto); font-family:inherit; }
+  .barra button:hover, .barra button:focus-visible { transform: translateY(-3px) scale(1.18); background:rgba(255,255,255,.08); outline:none; }
+  .barra button:active { transform: scale(.92); }
+  .barra .sep { width:1px; align-self:stretch; background:rgba(233,225,200,.25); margin:2px 3px; }
+  .barra .txt { font-size:13px; padding:5px 9px; border:1px solid rgba(233,225,200,.35); }
+  .frases { position:absolute; right:10px; bottom:54px; z-index:460; background:#121838; border:2px solid var(--creme); border-radius:10px;
+    padding:6px; min-width:220px; max-width:min(320px, calc(100% - 20px)); box-shadow:4px 4px 0 var(--tinta); }
+  .frases .cab { font-size:12px; color:var(--suave); padding:2px 6px 6px; }
+  .frases button { display:block; width:100%; text-align:left; background:none; border:0; color:var(--texto); font:inherit; font-size:14px;
+    padding:7px 8px; border-radius:6px; cursor:pointer; }
+  .frases button:hover, .frases button:focus-visible { background:#2B3BA0; outline:none; }
+  .flutua { position:absolute; z-index:420; font-size:30px; pointer-events:none; transform:translate(-50%,-100%);
+    animation: flutuar 2.6s cubic-bezier(.2,.7,.3,1) forwards; filter: drop-shadow(0 3px 4px rgba(0,0,0,.45)); }
+  @keyframes flutuar { 0% { opacity:0; transform:translate(-50%,-60%) scale(.3); } 12% { opacity:1; transform:translate(-50%,-110%) scale(1.25); }
+    25% { transform:translate(-50%,-130%) scale(1); } 100% { opacity:0; transform:translate(calc(-50% + var(--dx, 0px)),-420%) scale(.9); } }
+  .anel { position:absolute; z-index:9; width:60px; height:22px; border-radius:50%; border:3px solid var(--ouro); pointer-events:none;
+    transform:translate(-50%,-50%); animation: anel 1s ease-out forwards; }
+  @keyframes anel { from { opacity:.9; transform:translate(-50%,-50%) scale(.4); } to { opacity:0; transform:translate(-50%,-50%) scale(2.2); } }
+  .balao.falado { background:#FFF3C4; border-color:var(--ouro); box-shadow:0 0 0 2px var(--ouro), 3px 3px 0 var(--tinta); }
+  .balao.falado::before { content:"🔊 "; }
+  .pessoa.falando .corpo { animation: falar .25s ease-in-out infinite alternate; }
+  @keyframes falar { to { transform: translateY(-2px) scale(1.04); } }
+  .aviso-som { position:absolute; left:50%; bottom:56px; transform:translateX(-50%); z-index:470; background:var(--ouro); color:#1B1606;
+    border:0; border-radius:999px; padding:6px 14px; font:inherit; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,.4); }
   @media (max-width: 560px) {
+    .barra button { font-size:17px; padding:3px 3px; } .flutua { font-size:24px; }
     .balao { width:112px; font-size:10.5px; -webkit-line-clamp:2; margin-bottom:4px; }
     .salao.estreito .balao.velho { display:none; }
     .pessoa .sprite { width:30px; height:48px; } .pessoa .foto { width:34px; height:34px; }
@@ -84,10 +114,10 @@
     .monitor { width:58px; height:40px; bottom:12px; } .monitor svg { height:24px; } .monitor .mt { font-size:9px; }
     .telao { width:84%; height:19%; padding:4px 8px; } .telao .t { font-size:16px; }
     .telao .st + .st { display:none; } .telao .info { max-width:52%; }
-    .dica { font-size:10.5px; right:10px; }
+    .dica { display:none; }
   }
   @media (prefers-reduced-motion: reduce) { .letreiro span { animation:none; padding-left:10px; } .pessoa { transition:none !important; }
-    .pessoa.andando .corpo, .pessoa.eu::before { animation:none; } }
+    .pessoa.andando .corpo, .pessoa.eu::before, .pessoa.falando .corpo { animation:none; } .flutua { animation-duration:.01s; } }
 </style>
 </head>
 <body>
@@ -97,6 +127,7 @@
   <div class="chao" id="chao"></div>
   <div class="telao" id="telao" title="Abrir o gráfico do telão"></div>
   <div class="dica" id="dica"></div>
+  <div class="barra" id="barra" role="toolbar" aria-label="Reações do seu avatar"></div>
 </div>
 <script>
 (() => {
@@ -155,6 +186,7 @@
     if (!p.demo) html += `<button data-a="privado">💬 Mensagem privada</button>`;
     if (p.quadro) html += `<button data-a="grafico">📈 Ver gráfico de ${esc(p.quadro.ticker)}</button>`;
     html += `<button data-a="perto">🚶 Ir até ${esc(p.apelido)}</button>`;
+    if (p.frase_id && args.pode) html += `<button data-a="denunciar">🚩 Denunciar a última frase</button>`;
     m.innerHTML = html; salao.appendChild(m); menuAberto = m;
     m.querySelectorAll('button').forEach(b => b.onclick = ev => {
       ev.stopPropagation();
@@ -162,6 +194,7 @@
       if (a === 'privado') valor({ acao: 'privado', id: p.id, n: ++contador });
       if (a === 'grafico') abrirGrafico(p.quadro, p.apelido);
       if (a === 'perto') andarPara(Math.max(3, p.x - 7), p.y, true);
+      if (a === 'denunciar') valor({ acao: 'denunciar_frase', id: p.frase_id, n: ++contador });
     });
     const primeiro = m.querySelector('button'); if (primeiro) primeiro.focus();
   }
@@ -191,7 +224,7 @@
   }
 
   chao.addEventListener('click', e => {
-    fecharMenu();
+    fecharMenu(); if (painelFrases) { painelFrases.remove(); painelFrases = null; }
     const r = salao.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width * 100, y = (e.clientY - r.top) / r.height * 100;
     const a = document.createElement('div'); a.className = 'alvo'; a.style.left = x + '%'; a.style.top = y + '%';
@@ -200,7 +233,7 @@
     salao.focus();
   });
   salao.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { fecharMenu(); const j = salao.querySelector('.janela'); if (j) j.remove(); return; }
+    if (e.key === 'Escape') { fecharMenu(); if (painelFrases) { painelFrases.remove(); painelFrases = null; } const j = salao.querySelector('.janela'); if (j) j.remove(); return; }
     if (!local || salao.querySelector('.janela') || menuAberto) return;
     const passo = 3.2, mapa = { ArrowLeft: [-passo, 0], a: [-passo, 0], ArrowRight: [passo, 0], d: [passo, 0],
       ArrowUp: [0, -passo * 1.6], w: [0, -passo * 1.6], ArrowDown: [0, passo * 1.6], s: [0, passo * 1.6] };
@@ -210,6 +243,105 @@
     andarPara(local.x + m[0], local.y + m[1], false);
   });
   telao.addEventListener('click', e => { e.stopPropagation(); if (args && args.telao) abrirGrafico(args.telao, args.telao.apelido); });
+
+
+  // --- emojis e frases ---------------------------------------------------------------
+  const vistos = new Set(), meusLocais = [];
+  let som = true, montado = Date.now(), barraK = '', audioBloqueado = null;
+  const barra = document.getElementById('barra');
+
+  function pessoaEl(pid) { return elems[pid]; }
+  function soltar(pid, emoji, rajada) {
+    const el = pessoaEl(pid); if (!el) return;
+    const x = parseFloat(el.dataset.x), y = parseFloat(el.dataset.y);
+    const r = salao.getBoundingClientRect();
+    const n = rajada ? 3 : 1;
+    for (let i = 0; i < n; i++) {
+      const f = document.createElement('div'); f.className = 'flutua'; f.textContent = emoji;
+      f.style.left = `calc(${x}% + ${(i - (n - 1) / 2) * 16}px)`; f.style.top = `calc(${y}% - 58px)`;
+      f.style.setProperty('--dx', ((Math.random() - .5) * 60).toFixed(0) + 'px');
+      f.style.animationDelay = (i * 0.18) + 's';
+      salao.appendChild(f); setTimeout(() => f.remove(), 3200 + i * 200);
+    }
+    const a = document.createElement('div'); a.className = 'anel'; a.style.left = x + '%'; a.style.top = y + '%';
+    salao.appendChild(a); setTimeout(() => a.remove(), 1000);
+  }
+  function vozDe(pid) {
+    let h = 0; for (const c of String(pid)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return { pitch: 0.75 + (h % 60) / 100, rate: 0.95 + ((h >> 6) % 20) / 100 };
+  }
+  function falarFrase(pid, texto, audio) {
+    const el = pessoaEl(pid);
+    if (el) {
+      const b = el.querySelector('.balao'); b.textContent = texto; b.hidden = false; b.classList.add('falado');
+      el.classList.add('falando'); el._frase = Date.now();
+      setTimeout(() => { if (Date.now() - el._frase >= 4400) { b.classList.remove('falado'); el.classList.remove('falando'); b.hidden = !b.dataset.fala; if (b.dataset.fala) b.textContent = b.dataset.fala; } }, 4500);
+    }
+    if (!som) return;
+    if (audio) {
+      const au = new Audio(audio);
+      au.play().catch(() => avisarSom(() => au.play()));
+    } else if ('speechSynthesis' in window) {
+      try { const u = new SpeechSynthesisUtterance(texto), v = vozDe(pid); u.lang = 'pt-BR'; u.pitch = v.pitch; u.rate = v.rate;
+        const pt = speechSynthesis.getVoices().filter(x => x.lang && x.lang.startsWith('pt')); if (pt.length) u.voice = pt[parseInt(String(pid).slice(-2), 16) % pt.length];
+        speechSynthesis.speak(u); } catch (e) {}
+    }
+  }
+  function avisarSom(tocar) {
+    if (audioBloqueado) return;
+    audioBloqueado = document.createElement('button'); audioBloqueado.className = 'aviso-som'; audioBloqueado.textContent = '🔊 Toque para ouvir o salão';
+    audioBloqueado.onclick = e => { e.stopPropagation(); tocar && tocar(); audioBloqueado.remove(); audioBloqueado = null; };
+    salao.appendChild(audioBloqueado);
+  }
+  function emotes(lista) {
+    (lista || []).forEach(e => {
+      if (vistos.has(e.id)) return; vistos.add(e.id);
+      if ((e.idade || 0) > 7) return;           // velho demais: não anima ao abrir a tela
+      if (e.pid === eu && e.tipo === 'emoji') {
+        const i = meusLocais.findIndex(m => m.emoji === e.conteudo && Date.now() - m.t < 6000);
+        if (i >= 0) { meusLocais.splice(i, 1); return; }   // já animado na hora do clique
+      }
+      if (e.tipo === 'emoji') soltar(e.pid, e.conteudo, true);
+      else falarFrase(e.pid, e.texto || '', e.audio);
+    });
+  }
+  function emoji(em) {
+    if (!args || !args.pode) return;
+    meusLocais.push({ emoji: em, t: Date.now() }); soltar(eu, em, true);
+    valor({ acao: 'emoji', emoji: em, n: ++contador });
+  }
+  let painelFrases = null;
+  function abrirFrases() {
+    if (painelFrases) { painelFrases.remove(); painelFrases = null; return; }
+    const fr = (args && args.minhas_frases) || [];
+    const p = document.createElement('div'); p.className = 'frases';
+    p.innerHTML = `<div class="cab">Suas frases (o avatar fala para a sala)</div>` +
+      (fr.length ? fr.map(f => `<button data-id="${f.id}">${f.audio ? '🎙️' : '🗣️'} ${esc(f.texto)}</button>`).join('')
+                 : `<div class="cab">Você ainda não gravou frases. Grave em Meu perfil → Frases do avatar.</div>`);
+    salao.appendChild(p); painelFrases = p;
+    p.querySelectorAll('button').forEach(b => b.onclick = ev => { ev.stopPropagation(); p.remove(); painelFrases = null;
+      valor({ acao: 'frase', id: +b.dataset.id, n: ++contador }); });
+    const primeiro = p.querySelector('button'); if (primeiro) primeiro.focus();
+  }
+  function montarBarra() {
+    const lista = (args && args.emojis) || [];
+    const k = JSON.stringify([lista, !!(args && args.pode)]);
+    if (k === barraK) return; barraK = k;
+    if (!args.pode) { barra.innerHTML = ''; barra.style.display = 'none'; return; }
+    barra.style.display = '';
+    barra.innerHTML = lista.map((e, i) => `<button data-e="${e}" title="${esc((args.emoji_nomes || {})[e] || e)} (tecla ${i < 9 ? i + 1 : i === 9 ? 0 : ''})" aria-label="${esc((args.emoji_nomes || {})[e] || e)}">${e}</button>`).join('') +
+      `<span class="sep"></span><button class="txt" data-f="1" title="Frases do seu avatar (tecla F)">🗣️ Frases</button>` +
+      `<button data-som="1" title="Som do salão" aria-label="Som do salão">${som ? '🔊' : '🔇'}</button>`;
+    barra.querySelectorAll('button[data-e]').forEach(b => b.onclick = ev => { ev.stopPropagation(); emoji(b.dataset.e); });
+    barra.querySelector('[data-f]').onclick = ev => { ev.stopPropagation(); abrirFrases(); };
+    barra.querySelector('[data-som]').onclick = ev => { ev.stopPropagation(); som = !som; ev.currentTarget.textContent = som ? '🔊' : '🔇';
+      if (!som && 'speechSynthesis' in window) speechSynthesis.cancel(); };
+  }
+  salao.addEventListener('keydown', e => {
+    if (!args || !args.pode || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (/^[0-9]$/.test(e.key)) { const i = e.key === '0' ? 9 : +e.key - 1; const em = (args.emojis || [])[i]; if (em) { e.preventDefault(); emoji(em); } }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); abrirFrases(); }
+  });
 
   function decorar() {
     if (decorado) return; decorado = true;
@@ -269,7 +401,9 @@
       if (corpoEl.dataset.k !== chave) { corpoEl.innerHTML = imagem + monitor; corpoEl.dataset.k = chave; }
       el.querySelector('.nome').textContent = p.apelido + (p.id === eu ? ' (você)' : '');
       const balao = el.querySelector('.balao');
-      if (p.fala) { balao.textContent = p.fala; balao.hidden = false; } else balao.hidden = true;
+      balao.dataset.fala = p.fala || '';
+      if (el._frase && Date.now() - el._frase < 4500) { /* frase falada no balão */ }
+      else if (p.fala) { balao.textContent = p.fala; balao.hidden = false; } else balao.hidden = true;
       balao.classList.toggle('velho', p.id !== eu && (p.rank == null || p.rank >= 2));
       if (p.id === eu) {
         if (!local) local = { x: p.x, y: p.y };
@@ -281,6 +415,7 @@
     });
     Object.keys(elems).forEach(id => { if (!vivos.has(id)) { elems[id].remove(); delete elems[id]; } });
     document.getElementById('dica').textContent = args.dica || '';
+    montarBarra(); emotes(args.emotes);
   }
 
   window.addEventListener('message', e => {

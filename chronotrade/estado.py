@@ -332,7 +332,7 @@ def avisar(email: str, tipo: str, titulo: str, texto: str) -> None:
 
 def tema_atual() -> str:
     """Tema de cores desta pessoa: o escolhido no perfil, senão o padrão do administrador."""
-    from chronotrade.tema import TEMAS
+    from chronotrade.tema import TEMA_PADRAO, TEMAS
 
     escolhido = st.session_state.get("tema_visitante") if visitante() else None
     if not escolhido and (not servidor() or (usuario() is not None)):
@@ -340,8 +340,8 @@ def tema_atual() -> str:
             escolhido = pregao().tema_de(identidade()[0])
         except Exception:
             escolhido = None
-    escolhido = escolhido or config_loja().get("tema_padrao") or "retro"
-    return escolhido if escolhido in TEMAS else "retro"
+    escolhido = escolhido or config_loja().get("tema_padrao") or TEMA_PADRAO
+    return escolhido if escolhido in TEMAS else TEMA_PADRAO
 
 
 @st.cache_resource

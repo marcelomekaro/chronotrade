@@ -42,6 +42,7 @@ SECOES = {
     ],
     "Mercado": [
         st.Page(_P / "noticias.py", title="Notícias e vídeos", icon="📰"),
+        st.Page(_P / "simulador.py", title="Simulador de mercado", icon="🌪️"),
         st.Page(_P / "oraculo.py", title="Oráculo", icon="🔮"),
         st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
     ],
@@ -173,4 +174,9 @@ if AVISOS in paginas:  # pop-up dos avisos novos (dica do Sentinela, data com, p
         st.toast(f"**{aviso.titulo}**  \nVeja em Avisos.", icon="🛡️")
 
 estado.iniciar_agente()
+st.session_state.pagina_atual = navegacao.url_path
+if paginas[0] is not PORTARIA:
+    from chronotrade import jarvis_app
+
+    jarvis_app.botao_flutuante()  # Jarvis mãos livres: o mesmo botão em todas as telas
 navegacao.run()

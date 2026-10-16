@@ -246,6 +246,46 @@ tema padrão em **Painel do admin → Loja**.
 Em **Avisos → Onde receber**, cole o endereço do webhook do canal e toque em **Mandar um teste**. Os avisos
 do Sentinela, alertas de preço e pontos chegam lá também. Só endereços HTTPS desses serviços são aceitos.
 
+### Visual: temas modernos
+O padrão agora é o **Esmeralda moderno** (grafite e verde, cartões de vidro, cantos suaves e animações discretas). Há
+também **Oceano moderno**, **Verde investidor**, **Laranja energia**, **Clássico** e o **Retrô noite** original. Quem
+prefere menos movimento na tela (configuração "reduzir movimento" do sistema) vê o app sem animações. O Portal ganhou
+uma linha de atalhos: Próximo aporte, Simular uma crise, Pregão, Check-in e Jarvis.
+
+### Simulador de mercado (plano Médio)
+Tela **Mercado → Simulador de mercado**, com três abas:
+- **Teste de estresse:** aplica à carteira de hoje as quedas aproximadas de crises que a B3 viveu (Covid 2020,
+  crise de 2008, recessão de 2015, choque de juros 2021–22, greve dos caminhoneiros 2018, Joesley Day 2017) ou uma
+  crise montada por você. Ações e ETFs são ajustados pelo beta de cada um contra o Ibovespa. Mostra o fundo da
+  crise, a perda no papel, o corte nos proventos, o tempo de volta e o caminho mês a mês com e sem aportes
+  (quem aporta na queda compra mais barato).
+- **Simular intenções:** escreva as compras e vendas que pensa em fazer e veja antes e depois: peso de cada ativo,
+  concentração, proventos por mês, caixa e o impacto numa crise. Dá para mandar para a carteira simulada.
+- **Futuros possíveis:** milhares de caminhos sorteados a partir dos retornos reais da carteira (bootstrap por
+  blocos de um mês), com a faixa provável, a chance de prejuízo e o tamanho de um mês ruim.
+Tudo para estudo: não é previsão nem recomendação.
+
+### Jarvis mãos livres (em todas as telas)
+O botão redondo no canto inferior direito (ou **Alt+J**) liga o microfone:
+- **Sempre ouvindo:** o Jarvis responde quando a frase começa com “Jarvis”. Depois de uma resposta, por 20
+  segundos dá para continuar sem repetir o nome. “Jarvis, para de ouvir” desliga.
+- **Toque para falar:** toca, fala, e ele para sozinho quando você termina.
+Comandos novos: check-in, simular crise (“e se o mercado cair 30%?”), simular compra ou venda, emojis e frases no
+Pregão, trocar o tema, ler avisos, confirmar ou cancelar a ordem simulada por voz, repetir. A fala vira texto na voz
+local (`chronotrade-voz` ou OpenJarvis); sem ela, pelo Gemini se houver chave. Nenhum áudio é guardado.
+Para o reconhecimento entender bem, rode o `chronotrade-voz` com o Whisper `small` ou maior
+(`CHRONOTRADE_VOZ_WHISPER=medium` entende melhor, mas pede mais computador). O app tolera variações como
+“Javis” e “Jardis” quando o resto da frase é um comando.
+
+### Emojis e frases dos avatares no Pregão
+- No salão há uma barra com 12 emojis (👏 🚀 💰 📈 📉 🐂 🐻 🔥 😂 🤝 🎉 ☕). Eles sobem da cabeça do seu avatar e todo
+  mundo vê. Atalho: teclas 1 a 0.
+- **Frases:** em **Meu perfil → Frases do avatar**, crie até 6 frases (até 80 letras) com a **sua voz gravada**
+  (até 8 segundos), com a **voz do Jarvis** ou com a voz do navegador. No salão, toque em **🗣️ Frases** (tecla F) ou
+  diga “Jarvis, falar a minha frase 1”: o avatar fala para a sala com balão.
+- Frases passam por um filtro (sem promessa de ganho, links, telefones ou ofensas). Quem ouvir algo errado clica
+  no avatar → **Denunciar a última frase**; o admin ouve e apaga em **Painel do admin → Pregão → Moderação**.
+
 ### Jarvis: comando de voz com o OpenJarvis
 O [OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (Stanford, código aberto) é um assistente de IA
 que roda no computador da pessoa. O Chrono Trade conversa com ele de dois jeitos:

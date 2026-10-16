@@ -32,6 +32,15 @@ ONLINE_POR = timedelta(minutes=2)
 INTERVALO_MINIMO = timedelta(seconds=3)
 TAMANHO_MAXIMO = 500
 REACOES = ["👍", "🔥", "💡", "🤔"]
+EMOJIS = ["👏", "🚀", "💰", "📈", "📉", "🐂", "🐻", "🔥", "😂", "🤝", "🎉", "☕"]
+EMOJI_NOMES = {"👏": "aplausos", "🚀": "foguete", "💰": "dinheiro", "📈": "alta", "📉": "queda", "🐂": "touro",
+               "🐻": "urso", "🔥": "fogo", "😂": "risada", "🤝": "aperto de mão", "🎉": "festa", "☕": "café"}
+INTERVALO_EMOJI = timedelta(seconds=1.2)
+INTERVALO_FRASE = timedelta(seconds=4)
+EMOTE_DURA = timedelta(seconds=9)
+FRASES_MAXIMO = 6
+FRASE_TEXTO_MAXIMO = 80
+FRASE_AUDIO_MAXIMO = 400_000  # bytes (uns 10 segundos de WAV 16 kHz)
 PERIODOS = {"1m": ("1 mês", 21), "6m": ("6 meses", 126), "1a": ("1 ano", 252), "5a": ("5 anos", 1260)}
 BOT_EMAIL, BOT_APELIDO = "bot:mestre", "Mestre do Pregão"
 _TICKER = re.compile(r"\$?\b([A-Z]{4}\d{1,2})\b")
@@ -94,6 +103,24 @@ CREATE TABLE IF NOT EXISTS quadros (
     nota TEXT DEFAULT '',
     criado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS emotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sala TEXT NOT NULL,
+    email TEXT NOT NULL,
+    tipo TEXT NOT NULL,
+    conteudo TEXT NOT NULL,
+    criado_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS emotes_sala ON emotes (sala, id);
+CREATE TABLE IF NOT EXISTS frases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    texto TEXT NOT NULL,
+    audio BLOB,
+    origem TEXT NOT NULL DEFAULT 'texto',
+    criado_em TEXT NOT NULL,
+    denuncias INTEGER NOT NULL DEFAULT 0
+);
 """
 
 # Colunas novas em bancos antigos: (tabela, coluna, definição)
@@ -120,6 +147,27 @@ class Perfil:
     avatar: str
     foto: str | None = None
     bio: str = ""
+
+
+@dataclass
+class Frase:
+    id: int
+    email: str
+    texto: str
+    origem: str          # "texto" (voz do avatar no navegador), "voz" (voz do Jarvis) ou "gravada" (a sua voz)
+    tem_audio: bool
+    criado_em: datetime
+    denuncias: int = 0
+
+
+@dataclass
+class Emote:
+    id: int
+    sala: str
+    email: str
+    tipo: str            # "emoji" ou "frase"
+    conteudo: str        # o emoji, ou o id da frase
+    criado_em: datetime
 
 
 @dataclass
@@ -556,11 +604,115 @@ class Pregao:
             linhas = con.execute("SELECT * FROM mensagens WHERE removida = 0 AND denuncias > 0 ORDER BY denuncias DESC").fetchall()
         return [self._mensagem(ln) for ln in linhas]
 
+    # -- emojis e frases dos avatares -------------------------------------------------------
+
+    def _ultimo_emote(self, con, email: str, tipo: str) -> datetime | None:
+        ln = con.execute("SELECT MAX(criado_em) FROM emotes WHERE email = ? AND tipo = ?", (email, tipo)).fetchone()[0]
+        return datetime.fromisoformat(ln) if ln else None
+
+    def emote(self, sala: str, email: str, emoji: str, agora: datetime | None = None) -> Emote:
+        """O avatar solta um emoji no salão (todo mundo vê por alguns segundos)."""
+        agora = agora or datetime.now()
+        if emoji not in EMOJIS:
+            raise ErroPregao("Emoji não disponível.")
+        return self._emote(sala, email, "emoji", emoji, agora, INTERVALO_EMOJI)
+
+    def tocar_frase(self, sala: str, email: str, frase_id: int, agora: datetime | None = None) -> Emote:
+        """O avatar fala uma das frases da pessoa no salão."""
+        agora = agora or datetime.now()
+        with self._con() as con:
+            if not con.execute("SELECT 1 FROM frases WHERE id = ? AND email = ?", (int(frase_id), email)).fetchone():
+                raise ErroPregao("Frase não encontrada.")
+        return self._emote(sala, email, "frase", str(int(frase_id)), agora, INTERVALO_FRASE)
+
+    def _emote(self, sala: str, email: str, tipo: str, conteudo: str, agora: datetime, intervalo: timedelta) -> Emote:
+        if sala not in SALAS:
+            raise ErroPregao("Sala desconhecida.")
+        ate = self.silenciado_ate(email, agora)
+        if ate:
+            raise ErroPregao(f"Você está silenciado até {ate:%d/%m %H:%M}.")
+        with self._con() as con:
+            ultimo = self._ultimo_emote(con, email, tipo)
+            if ultimo and timedelta(0) <= agora - ultimo < intervalo:
+                raise ErroPregao("Calma: espere um instante.")
+            cur = con.execute("INSERT INTO emotes (sala, email, tipo, conteudo, criado_em) VALUES (?, ?, ?, ?, ?)",
+                              (sala, email, tipo, conteudo, agora.isoformat(timespec="milliseconds")))
+            con.execute("DELETE FROM emotes WHERE criado_em < ?", ((agora - timedelta(days=1)).isoformat(),))
+            return Emote(int(cur.lastrowid), sala, email, tipo, conteudo, agora)
+
+    def emotes(self, sala: str, desde: timedelta = EMOTE_DURA, agora: datetime | None = None) -> list[Emote]:
+        agora = agora or datetime.now()
+        with self._con() as con:
+            linhas = con.execute("SELECT * FROM emotes WHERE sala = ? AND criado_em >= ? ORDER BY id",
+                                 (sala, (agora - desde).isoformat(timespec="milliseconds"))).fetchall()
+        return [Emote(ln["id"], ln["sala"], ln["email"], ln["tipo"], ln["conteudo"],
+                      datetime.fromisoformat(ln["criado_em"])) for ln in linhas]
+
+    def salvar_frase(self, email: str, texto: str, audio: bytes | None = None, origem: str = "texto",
+                     agora: datetime | None = None) -> Frase:
+        texto = re.sub(r"\s+", " ", texto or "").strip()
+        if not texto:
+            raise ErroPregao("Escreva a frase (ela aparece no balão do avatar).")
+        if len(texto) > FRASE_TEXTO_MAXIMO:
+            raise ErroPregao(f"Frases têm até {FRASE_TEXTO_MAXIMO} caracteres.")
+        if origem not in ("texto", "voz", "gravada"):
+            raise ErroPregao("Origem de áudio desconhecida.")
+        if audio is not None and len(audio) > FRASE_AUDIO_MAXIMO:
+            raise ErroPregao("Áudio grande demais: grave até 8 segundos.")
+        from chronotrade.moderacao import conferir
+
+        problema = conferir(texto)
+        if problema:
+            raise ErroPregao(problema)
+        agora = agora or datetime.now()
+        with self._con() as con:
+            total = con.execute("SELECT COUNT(*) FROM frases WHERE email = ?", (email,)).fetchone()[0]
+            if total >= FRASES_MAXIMO:
+                raise ErroPregao(f"Você já tem {FRASES_MAXIMO} frases. Apague uma para gravar outra.")
+            cur = con.execute("INSERT INTO frases (email, texto, audio, origem, criado_em) VALUES (?, ?, ?, ?, ?)",
+                              (email, texto, audio, origem, agora.isoformat(timespec="seconds")))
+        return Frase(int(cur.lastrowid), email, texto, origem, audio is not None, agora)
+
+    def _frase(self, ln) -> Frase:
+        return Frase(ln["id"], ln["email"], ln["texto"], ln["origem"], bool(ln["tem_audio"]),
+                     datetime.fromisoformat(ln["criado_em"]), ln["denuncias"])
+
+    def frases(self, email: str) -> list[Frase]:
+        with self._con() as con:
+            linhas = con.execute("SELECT id, email, texto, origem, criado_em, denuncias, audio IS NOT NULL AS tem_audio "
+                                 "FROM frases WHERE email = ? ORDER BY id", (email,)).fetchall()
+        return [self._frase(ln) for ln in linhas]
+
+    def frase(self, frase_id: int) -> tuple[Frase, bytes | None] | None:
+        with self._con() as con:
+            ln = con.execute("SELECT *, audio IS NOT NULL AS tem_audio FROM frases WHERE id = ?", (int(frase_id),)).fetchone()
+        return (self._frase(ln), ln["audio"]) if ln else None
+
+    def apagar_frase(self, frase_id: int, email: str | None = None) -> bool:
+        """Apaga a frase (a própria pessoa, ou o admin quando email=None)."""
+        with self._con() as con:
+            if email is None:
+                cur = con.execute("DELETE FROM frases WHERE id = ?", (int(frase_id),))
+            else:
+                cur = con.execute("DELETE FROM frases WHERE id = ? AND email = ?", (int(frase_id), email))
+            return cur.rowcount > 0
+
+    def denunciar_frase(self, frase_id: int) -> None:
+        with self._con() as con:
+            con.execute("UPDATE frases SET denuncias = denuncias + 1 WHERE id = ?", (int(frase_id),))
+
+    def frases_denunciadas(self) -> list[Frase]:
+        with self._con() as con:
+            linhas = con.execute("SELECT id, email, texto, origem, criado_em, denuncias, audio IS NOT NULL AS tem_audio "
+                                 "FROM frases WHERE denuncias > 0 ORDER BY denuncias DESC").fetchall()
+        return [self._frase(ln) for ln in linhas]
+
     def apagar_dados(self, email: str) -> None:
         """LGPD: some com perfil, presença, reações e privadas da pessoa."""
         with self._con() as con:
             for sql in ("DELETE FROM perfis_pregao WHERE email = ?", "DELETE FROM presenca WHERE email = ?",
-                        "DELETE FROM reacoes WHERE email = ?", "DELETE FROM privadas WHERE de = ? OR para = ?"):
+                        "DELETE FROM reacoes WHERE email = ?", "DELETE FROM privadas WHERE de = ? OR para = ?",
+                        "DELETE FROM emotes WHERE email = ?", "DELETE FROM frases WHERE email = ?"):
                 con.execute(sql, (email,) * sql.count("?"))
 
 

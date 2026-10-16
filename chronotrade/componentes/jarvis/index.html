@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --cor: #34D399; --cor2: #F2C14E; --fundo: rgba(12,17,28,.92); --texto: #EEF2F7; --suave: #9AA6B8; --erro: #F87171; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden;
+    font-family: 'Plus Jakarta Sans', 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif; color: var(--texto); }
+  .raiz { position: relative; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; padding: 4px; }
+  .cartao { width: 330px; max-width: calc(100vw - 24px); background: var(--fundo); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px; padding: 12px 14px 10px; box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.03) inset;
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transform-origin: bottom right;
+    animation: entrar .28s cubic-bezier(.2,.8,.2,1); }
+  .cartao[hidden] { display: none; }
+  @keyframes entrar { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+  .topo { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--suave); }
+  .ponto { width: 8px; height: 8px; border-radius: 50%; background: var(--suave); flex: 0 0 auto; }
+  .ponto.vivo { background: var(--cor); box-shadow: 0 0 0 0 var(--cor); animation: pulso 1.6s infinite; }
+  .ponto.grava { background: var(--erro); animation: pulso 1s infinite; }
+  @keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.6); } 70% { box-shadow: 0 0 0 8px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+  .topo .status { flex: 1; }
+  .topo button { background: none; border: 0; color: var(--suave); cursor: pointer; font-size: 16px; padding: 2px 4px; border-radius: 6px; }
+  .topo button:hover, .topo button:focus-visible { color: var(--texto); background: rgba(255,255,255,.08); outline: none; }
+  .linha { margin-top: 8px; font-size: 14px; line-height: 1.45; }
+  .linha .quem { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--suave); display: block; }
+  .linha.jarvis .txt { color: var(--texto); }
+  .linha.voce .txt { color: #C7D2E0; font-style: italic; }
+  .txt { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+  .nivel { height: 4px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 10px; overflow: hidden; }
+  .nivel i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--cor), var(--cor2)); transition: width .08s linear; }
+  .modos { display: flex; gap: 6px; margin-top: 10px; }
+  .modos button { flex: 1; font: inherit; font-size: 12px; padding: 6px 8px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.14); background: transparent; color: var(--suave); transition: all .15s ease; }
+  .modos button.ativo { background: var(--cor); color: #06110C; border-color: transparent; font-weight: 700; }
+  .modos button:hover { border-color: rgba(255,255,255,.35); }
+  .dica { margin-top: 8px; font-size: 11.5px; color: var(--suave); }
+  .orbe { position: relative; width: 62px; height: 62px; border-radius: 50%; border: 0; cursor: pointer; flex: 0 0 auto;
+    background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 45%), linear-gradient(145deg, var(--cor), #0E7C66);
+    box-shadow: 0 10px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.18) inset; display: grid; place-items: center;
+    transition: transform .18s ease, filter .18s ease; }
+  .orbe:hover { transform: translateY(-2px) scale(1.04); }
+  .orbe:active { transform: scale(.95); }
+  .orbe:focus-visible { outline: 3px solid var(--cor2); outline-offset: 3px; }
+  .orbe svg { width: 26px; height: 26px; fill: #06110C; position: relative; z-index: 2; }
+  .orbe.parado { background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.25), transparent 45%), linear-gradient(145deg, #3B4658, #1C2331); }
+  .orbe.parado svg { fill: #DCE3EE; }
+  .orbe::before, .orbe::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--cor); opacity: 0; }
+  .orbe.ouvindo::before { animation: onda 2.2s ease-out infinite; }
+  .orbe.ouvindo::after { animation: onda 2.2s ease-out 1.1s infinite; }
+  .orbe.gravando { background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.35), transparent 45%), linear-gradient(145deg, #FB7185, #BE123C); }
+  .orbe.gravando::before { border-color: #FB7185; animation: onda 1s ease-out infinite; }
+  .orbe.pensando::before { opacity: 1; border-color: transparent; border-top-color: var(--cor2); border-right-color: var(--cor2); animation: girar .9s linear infinite; inset: -5px; }
+  .orbe.falando { animation: falar .5s ease-in-out infinite alternate; }
+  @keyframes onda { from { opacity: .7; transform: scale(1); } to { opacity: 0; transform: scale(1.7); } }
+  @keyframes girar { to { transform: rotate(360deg); } }
+  @keyframes falar { to { transform: scale(1.07); filter: brightness(1.12); } }
+  .selo { position: absolute; top: -3px; right: -3px; z-index: 3; min-width: 18px; height: 18px; border-radius: 9px; background: var(--cor2);
+    color: #1B1606; font-size: 11px; font-weight: 800; display: grid; place-items: center; padding: 0 4px; }
+  .selo[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { .orbe::before, .orbe::after, .orbe.falando, .ponto { animation: none !important; } .cartao { animation: none; } }
+</style>
+</head>
+<body>
+<div class="raiz" id="raiz">
+  <div class="cartao" id="cartao" hidden role="status" aria-live="polite">
+    <div class="topo"><span class="ponto" id="ponto"></span><span class="status" id="status">Jarvis</span>
+      <button id="fechar" title="Esconder" aria-label="Esconder o cartão">✕</button></div>
+    <div class="linha voce" id="lvoce" hidden><span class="quem">Você</span><span class="txt" id="voce"></span></div>
+    <div class="linha jarvis" id="ljarvis" hidden><span class="quem">Jarvis</span><span class="txt" id="resposta"></span></div>
+    <div class="nivel" id="nivel" hidden><i id="barra"></i></div>
+    <div class="modos" role="group" aria-label="Modo de escuta">
+      <button id="m_palavra" title="O microfone fica aberto e o Jarvis responde quando você diz “Jarvis”.">Sempre ouvindo</button>
+      <button id="m_toque" title="Toque no botão, fale, e ele para sozinho quando você terminar.">Toque para falar</button>
+    </div>
+    <div class="dica" id="dica"></div>
+  </div>
+  <button class="orbe parado" id="orbe" aria-label="Jarvis: ligar o microfone (Alt+J)" title="Jarvis, mãos livres (Alt+J)">
+    <span class="selo" id="selo" hidden>!</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+  </button>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const orbe = $('orbe'), cartao = $('cartao');
+  const enviar = (tipo, dados) => window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type: tipo }, dados), '*');
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const lido = (k, p) => { try { const v = localStorage.getItem(k); return v == null ? p : v; } catch (e) { return p; } };
+
+  let args = {}, estado = 'parado', modo = lido('ct_jv_modo', 'palavra'), contador = +lido('ct_jv_n', '0') || 0;
+  let ultimaResposta = +lido('ct_jv_resp', '-1'), primeiro = true, umaVez = false, esconderEm = null, esperaTimer = null;
+  let ctx = null, fluxo = null, proc = null, fonte = null;
+
+  // --- posição: flutua no canto da tela, por cima do app ------------------------------------
+  const fe = window.frameElement;
+  function posicionar() {
+    if (!fe) return;
+    const doc = window.parent.document;
+    const chat = doc.querySelector('[data-testid="stChatInput"]');
+    const baixo = chat ? Math.max(16, window.parent.innerHeight - chat.getBoundingClientRect().top + 10) : 16;
+    const largura = cartao.hidden ? 76 : Math.min(352, window.parent.innerWidth - 12);
+    fe.style.cssText = `position:fixed;right:12px;bottom:${baixo}px;width:${largura}px;z-index:999990;border:0;` +
+      `background:transparent;color-scheme:normal;transition:bottom .2s ease;`;
+    const caixa = fe.closest('[data-testid="stElementContainer"], .element-container');
+    if (caixa) {
+      caixa.style.cssText = 'height:0;min-height:0;margin:0;padding:0;overflow:visible;';
+      // nada acima do botão pode "prender" o position:fixed (transform, filtro, animação)
+      let e = caixa;
+      for (let i = 0; e && i < 8 && e !== doc.body; i++, e = e.parentElement) {
+        const s = window.parent.getComputedStyle(e);
+        if (s.transform !== 'none' || s.filter !== 'none' || s.backdropFilter !== 'none' || (s.contain && s.contain !== 'none')) {
+          e.style.setProperty('transform', 'none', 'important'); e.style.setProperty('animation', 'none', 'important');
+          e.style.setProperty('filter', 'none', 'important'); e.style.setProperty('contain', 'none', 'important');
+        }
+      }
+    }
+    enviar('streamlit:setFrameHeight', { height: document.getElementById('raiz').offsetHeight + 8 });
+  }
+  setInterval(posicionar, 1200);
+  new ResizeObserver(posicionar).observe(document.getElementById('raiz'));
+
+  function cores() {
+    try {
+      const s = window.parent.getComputedStyle(window.parent.document.documentElement);
+      const c1 = s.getPropertyValue('--jade').trim(), c2 = s.getPropertyValue('--ouro').trim();
+      if (c1) document.documentElement.style.setProperty('--cor', c1);
+      if (c2) document.documentElement.style.setProperty('--cor2', c2);
+    } catch (e) {}
+  }
+
+  // --- interface -----------------------------------------------------------------------------
+  const TEXTOS = {
+    parado: 'Microfone desligado', espera: 'Pronto. Toque no botão e fale.',
+    ouvindo: () => modo === 'palavra' ? 'Ouvindo… comece com “Jarvis”' : 'Pode falar…',
+    gravando: 'Escutando você…', pensando: 'Pensando…', falando: 'Falando…',
+  };
+  function mudar(novo, texto) {
+    estado = novo;
+    orbe.className = 'orbe ' + novo;
+    const t = TEXTOS[novo]; $('status').textContent = texto || (typeof t === 'function' ? t() : t);
+    $('ponto').className = 'ponto' + (novo === 'gravando' ? ' grava' : (['ouvindo', 'espera', 'pensando', 'falando'].includes(novo) ? ' vivo' : ''));
+    $('nivel').hidden = !['ouvindo', 'gravando'].includes(novo);
+    orbe.setAttribute('aria-label', novo === 'parado' ? 'Jarvis: ligar o microfone (Alt+J)' : 'Jarvis: desligar o microfone (Alt+J)');
+    $('m_palavra').classList.toggle('ativo', modo === 'palavra');
+    $('m_toque').classList.toggle('ativo', modo === 'toque');
+    $('dica').textContent = modo === 'palavra'
+      ? 'Ex.: “Jarvis, faz o check-in”, “Jarvis, e se vier uma crise como a de 2008?”, “Jarvis, aplausos no pregão”.'
+      : 'Toque, fale o comando e espere. Ex.: “cotação da Taesa”, “abrir a agenda”.';
+  }
+  function mostrarCartao(segundos) {
+    cartao.hidden = false; posicionar();
+    clearTimeout(esconderEm);
+    if (segundos) esconderEm = setTimeout(() => { if (!['gravando', 'pensando', 'falando'].includes(estado)) { cartao.hidden = true; posicionar(); } }, segundos * 1000);
+  }
+  $('fechar').onclick = () => { cartao.hidden = true; posicionar(); };
+  $('m_palavra').onclick = () => { modo = 'palavra'; guardar('ct_jv_modo', modo); if (estado === 'espera') mudar('ouvindo'); else mudar(estado); };
+  $('m_toque').onclick = () => { modo = 'toque'; guardar('ct_jv_modo', modo); if (estado === 'ouvindo') mudar('espera'); else mudar(estado); };
+
+  // --- microfone e detecção de fala ------------------------------------------------------------
+  let piso = 0.008, falando = false, quadros = [], previos = [], silencio = 0, acima = 0, inicioFala = 0;
+  async function ligar() {
+    if (fluxo) return true;
+    try {
+      fluxo = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
+    } catch (e) {
+      mudar('parado', 'Sem acesso ao microfone. Libere no cadeado do navegador.'); mostrarCartao(8); return false;
+    }
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    fonte = ctx.createMediaStreamSource(fluxo);
+    proc = ctx.createScriptProcessor(4096, 1, 1);
+    proc.onaudioprocess = ouvirQuadro;
+    fonte.connect(proc); proc.connect(ctx.destination);
+    if (ctx.state === 'suspended') {
+      $('status').textContent = 'Toque em qualquer lugar da tela para ativar o microfone';
+      const retomar = () => { ctx && ctx.resume(); window.parent.document.removeEventListener('pointerdown', retomar, true); };
+      window.parent.document.addEventListener('pointerdown', retomar, true);
+    }
+    guardar('ct_jv_ligado', '1');
+    return true;
+  }
+  function desligar() {
+    try { proc && proc.disconnect(); fonte && fonte.disconnect(); fluxo && fluxo.getTracks().forEach(t => t.stop()); ctx && ctx.close(); } catch (e) {}
+    ctx = fluxo = proc = fonte = null; falando = false; quadros = [];
+    try { speechSynthesis.cancel(); } catch (e) {}
+    guardar('ct_jv_ligado', '0');
+    mudar('parado');
+  }
+  function ouvirQuadro(ev) {
+    if (!['ouvindo', 'gravando'].includes(estado)) return;
+    const d = ev.inputBuffer.getChannelData(0);
+    let s = 0; for (let i = 0; i < d.length; i++) s += d[i] * d[i];
+    const rms = Math.sqrt(s / d.length), limiar = Math.max(0.012, piso * 3.2);
+    $('barra').style.width = Math.min(100, rms / limiar * 45) + '%';
+    const copia = new Float32Array(d);
+    if (!falando) {
+      previos.push(copia); if (previos.length > 4) previos.shift();
+      if (rms > limiar) { acima++; } else { acima = 0; piso = piso * 0.95 + rms * 0.05; }
+      if (acima >= 2) { falando = true; quadros = previos.slice(); previos = []; silencio = 0; inicioFala = Date.now(); mudar('gravando'); }
+      return;
+    }
+    quadros.push(copia);
+    silencio = rms < limiar * 0.8 ? silencio + 1 : 0;
+    const segundos = quadros.length * d.length / ctx.sampleRate;
+    if (silencio * d.length / ctx.sampleRate > 0.85 || segundos > 12) terminarFala();
+  }
+  function terminarFala() {
+    falando = false;
+    const taxa = ctx.sampleRate, total = quadros.reduce((n, q) => n + q.length, 0);
+    const tudo = new Float32Array(total); let o = 0; quadros.forEach(q => { tudo.set(q, o); o += q.length; }); quadros = [];
+    if (total / taxa < 0.5) { mudar(modo === 'palavra' || umaVez ? 'ouvindo' : 'espera'); return; }
+    const wav = paraWav(reamostrar(tudo, taxa, 16000), 16000);
+    umaVez = false;
+    mudar('pensando'); mostrarCartao();
+    valor({ acao: 'fala', audio: base64(wav), modo, n: ++contador });
+    clearTimeout(esperaTimer);
+    esperaTimer = setTimeout(() => { if (estado === 'pensando') voltar(); }, 30000);
+  }
+  function reamostrar(x, de, para) {
+    if (de === para) return x;
+    const r = de / para, n = Math.floor(x.length / r), y = new Float32Array(n);
+    for (let i = 0; i < n; i++) { const a = Math.floor(i * r), b = Math.min(x.length, Math.floor((i + 1) * r)); let s = 0; for (let j = a; j < b; j++) s += x[j]; y[i] = s / Math.max(1, b - a); }
+    return y;
+  }
+  function paraWav(x, taxa) {
+    const buf = new ArrayBuffer(44 + x.length * 2), v = new DataView(buf);
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, 'RIFF'); v.setUint32(4, 36 + x.length * 2, true); str(8, 'WAVE'); str(12, 'fmt '); v.setUint32(16, 16, true);
+    v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, taxa, true); v.setUint32(28, taxa * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true); str(36, 'data'); v.setUint32(40, x.length * 2, true);
+    for (let i = 0; i < x.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, x[i])) * 0x7fff, true);
+    return buf;
+  }
+  function base64(buf) {
+    const b = new Uint8Array(buf); let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function valor(v) { guardar('ct_jv_n', String(contador)); enviar('streamlit:setComponentValue', { value: v, dataType: 'json' }); }
+  function voltar() {
+    if (!fluxo) { mudar('parado'); return; }
+    mudar(modo === 'palavra' ? 'ouvindo' : 'espera');
+  }
+
+  // --- respostas ------------------------------------------------------------------------------
+  function falar(r) {
+    const fim = () => { if (r.parar) { desligar(); mostrarCartao(6); } else { setTimeout(voltar, 250); mostrarCartao(9); } };
+    if (r.audio) {
+      mudar('falando');
+      const a = new Audio(r.audio); a.onended = fim; a.onerror = fim;
+      a.play().catch(() => fim());
+      return;
+    }
+    if (r.texto && 'speechSynthesis' in window) {
+      mudar('falando');
+      try {
+        const u = new SpeechSynthesisUtterance(r.fala || r.texto); u.lang = 'pt-BR'; u.rate = 1.05;
+        const v = speechSynthesis.getVoices().find(x => x.lang && x.lang.startsWith('pt')); if (v) u.voice = v;
+        u.onend = fim; u.onerror = fim; speechSynthesis.cancel(); speechSynthesis.speak(u);
+        setTimeout(() => { if (estado === 'falando' && !speechSynthesis.speaking) fim(); }, 1500);
+      } catch (e) { fim(); }
+      return;
+    }
+    fim();
+  }
+  function receber(r) {
+    if (!r || r.n == null) return;
+    if (primeiro && r.n <= ultimaResposta) return;   // já tocada antes de recarregar a tela
+    if (!primeiro && r.n === ultimaResposta) return;
+    ultimaResposta = r.n; guardar('ct_jv_resp', String(r.n));
+    clearTimeout(esperaTimer);
+    if (r.silencioso) { voltar(); return; }
+    $('lvoce').hidden = !r.ouvido; $('voce').textContent = r.ouvido || '';
+    $('ljarvis').hidden = !r.texto; $('resposta').textContent = r.texto || '';
+    mostrarCartao();
+    $('selo').hidden = true;
+    falar(r);
+  }
+
+  // --- botão, atalho e ciclo de vida ------------------------------------------------------------
+  async function alternar() {
+    if (estado === 'falando') { try { speechSynthesis.cancel(); } catch (e) {} voltar(); return; }
+    if (estado === 'parado') {
+      mudar('pensando', 'Ligando o microfone…'); mostrarCartao();
+      if (!(await ligar())) return;
+      if (modo === 'toque') umaVez = true;
+      mudar('ouvindo'); mostrarCartao(modo === 'palavra' ? 10 : 0);
+      return;
+    }
+    if (estado === 'espera') { umaVez = true; mudar('ouvindo'); mostrarCartao(); return; }
+    desligar(); mostrarCartao(4);
+  }
+  orbe.onclick = alternar;
+  try {
+    window.parent.__ctJarvis = alternar;
+    if (!window.parent.__ctJarvisAtalho) {
+      window.parent.__ctJarvisAtalho = true;
+      window.parent.document.addEventListener('keydown', e => {
+        if (e.altKey && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); window.parent.__ctJarvis && window.parent.__ctJarvis(); }
+      });
+    }
+  } catch (e) {}
+  document.addEventListener('keydown', e => { if (e.altKey && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); alternar(); } });
+
+  window.addEventListener('message', async e => {
+    if (!e.data || e.data.type !== 'streamlit:render') return;
+    args = e.data.args || {};
+    cores();
+    if (primeiro) {
+      mudar('parado');
+      receber(args.resposta);
+      primeiro = false;
+      if (lido('ct_jv_ligado', '0') === '1' && args.permitido !== false) {
+        if (await ligar()) { mudar(modo === 'palavra' ? 'ouvindo' : 'espera'); }
+      }
+    } else {
+      receber(args.resposta);
+    }
+    posicionar();
+  });
+  enviar('streamlit:componentReady', { apiVersion: 1 });
+  posicionar();
+})();
+</script>
+</body>
+</html>

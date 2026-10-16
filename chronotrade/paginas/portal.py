@@ -1,5 +1,7 @@
 """Portal: onde a carteira está hoje e quanto falta para a meta de renda."""
 
+import contextlib
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
@@ -10,6 +12,12 @@ from chronotrade.calculos import brl, pct
 st.title("Portal")
 tema.subtitulo("Onde a sua carteira está hoje e quanto falta para a renda que você quer.")
 c = estado.carteira()
+atalhos = [("paginas/aporte.py", "Próximo aporte", "🧭"), ("paginas/simulador.py", "Simular uma crise", "🌪️"),
+           ("paginas/pregao.py", "Pregão ao vivo", "🏛️"), ("paginas/loja.py", "Check-in e loja", "✅"),
+           ("paginas/jarvis.py", "Jarvis mãos livres", "🎙️")]
+for col, (pagina, rotulo, icone) in zip(st.columns(len(atalhos)), atalhos, strict=True):
+    with col, contextlib.suppress(Exception):  # tela fora do plano: o atalho some
+        st.page_link(pagina, label=rotulo, icon=icone, width="stretch")
 primeiros_passos.mostrar()
 
 if not c.posicoes:

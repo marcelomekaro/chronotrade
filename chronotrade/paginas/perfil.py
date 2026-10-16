@@ -84,14 +84,76 @@ with col_form:
 
 with col_prev:
     st.markdown("**Assim você aparece**")
-    st.html(f'<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px;'
-            f'border:3px solid var(--creme,#E9E1C8);border-radius:8px;background:#121838">'
+    st.html(f'<div class="ct-janela" style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px">'
             f'{av.retrato(boneco.json(), foto_final, eu, 128, apelido)}'
-            f'<div style="font-family:Pixelify Sans,monospace;color:#F2C14E;font-size:1.3rem">{html.escape(apelido or "?")}</div>'
-            f'<div style="color:#A9B0D6;font-size:.9rem;text-align:center">{html.escape(bio or "")}</div></div>')
+            f'<div style="color:var(--ouro);font-size:1.3rem;font-weight:800">{html.escape(apelido or "?")}</div>'
+            f'<div style="color:var(--suave);font-size:.9rem;text-align:center">{html.escape(bio or "")}</div></div>')
     if st.session_state.foto_nova:
         st.caption("Foto nova ainda não salva.")
     st.page_link("paginas/pregao.py", label="Ir para o Pregão", icon="🏛️")
+
+st.divider()
+st.subheader("Frases do avatar")
+st.markdown("Frases curtas que o seu avatar fala no salão do Pregão: com a **sua voz** gravada, com a **voz do Jarvis** "
+            "ou com a voz do navegador. No salão, toque em **🗣️ Frases** ou diga *“Jarvis, falar a minha frase 1”*.")
+frases = db.frases(eu) if pode else []
+for i, f in enumerate(frases, start=1):
+    with st.container(border=True):
+        c1, c2, c3 = st.columns([0.62, 0.26, 0.12], vertical_alignment="center")
+        origem_txt = {"gravada": "🎙️ sua voz", "voz": "🤖 voz do Jarvis", "texto": "🗣️ voz do navegador"}[f.origem]
+        c1.markdown(f"**{i}. {html.escape(f.texto)}**  \n<span style='color:var(--suave);font-size:.85rem'>{origem_txt}</span>",
+                    unsafe_allow_html=True)
+        with c2:
+            achada = db.frase(f.id)
+            if achada and achada[1]:
+                st.audio(achada[1], format="audio/wav")
+            elif st.button("▶ Ouvir", key=f"ouvir_frase{f.id}"):
+                import streamlit.components.v1 as components
+
+                from chronotrade import jarvis
+
+                components.html(jarvis.falar_no_navegador(f.texto), height=0)
+        if c3.button("🗑️", key=f"apagar_frase{f.id}", help="Apagar esta frase"):
+            db.apagar_frase(f.id, eu)
+            st.rerun()
+
+if pode and len(frases) < pg.FRASES_MAXIMO:
+    with st.expander("➕ Nova frase", expanded=not frases):
+        sugestoes = ["Bom dia, pregão!", "Buy and hold diário!", "Mais um aporte feito!", "Data com chegando!",
+                     "Dividendo caiu na conta!", "Paciência também rende."]
+        escolhida = st.pills("Ideias", sugestoes, key="frase_ideia")
+        texto_frase = st.text_input("Texto da frase (aparece no balão)", value=escolhida or "", max_chars=pg.FRASE_TEXTO_MAXIMO,
+                                    key=f"frase_texto_{escolhida or ''}")
+        from chronotrade import jarvis_app
+
+        voz_ok = jarvis_app.saude()["online"] and jarvis_app.saude()["voz"]
+        modos = {"gravada": "🎙️ Gravar com a minha voz", "voz": "🤖 Voz do Jarvis", "texto": "🗣️ Voz do navegador"}
+        if not voz_ok:
+            modos.pop("voz")
+        modo = st.radio("Como o avatar fala", list(modos), format_func=modos.get, horizontal=True, key="frase_modo")
+        gravacao = st.audio_input("Grave a frase (até 8 segundos)", key="frase_audio") if modo == "gravada" else None
+        if st.button("Salvar frase", type="primary", disabled=not texto_frase.strip()):
+            from chronotrade import audio as au
+
+            try:
+                som = None
+                if modo == "gravada":
+                    if gravacao is None:
+                        raise pg.ErroPregao("Grave a frase antes de salvar.")
+                    som, _ = au.preparar_frase(gravacao.getvalue())
+                elif modo == "voz":
+                    bruto = jarvis_app.cliente().sintetizar(texto_frase)
+                    som = au.preparar_frase(bruto, 10)[0] if bruto else None
+                db.salvar_frase(eu, texto_frase, som, modo if som or modo == "texto" else "texto")
+                estado.conquistar("primeira_frase")
+                st.toast("Frase salva. Use no salão do Pregão!", icon="🗣️")
+                st.rerun()
+            except (pg.ErroPregao, au.ErroAudio) as erro:
+                st.error(str(erro))
+        tema.legenda("Frases são públicas no salão e passam pelas regras do Pregão: nada de promessas de ganho, "
+                     "links ou ofensas. Quem ouvir algo errado pode denunciar.")
+elif not pode:
+    st.caption("Crie a sua conta para gravar frases.")
 
 st.divider()
 st.subheader("Aparência do app")
@@ -99,22 +161,28 @@ from chronotrade import tema as _tema  # noqa: E402
 
 atual_tema = estado.tema_atual()
 opcoes = list(_tema.TEMAS)
-cols = st.columns(len(opcoes))
-for col, chave in zip(cols, opcoes, strict=True):
-    t = _tema.TEMAS[chave]
-    with col:
-        st.html(f'<div style="border:3px solid {t["borda"]};border-radius:8px;overflow:hidden;'
-                f'box-shadow:0 0 0 {"3px " + t["ouro"] if chave == atual_tema else "0"}">'
-                f'<div style="background:{t["ceu"]};padding:10px 12px;color:{t["texto"]};font-weight:700">'
-                f'<span style="color:{t["ouro"]}">●</span> {t["nome"]}</div>'
-                f'<div style="background:linear-gradient(180deg,{t["janela_topo"]},{t["janela_base"]});height:34px"></div>'
-                f'<div style="background:{t["ceu_2"]};color:{t["suave"]};padding:8px 12px;font-size:.85rem;min-height:58px">'
-                f'{t["descricao"]}</div></div>')
-        if st.button("Em uso" if chave == atual_tema else "Usar este", key=f"tema_{chave}", width="stretch",
-                     disabled=chave == atual_tema, type="secondary" if chave == atual_tema else "primary"):
-            if estado.visitante():
-                st.session_state.tema_visitante = chave
-            else:
-                db.salvar_tema(eu, chave, nome)
-            st.rerun()
-tema.legenda("O tema vale para você, em todos os aparelhos. O salão do Pregão mantém o visual de jogo.")
+for inicio in range(0, len(opcoes), 3):
+    cols = st.columns(3)
+    for col, chave in zip(cols, opcoes[inicio:inicio + 3], strict=False):
+        t = _tema.TEMAS[chave]
+        with col:
+            st.html(f'<div class="ct-amostra" style="border:1px solid {t["borda"]};border-radius:16px;overflow:hidden;'
+                    f'box-shadow:0 0 0 {"2px " + t["ouro"] if chave == atual_tema else "0"};background:{t["ceu"]}">'
+                    f'<div style="padding:12px 14px;color:{t["texto"]};font-weight:700;display:flex;align-items:center;gap:8px">'
+                    f'<span style="width:12px;height:12px;border-radius:50%;background:{t["ouro"]};display:inline-block"></span>'
+                    f'{t["nome"]}</div>'
+                    f'<div style="display:flex;gap:6px;padding:0 14px 10px">'
+                    f'<span style="flex:2;height:30px;border-radius:8px;background:linear-gradient(135deg,{t["janela_topo"]},{t["janela_base"]})"></span>'
+                    f'<span style="flex:1;height:30px;border-radius:8px;background:{t["ouro"]}"></span>'
+                    f'<span style="flex:1;height:30px;border-radius:8px;background:{t["jade"]}"></span></div>'
+                    f'<div style="background:{t["ceu_2"]};color:{t["suave"]};padding:8px 14px;font-size:.85rem;min-height:54px">'
+                    f'{t["descricao"]}</div></div>')
+            if st.button("Em uso" if chave == atual_tema else "Usar este", key=f"tema_{chave}", width="stretch",
+                         disabled=chave == atual_tema, type="secondary" if chave == atual_tema else "primary"):
+                if estado.visitante():
+                    st.session_state.tema_visitante = chave
+                else:
+                    db.salvar_tema(eu, chave, nome)
+                st.rerun()
+tema.legenda("O tema vale para você, em todos os aparelhos. Dá para trocar por voz: “Jarvis, mudar o tema para verde”. "
+             "O salão do Pregão mantém o visual de jogo.")

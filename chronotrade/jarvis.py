@@ -27,6 +27,7 @@ import urllib.request
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from difflib import SequenceMatcher
 
 from chronotrade.legal import AVISO_CURTO
 
@@ -145,6 +146,10 @@ PAGINAS = {
     "perfil": ("paginas/perfil.py", ["meu perfil", "perfil", "foto", "apelido"]),
     "avisos": ("paginas/avisos.py", ["avisos", "notificacoes"]),
     "conta": ("paginas/conta.py", ["minha conta", "assinatura", "plano"]),
+    "loja": ("paginas/loja.py", ["loja", "pontos", "meus pontos"]),
+    "simulador": ("paginas/simulador.py", ["simulador", "simulacao", "simulacoes", "teste de estresse", "estresse"]),
+    "jarvis": ("paginas/jarvis.py", ["jarvis", "conversa com o jarvis"]),
+    "compartilhar": ("paginas/compartilhar.py", ["relatorio", "relatorios"]),
 }
 
 EMPRESAS = {
@@ -228,6 +233,132 @@ class Comando:
     lado: str | None = None
     quantidade: int | None = None
     preco: float | None = None
+    extra: str | None = None      # cenário de estresse, emoji, número da frase, tema...
+
+
+# --- palavra de ativação e ruídos que o Whisper costuma "ouvir" no silêncio ----------------
+
+_ATIVACAO = re.compile(r"^\W*(?:(?:ok|ei|hey|oi|ola|e ai|fala|bom dia|boa tarde|boa noite)\W+)?"
+                       r"(jarvis|jarves|jarvi|javis|jarbas|jervis|djarvis|jarvas|jarviz|garvis|charvis|jarvys|jarviss)\b\W*(.*)$")
+_ALUCINACOES = {"", "obrigado", "obrigada", "tchau", "legendas pela comunidade amara org", "musica", "aplausos",
+                "e ai", "hum", "ah", "uh", "e", "sim", "nao", "legenda adriana zanotto", "inscreva se no canal",
+                "transcricao e legendas", "ok"}
+
+
+def tirar_ativacao(texto: str) -> tuple[bool, str]:
+    """("Jarvis, cotação da Taesa") -> (True, "cotação da Taesa"). Sem a palavra: (False, texto).
+
+    O reconhecimento de voz nem sempre escreve "Jarvis" certinho ("Javis", "Jardis", "Já vi"). Então a primeira
+    ou as duas primeiras palavras são comparadas pelo som: parecida de verdade vale sempre; meio parecida só vale
+    se o resto for um comando do app (para conversa de ambiente não disparar o Jarvis).
+    """
+    m = _ATIVACAO.match(normalizar(texto))
+    if m:
+        alvo = re.search(r"(?i)\b(jarvis|jarves|jarvi|javis|jarbas|jervis|djarvis|jarvas|jarviz|garvis|charvis|"
+                         r"jarvys|jarviss)\b\W*", texto)
+        return True, (texto[alvo.end():] if alvo else texto).strip()
+    palavras = re.findall(r"[\wÀ-ÿ]+", texto)
+    for n in (1, 2):
+        if len(palavras) < n:
+            break
+        candidata = normalizar("".join(palavras[:n])).replace(" ", "")
+        if not candidata or candidata[0] not in "jgdct":
+            continue
+        parecida = SequenceMatcher(None, candidata, "jarvis").ratio()
+        if parecida < 0.65:
+            continue
+        resto = texto
+        for p in palavras[:n]:
+            resto = resto[resto.find(p) + len(p):]
+        resto = resto.lstrip(" ,.!?:;-").strip()
+        if parecida >= 0.85 or (resto and entender(resto).acao not in ("conversa", "ajuda")):
+            return True, resto
+    return False, texto
+
+
+# Palavras que o reconhecimento de voz costuma trocar nos comandos do app
+_CORRECOES = [(r"\b(chiquinho|chequinho|chequinha|chiquinha|chicken|chekin|chequim)\b", "check-in"),
+              (r"\b(peibao|peibão|pegão|pegao|pregam)\b", "pregão"), (r"\bapauso(s)?\b", "aplausos"),
+              (r"\b(se mule|simula ra)\b", "simule"), (r"\bcase com\b", "crise como")]
+
+
+def corrigir(texto: str) -> str:
+    for padrao, certo in _CORRECOES:
+        texto = re.sub(padrao, certo, texto, flags=re.IGNORECASE)
+    return texto
+
+
+def ruido(texto: str) -> bool:
+    """Frases que o reconhecimento inventa com barulho de fundo ou silêncio."""
+    t = normalizar(texto).strip(" .,!?")
+    return t in _ALUCINACOES or len(t) < 2
+
+
+EMOJIS_FALADOS = {"aplaus": "👏", "palma": "👏", "aplaud": "👏", "foguete": "🚀", "dinheiro": "💰", "grana": "💰",
+                  "touro": "🐂", "urso": "🐻", "fogo": "🔥", "risada": "😂", "rir": "😂", "kkk": "😂", "festa": "🎉",
+                  "comemor": "🎉", "cafe": "☕", "aperto de mao": "🤝", "toca aqui": "🤝", "parceria": "🤝",
+                  "grafico subindo": "📈", "subindo": "📈", "grafico caindo": "📉", "caindo": "📉"}
+CENARIOS_FALADOS = [("covid", "covid"), ("pandemia", "covid"), ("2020", "covid"), ("2008", "crise_2008"),
+                    ("lehman", "crise_2008"), ("crise financeira", "crise_2008"), ("2015", "recessao_2015"),
+                    ("recessao", "recessao_2015"), ("juros", "juros_2022"), ("selic", "juros_2022"),
+                    ("greve", "greve_2018"), ("caminhoneiro", "greve_2018"), ("joesley", "joesley"),
+                    ("2017", "joesley")]
+TEMAS_FALADOS = {"verde": "verde", "laranja": "laranja", "classico": "classico", "retro": "retro",
+                 "moderno": "moderno", "oceano": "oceano", "azul": "oceano", "esmeralda": "moderno"}
+_NUM_FRASE = {"um": 1, "uma": 1, "primeira": 1, "dois": 2, "duas": 2, "segunda": 2, "tres": 3, "terceira": 3,
+              "quatro": 4, "quarta": 4, "cinco": 5, "quinta": 5, "seis": 6, "sexta": 6}
+
+
+def _entender_app(t: str, texto: str) -> Comando | None:
+    """Comandos que mexem no app: parar, confirmar, check-in, emojis, frases, tema, avisos, simulações."""
+    if re.search(r"\b(para de ouvir|pare de ouvir|parar de ouvir|desliga\w* (o )?(microfone|jarvis|maos livres)|"
+                 r"pode descansar|tchau jarvis|ate mais jarvis|dormir)\b", t):
+        return Comando("parar", texto)
+    if re.fullmatch(r"(repete|repita|repetir|o que voce disse|nao ouvi|fala de novo)( por favor)?", t):
+        return Comando("repetir", texto)
+    if re.fullmatch(r"(sim|sim pode|confirm\w*|pode confirmar|confirma( a ordem| a compra| a venda)?|isso mesmo|"
+                    r"manda ver|pode mandar|executa|executar)( por favor)?", t):
+        return Comando("confirmar", texto)
+    if re.fullmatch(r"(nao|cancel\w*|cancela( a ordem)?|deixa pra la|esquece|desist\w*)( por favor)?", t):
+        return Comando("cancelar", texto)
+    if re.search(r"\b(check ?in|chec?k ?ins?|chequin|chekin|tchequin|chiquin|chiquinho|marcar presenca|bater (o )?ponto)\b", t):
+        return Comando("checkin", texto)
+    if re.search(r"\b(emoji|solt\w*|mand\w*|jog\w*|aplaud\w*|aplaus\w*|palmas|comemor\w*)\b", t) and \
+            (re.search(r"\b(pregao|salao|sala|emoji|aplaud\w*|aplaus\w*|palmas|comemor\w*)\b", t)):
+        for chave, emoji in EMOJIS_FALADOS.items():
+            if chave in t:
+                return Comando("emoji", texto, extra=emoji)
+        return Comando("emoji", texto, extra="👏")
+    m = re.search(r"\b(fal\w*|toc\w*|diz\w*|solt\w*|mand\w*)\b.*\bfrase\b(?:\s+(?:numero\s+)?(\d|\w+))?", t)
+    if m:
+        palavra = m.group(2) or "1"
+        indice = int(palavra) if palavra.isdigit() else _NUM_FRASE.get(palavra, 1)
+        m2 = re.search(r"\b(primeira|segunda|terceira|quarta|quinta|sexta)\b", t)
+        if m2:
+            indice = _NUM_FRASE[m2.group(1)]
+        return Comando("frase", texto, extra=str(indice))
+    if re.search(r"\b(tema|cores?|visual|aparencia)\b", t) and re.search(r"\b(mud\w*|troc\w*|us[ae]r?|coloc\w*|ativ\w*|quero)\b", t):
+        for palavra, chave in TEMAS_FALADOS.items():
+            if re.search(rf"\b{palavra}\b", t):
+                return Comando("tema", texto, extra=chave)
+    if re.search(r"\b(le|ler|leia|quais|tenho|meus|novos|algum)\b.*\bavisos?\b|\bavisos? novos?\b|\bnotificac", t) \
+            and not re.search(r"\b(abr[ae]|abrir|ir para|vai para|mostr[ae])\b", t):
+        return Comando("avisos", texto)
+    ticker = achar_ticker(t)
+    if ticker and re.search(r"\b(simul\w*|e se eu|se eu)\b", t) and re.search(r"\b(compr\w*|vend\w*)\b", t):
+        return Comando("intencao", texto, ticker, lado="venda" if re.search(r"\bvend\w*", t) else "compra",
+                       quantidade=achar_quantidade(t), preco=achar_preco(t))
+    return None
+
+
+def _cenario_falado(t: str) -> str:
+    m = re.search(r"\b(?:ca\w*|despenc\w*|derret\w*|queda de)\s+(?:de\s+)?(\d{1,2})\b(?:\s*por cento)?", t)
+    if m:
+        return f"livre:{-int(m.group(1)) / 100}"
+    for palavra, chave in CENARIOS_FALADOS:
+        if palavra in t:
+            return chave
+    return "covid"
 
 
 def entender(texto: str) -> Comando:
@@ -236,6 +367,9 @@ def entender(texto: str) -> Comando:
         return Comando("ajuda", texto)
     if re.search(r"\b(ajuda|o que voce faz|o que voce sabe|comandos)\b", t):
         return Comando("ajuda", texto)
+    app = _entender_app(t, texto)
+    if app:
+        return app
     ticker = achar_ticker(t)
     venda = re.search(r"\b(vend[ae]r?|vendo|venda)\b", t)
     compra = re.search(r"\b(compr[ae]r?|compro|compra)\b", t)
@@ -256,6 +390,9 @@ def entender(texto: str) -> Comando:
         for chave, (_, termos) in PAGINAS.items():
             if any(re.search(rf"\b{termo}\b", t) for termo in termos):
                 return Comando("navegar", texto, ticker, pagina=chave)
+    if re.search(r"\b(estresse|stress|crise|crash|covid|pandemia|recessao|joesley|greve|choque de juros)\b|"
+                 r"\be se (o mercado|a bolsa|o ibovespa|tudo)\b|\b(simul\w*) (uma )?(queda|crise)", t):
+        return Comando("estresse", texto, extra=_cenario_falado(t))
     if re.search(r"\b(patrimonio|quanto (eu )?tenho|quanto vale (a |minha )?carteira|meu saldo|resumo da carteira)\b", t):
         return Comando("patrimonio", texto)
     if re.search(r"\b(dica|proximo aporte|onde aportar|o que comprar|aporte do mes)\b", t):
@@ -283,9 +420,13 @@ class Resposta:
     ordem: dict | None = None              # ordem simulada aguardando confirmação
     compartilhar: str | None = None        # texto pronto para o WhatsApp
     dados: dict = field(default_factory=dict)
+    abrir: bool = False                    # mãos livres: ir direto para a tela
+    silencioso: bool = False               # não falar nada (ruído, sem palavra de ativação)
 
 
-AJUDA = ("Posso criar alertas (\"me avise quando a Taesa ficar abaixo de 34 reais\"), abrir telas (\"abrir agenda\"), dar cotação (\"cotação da Petrobras\"), montar a dica do próximo "
+AJUDA = ("Diga \"Jarvis\" e o comando. Posso fazer o check-in do dia, simular uma crise (\"e se vier uma crise como a da Covid?\"), "
+         "simular uma compra (\"simular compra de 100 TAEE11\"), soltar emojis e falar as suas frases no Pregão, trocar o tema "
+         "do app, ler os seus avisos, criar alertas (\"me avise quando a Taesa ficar abaixo de 34 reais\"), abrir telas (\"abrir agenda\"), dar cotação (\"cotação da Petrobras\"), montar a dica do próximo "
          "aporte (\"qual a dica do aporte?\"), listar proventos, dizer o patrimônio, trazer notícias de um ativo, "
          "preparar uma ordem na carteira simulada (\"comprar 100 TAEE11\", você confirma antes) e compartilhar "
          "no WhatsApp. Outras perguntas eu respondo com o modelo do OpenJarvis.")
@@ -311,6 +452,7 @@ class Contexto:
     conversar: Callable[[list[dict]], str | None] | None = None
     resumo: Callable[[], dict] | None = None
     criar_alerta: Callable[[str, str, float], object] | None = None
+    acoes: dict[str, Callable[[Comando], Resposta | str]] = field(default_factory=dict)  # comandos do app
 
 
 def _resumo_texto(ctx: Contexto) -> str:
@@ -321,12 +463,22 @@ def _resumo_texto(ctx: Contexto) -> str:
             f"{_brl(r.get('renda_12m', 0))}.")
 
 
+ACOES_DO_APP = ("parar", "repetir", "confirmar", "cancelar", "checkin", "emoji", "frase", "tema", "avisos",
+                "estresse", "intencao")
+
+
 def executar(cmd: Comando, ctx: Contexto, historico: list[dict] | None = None) -> Resposta:
     if cmd.acao == "ajuda":
         return Resposta(AJUDA)
+    if cmd.acao in ACOES_DO_APP:
+        funcao = ctx.acoes.get(cmd.acao)
+        if funcao is None:
+            return Resposta("Esse comando funciona dentro do app, com a sua conta.")
+        r = funcao(cmd)
+        return r if isinstance(r, Resposta) else Resposta(str(r))
     if cmd.acao == "navegar":
         caminho, termos = PAGINAS[cmd.pagina]
-        return Resposta(f"Abrindo {termos[0]}.", pagina=caminho)
+        return Resposta(f"Abrindo {termos[0]}.", pagina=caminho, abrir=True)
     if cmd.acao == "cotacao":
         d = ctx.obter(cmd.ticker if cmd.ticker.startswith("^") else cmd.ticker + ".SA")
         preco = getattr(d, "preco", None)

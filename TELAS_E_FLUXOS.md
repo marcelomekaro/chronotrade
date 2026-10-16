@@ -149,6 +149,17 @@ flowchart LR
 | ![](docs/telas/58_perfil_temas.png) **Aparência do app** | Escolha do tema em Meu perfil | Todos |
 | ![](docs/telas/59_pregao_terno.png) **Avatar de terno no Pregão** | Itens comprados aparecem no salão | Básico |
 | ![](docs/telas/60_webhook.png) **Webhook** | Avisos no Discord, Slack, Teams, Google Chat, Zapier ou Make | Médio |
+| ![](docs/telas/61_portal_moderno.png) **Portal no tema moderno** | Atalhos rápidos, cartões de vidro, barra de meta com brilho | Todos |
+| ![](docs/telas/62_estresse.png) **Teste de estresse** | Crises da B3 aplicadas à carteira, com e sem aportes | Médio |
+| ![](docs/telas/63_intencoes.png) **Simular intenções** | Compras e vendas antes de fazer: pesos, concentração, proventos | Médio |
+| ![](docs/telas/64_futuros.png) **Futuros possíveis** | Faixa provável do patrimônio e chance de prejuízo | Médio |
+| ![](docs/telas/65_jarvis.png) **Jarvis** | Mãos livres, conversa contínua e confirmação por voz | Médio |
+| ![](docs/telas/67_maos_livres_checkin.png) **Mãos livres: check-in** | “Jarvis, fazer o check-in do dia” em qualquer tela | Médio |
+| ![](docs/telas/68_maos_livres_crise.png) **Mãos livres: crise** | “Jarvis, e se vier uma crise como a de 2008?” abre o simulador e responde falando | Médio |
+| ![](docs/telas/66_perfil_frases.png) **Frases do avatar** | Gravar com a sua voz, voz do Jarvis ou do navegador | Básico |
+| ![](docs/telas/69_temas.png) **Temas** | Seis temas, com o Esmeralda moderno como padrão | Todos |
+| ![](docs/telas/70_pregao_emoji.png) **Emojis no salão** | Barra de emojis; eles sobem do avatar para todos verem | Básico |
+| ![](docs/telas/72_pregao_frase_falada.png) **Frase falada** | O avatar fala a frase com balão 🔊 | Básico |
 | ![](docs/telas/39_alertas.png) **Alertas de preço** | Preço-alvo abaixo ou acima; zona de compra automática; Telegram grátis | Básico (Telegram no Médio) |
 | ![](docs/telas/40_importar_b3.png) **Importar da B3** | Posição de todas as corretoras pela Área do Investidor, com prévia | Todos |
 | ![](docs/telas/41_agenda_ics.png) **Agenda no calendário** | Arquivo .ics com as datas com e lembrete um dia antes | Básico |
@@ -156,6 +167,7 @@ flowchart LR
 O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) é do plano Premium, com 30 análises por mês.
 
 ## Avisos legais no app
+- Simulador: crises com quedas aproximadas, para estudo; não é previsão nem recomendação. Mãos livres não guarda áudio; frases do avatar são públicas e moderadas.
 - Pontos e itens do avatar não têm valor monetário nem são prêmio por desempenho; pacotes têm 7 dias de arrependimento enquanto não usados.
 - Cadastro só com duas confirmações: termos de uso e "o Chrono Trade não faz recomendação; as decisões e os riscos são meus".
 - Aviso legal no fim das telas com números de investimento, na vitrine e na barra lateral.

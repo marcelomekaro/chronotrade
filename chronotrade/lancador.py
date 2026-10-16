@@ -7,10 +7,10 @@ from pathlib import Path
 
 TEMA = {
     "theme.base": "dark",
-    "theme.primaryColor": "#F2C14E",
-    "theme.backgroundColor": "#121838",
-    "theme.secondaryBackgroundColor": "#1A2150",
-    "theme.textColor": "#EDE6D2",
+    "theme.primaryColor": "#34D399",
+    "theme.backgroundColor": "#0E131B",
+    "theme.secondaryBackgroundColor": "#151C27",
+    "theme.textColor": "#E8EDF3",
     "browser.gatherUsageStats": "false",
     "server.enableStaticServing": "true",   # serve o ícone e o manifesto do app
     "client.toolbarMode": "viewer",         # esconde os menus de desenvolvedor

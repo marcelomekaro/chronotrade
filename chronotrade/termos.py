@@ -57,6 +57,12 @@ chapéus, acessórios e molduras): não têm valor monetário, não são transfe
 não são recomendação nem prêmio por desempenho de investimento. Pacotes comprados podem ser cancelados em até
 7 dias, com devolução do valor, enquanto os pontos não forem usados.
 
+**6.2 Simulador e voz.** O simulador de mercado usa quedas aproximadas de crises passadas e sorteios estatísticos
+para estudo: não é previsão, garantia nem recomendação. No modo mãos livres, o microfone só é usado enquanto o
+botão do Jarvis estiver ligado; o áudio é transformado em texto pela voz local (ou pelo Gemini, se configurado) e
+não é guardado. As frases do avatar (texto e, se você gravar, a sua voz) ficam guardadas no servidor, são
+públicas no Pregão, podem ser denunciadas e apagadas pela moderação, e você pode apagá-las quando quiser.
+
 **7. Seus dados (LGPD).** Guardamos nome, e-mail, WhatsApp, senha (só em forma criptografada, que
 ninguém consegue ler), a carteira que você cadastra e os avisos enviados. Eles servem para o app
 funcionar, para enviar os avisos que você escolher (no app, por e-mail ou WhatsApp) e para falar com

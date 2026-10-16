@@ -49,7 +49,7 @@ CONFIG_PADRAO = {
     "fontes_noticias": "",
     "canais_youtube": "",
     "url_publica": "",
-    "tema_padrao": "retro",
+    "tema_padrao": "moderno",
     "openjarvis_url": "",
 }
 

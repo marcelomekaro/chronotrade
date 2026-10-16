@@ -183,6 +183,8 @@ def main() -> None:
     voz = Voz()
     if not voz.pronta():
         print("Modelos de voz não encontrados. Rode primeiro: chronotrade-voz baixar")
+    else:  # carrega os modelos já, para a primeira fala do modo mãos livres não demorar
+        threading.Thread(target=lambda: (voz.ouvinte(), voz.falante()), daemon=True).start()
     uvicorn.run(criar_app(voz), host=os.environ.get("CHRONOTRADE_VOZ_HOST", "127.0.0.1"),
                 port=int(os.environ.get("CHRONOTRADE_VOZ_PORTA", "8000")))
 

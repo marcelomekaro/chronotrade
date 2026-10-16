@@ -328,6 +328,23 @@ with abas[6]:
                 pregao_db.silenciar(m.email)
                 st.toast(f"{m.apelido} silenciado por 24 horas.")
 
+    frases_den = pregao_db.frases_denunciadas()
+    if frases_den:
+        st.markdown("**Frases de avatar denunciadas**")
+    for f in frases_den:
+        with st.container(border=True):
+            st.markdown(f"**{f.email}**: “{f.texto}” ({f.denuncias} denúncia(s), {f.origem})")
+            achada = pregao_db.frase(f.id)
+            if achada and achada[1]:
+                st.audio(achada[1], format="audio/wav")
+            b1, b2 = st.columns(2)
+            if b1.button("Apagar frase", key=f"adm_frase{f.id}"):
+                pregao_db.apagar_frase(f.id)
+                st.rerun()
+            if b2.button("Silenciar 24h", key=f"adm_frase_sil{f.id}"):
+                pregao_db.silenciar(f.email)
+                st.toast("Silenciado por 24 horas.")
+
     fotos = pregao_db.fotos()
     if fotos:
         with st.expander(f"Fotos de perfil ({len(fotos)})"):

@@ -22,7 +22,10 @@
 - **Conexões**: assistente para MetaTrader 5 e Profit (ProfitDLL) com teste, prévia, sincronização automática e cofre de senhas; Conector do PC para a versão online.
 - **Pregão ao vivo**: salão onde os avatares (com foto) andam, conversam, mandam mensagens privadas e mostram gráficos no telão; robô com comandos, reações, respostas e menções.
 - **Pontos e loja**: check-in diário, conquistas e pontos pela valorização semanal da carteira, trocados por terno, cartola e molduras para o avatar; pacotes pelo PIX.
-- **Temas de cor**: Retrô, Verde investidor, Laranja energia e Clássico.
+- **Temas de cor**: Esmeralda moderno (padrão), Oceano moderno, Verde investidor, Laranja energia, Clássico e Retrô noite.
+- **Simulador de mercado**: teste de estresse com crises da B3 (2008, Covid, 2015, juros, greve, Joesley), simulação de intenções de compra e venda e futuros possíveis (Monte Carlo).
+- **Jarvis mãos livres**: botão em todas as telas, palavra de ativação “Jarvis”, conversa contínua e confirmação por voz.
+- **Emojis e frases no Pregão**: emojis que sobem do avatar e frases faladas com a voz da pessoa, do Jarvis ou do navegador.
 - **Conta de teste**: o admin cria um usuário (ex.: `Teste`) com senha e prazo de 30 dias.
 - **Webhooks**: avisos no Discord, Slack, Teams, Google Chat, Zapier e Make.
 - **Alertas**: preço-alvo e zona de compra, no app, e-mail, WhatsApp ou Telegram (grátis).

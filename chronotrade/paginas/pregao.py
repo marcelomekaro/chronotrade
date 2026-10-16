@@ -2,6 +2,8 @@
 
 import html
 import re
+import time
+from datetime import timedelta
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -71,6 +73,18 @@ def _serie(ticker: str, periodo: str, demo_: bool):
     return s
 
 
+@st.cache_data(ttl=120, show_spinner=False, max_entries=200)
+def _frase_publica(frase_id: int) -> dict | None:
+    """Texto e áudio (data URI) de uma frase, guardados um pouco para não pesar a cada 3 segundos."""
+    from chronotrade.audio import data_uri
+
+    achada = estado.pregao().frase(frase_id)
+    if not achada:
+        return None
+    frase, som = achada
+    return {"texto": frase.texto, "audio": data_uri(som) if som else None}
+
+
 def _cotacoes():
     c = estado.carteira()
     linhas = []
@@ -127,13 +141,46 @@ def salao_ao_vivo():
     if telao is None:
         s = _serie("^BVSP", "6m", demo)
         telao = {**s, "apelido": "Mercado", "nota": ""} if s else None
+    agora = time.time()
+    lista_emotes = []
+    for e in db.emotes(sala):
+        item = {"id": e.id, "pid": pg.id_publico(e.email), "tipo": e.tipo, "conteudo": e.conteudo,
+                "idade": round(agora - e.criado_em.timestamp(), 1)}
+        if e.tipo == "frase":
+            dados_frase = _frase_publica(int(e.conteudo))
+            if not dados_frase:
+                continue
+            item.update(dados_frase)
+        lista_emotes.append(item)
+    if demo and sala == "geral":
+        lista_emotes += salao.emotes_demo(agora)
+    ultima_frase = {e.email: int(e.conteudo) for e in db.emotes(sala, timedelta(minutes=3)) if e.tipo == "frase"}
+    for item in args:
+        email_item = mapa_ids.get(item["id"])
+        if email_item in ultima_frase and email_item != eu:
+            item["frase_id"] = ultima_frase[email_item]
+    minhas = [{"id": f.id, "texto": f.texto, "audio": f.tem_audio} for f in db.frases(eu)] if pode else []
     acao = salao.mostrar(pg.id_publico(eu), titulo, subtitulo, args, telao, _cotacoes(),
-                         "Clique no chão ou use as setas para andar. Clique em alguém para conversar ou ver o gráfico.",
-                         key=f"salao_{sala}")
+                         "Clique no chão ou use as setas para andar. Teclas 1 a 0 soltam emojis; F abre as suas frases.",
+                         key=f"salao_{sala}", emotes=lista_emotes, minhas_frases=minhas, pode=pode)
     if acao and acao.get("n") != st.session_state.get(f"salao_n_{sala}"):
         st.session_state[f"salao_n_{sala}"] = acao.get("n")
         if acao.get("acao") == "mover" and pode:
             db.mover(eu, sala, acao.get("x", 50), acao.get("y", 60))
+        elif acao.get("acao") == "emoji" and pode:
+            try:
+                db.emote(sala, eu, acao.get("emoji", ""))
+                estado.conquistar("primeiro_emoji")
+            except pg.ErroPregao as erro:
+                st.toast(str(erro), icon="⏳")
+        elif acao.get("acao") == "frase" and pode:
+            try:
+                db.tocar_frase(sala, eu, int(acao.get("id", 0)))
+            except (pg.ErroPregao, ValueError) as erro:
+                st.toast(str(erro), icon="⏳")
+        elif acao.get("acao") == "denunciar_frase" and pode:
+            db.denunciar_frase(int(acao.get("id", 0)))
+            st.toast("Obrigado. A moderação vai ouvir.", icon="🚩")
         elif acao.get("acao") == "privado" and acao.get("id") in mapa_ids:
             st.session_state.dm_com = mapa_ids[acao["id"]]
             st.session_state.ir_privadas = True

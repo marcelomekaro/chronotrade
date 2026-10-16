@@ -52,6 +52,10 @@ CONQUISTAS = {
     "carteira": ("Inventário em dia", 50, "Cadastrou a carteira."),
     "sequencia_7": ("Uma semana firme", 70, "Sete check-ins seguidos."),
     "sequencia_30": ("Mês de disciplina", 300, "Trinta check-ins seguidos."),
+    "primeiro_emoji": ("Torcida animada", 15, "Soltou o primeiro emoji no salão."),
+    "primeira_frase": ("Voz no pregão", 30, "Gravou a primeira frase do avatar."),
+    "estresse": ("Preparado para a tempestade", 40, "Fez o primeiro teste de estresse da carteira."),
+    "maos_livres": ("Mãos livres", 30, "Deu o primeiro comando de voz com o Jarvis."),
 }
 
 MAX_DESEMPENHO = 50

@@ -44,10 +44,29 @@ def serie_grafico(historico: pd.Series, periodo: str = "6m", pontos: int = 90) -
 
 
 def mostrar(eu: str, titulo: str, subtitulo: str, pessoas: list[dict], telao: dict | None, cotacoes: list,
-            dica: str, key: str, altura: int | None = None):
-    """Desenha o salão e devolve a última ação da pessoa ({acao: mover|privado, ...}) ou None."""
+            dica: str, key: str, altura: int | None = None, emotes: list[dict] | None = None,
+            minhas_frases: list[dict] | None = None, pode: bool = False):
+    """Desenha o salão e devolve a última ação da pessoa ({acao: mover|privado|emoji|frase, ...}) ou None."""
+    from chronotrade.pregao import EMOJI_NOMES, EMOJIS
+
     return _comp()(eu=eu, titulo=titulo, subtitulo=subtitulo, pessoas=pessoas, telao=telao, cotacoes=cotacoes,
-                   dica=dica, altura=altura, key=key, default=None)
+                   dica=dica, altura=altura, emotes=emotes or [], minhas_frases=minhas_frases or [],
+                   emojis=EMOJIS, emoji_nomes=EMOJI_NOMES, pode=pode, key=key, default=None)
+
+
+def emotes_demo(agora: float, intervalo: int = 6) -> list[dict]:
+    """Os participantes de demonstração soltam um emoji de vez em quando, para o salão parecer vivo."""
+    from chronotrade.pregao import _DEMO, EMOJIS, id_publico
+
+    balde = int(agora // intervalo)
+    saida = []
+    for b in (balde - 1, balde):
+        idade = agora - b * intervalo
+        if 0 <= idade < 8:
+            email = _DEMO[b % len(_DEMO)][0]
+            saida.append({"id": -b, "pid": id_publico(email), "tipo": "emoji", "conteudo": EMOJIS[(b * 7) % len(EMOJIS)],
+                          "idade": round(idade, 1)})
+    return saida
 
 
 def sparkline(serie: list[float], largura: int = 160, altura: int = 44) -> str:
