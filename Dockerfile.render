@@ -22,6 +22,8 @@ COPY --from=builder /opt/venv /opt/venv
 WORKDIR /app
 COPY --from=builder /build/.streamlit ./.streamlit
 COPY --from=builder /build/deploy/render/iniciar.sh ./iniciar.sh
+# Se o arquivo veio do Windows com fim de linha CRLF, o sh não roda: limpa por garantia
+RUN sed -i 's/\r$//' ./iniciar.sh
 # O disco do Render é montado em /data na hora de rodar; o processo roda como root para poder gravar nele.
 EXPOSE 10000
 CMD ["sh", "./iniciar.sh"]
