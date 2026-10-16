@@ -27,6 +27,10 @@ class Avatar:
     cor_cabelo: str = CORES_CABELO[0]
     roupa: str = ROUPAS[0]
     acessorio: str = "gravata"
+    traje: str = "casual"       # itens da loja: terno, terno_branco, smoking, colete
+    chapeu: str = "nenhum"      # cartola, panama, coroa, bone_verde
+    extra: str = "nenhum"       # oculos_escuros, relogio_ouro, maleta, cafe, trofeu
+    moldura: str = "nenhuma"    # moldura_ouro, moldura_neon (para a foto)
 
     def json(self) -> str:
         return json.dumps(asdict(self))
@@ -106,13 +110,81 @@ def _pixels(a: Avatar) -> list[tuple[int, int, str]]:
     return px
 
 
+PRETO, BRANCO, OURO, MARINHO = "#1C1C28", "#F4F1E6", "#F2C14E", "#22284A"
+
+
+def _itens(a: Avatar) -> list[tuple[int, int, str]]:
+    """Os itens da loja por cima do bonequinho (mesma grade
+    chapéus usam as linhas acima da cabeça)."""
+    px: list[tuple[int, int, str]] = []
+
+    def ret(x0, y0, x1, y1, cor):
+        px.extend((x, y, cor) for y in range(y0, y1 + 1) for x in range(x0, x1 + 1))
+
+    # trajes: paletó nos braços e no corpo, camisa e gravata no meio
+    if a.traje in ("terno", "terno_branco", "smoking"):
+        paleto = {"terno": MARINHO, "terno_branco": "#E9E1C8", "smoking": "#101018"}[a.traje]
+        ret(2, 8, 9, 13, paleto)
+        ret(0, 9, 1, 12, paleto)
+        ret(10, 9, 11, 12, paleto)
+        ret(5, 8, 6, 11, BRANCO)
+        px += [(4, 8, paleto), (7, 8, paleto), (4, 9, "#0A0E26"), (7, 9, "#0A0E26")]  # lapelas
+        if a.traje == "smoking":
+            px += [(4, 8, PRETO), (5, 8, PRETO), (6, 8, PRETO), (7, 8, PRETO)]  # gravata-borboleta
+        else:
+            ret(5, 9, 6, 12, "#C0392B" if a.traje == "terno" else MARINHO)
+        px += [(3, 11, OURO)] if a.traje == "smoking" else []
+    elif a.traje == "colete":
+        ret(0, 9, 1, 12, BRANCO)
+        ret(10, 9, 11, 12, BRANCO)
+        ret(2, 8, 9, 9, BRANCO)
+        ret(2, 10, 9, 13, "#3B2A1A")
+        ret(5, 10, 6, 13, BRANCO)
+        px += [(5, 11, OURO), (5, 12, OURO)]
+    # chapéus
+    if a.chapeu == "cartola":
+        ret(2, 1, 9, 1, PRETO)
+        ret(3, -2, 8, 0, PRETO)
+        ret(3, 0, 8, 0, "#C0392B")
+    elif a.chapeu == "panama":
+        ret(1, 1, 10, 1, "#D9C9A3")
+        ret(3, -1, 8, 0, "#D9C9A3")
+        ret(3, 0, 8, 0, PRETO)
+    elif a.chapeu == "coroa":
+        ret(3, 0, 8, 1, OURO)
+        px += [(3, -1, OURO), (5, -1, OURO), (6, -1, OURO), (8, -1, OURO), (5, 0, "#C0392B"), (6, 0, "#C0392B")]
+    elif a.chapeu == "bone_verde":
+        ret(3, 1, 8, 2, "#2E8B57")
+        ret(8, 2, 10, 2, "#2E8B57")
+        px.append((5, 1, OURO))
+    # extras
+    if a.extra == "oculos_escuros":
+        ret(3, 4, 8, 4, PRETO)
+        px += [(3, 5, PRETO), (4, 5, PRETO), (7, 5, PRETO), (8, 5, PRETO)]
+    elif a.extra == "relogio_ouro":
+        px += [(0, 12, OURO), (1, 12, OURO)]
+    elif a.extra == "maleta":
+        ret(10, 14, 11, 15, "#6B4A2B")
+        px += [(10, 13, PRETO), (11, 13, PRETO), (10, 14, OURO)]
+    elif a.extra == "cafe":
+        ret(10, 12, 11, 13, BRANCO)
+        px += [(10, 12, "#6B4A2B"), (11, 11, "#C0C0C0")]
+    elif a.extra == "trofeu":
+        ret(0, 11, 1, 12, OURO)
+        px += [(0, 13, "#B8860B"), (1, 13, "#B8860B"), (0, 10, OURO), (1, 10, OURO)]
+    return px
+
+
+_TOPO, _ALTURA = -3, 19  # espaço para chapéus acima da cabeça
+
+
 def svg(a: Avatar, tamanho: int = 48, rotulo: str = "") -> str:
     """O avatar como SVG nítido (pixels quadrados), pronto para pôr no HTML."""
-    escala = tamanho / 16
-    rects = "".join(f'<rect x="{x}" y="{y}" width="1" height="1" fill="{c}"/>' for x, y, c in _pixels(a))
+    rects = "".join(f'<rect x="{x}" y="{y}" width="1" height="1" fill="{c}"/>' for x, y, c in _pixels(a) + _itens(a))
     titulo = f"<title>{rotulo}</title>" if rotulo else ""
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 16" width="{12 * escala:.0f}" '
-            f'height="{tamanho}" shape-rendering="crispEdges" role="img">{titulo}{rects}</svg>')
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 {_TOPO} 12 {_ALTURA}" '
+            f'width="{12 * tamanho / _ALTURA:.0f}" height="{tamanho}" shape-rendering="crispEdges" role="img">'
+            f'{titulo}{rects}</svg>')
 
 
 def img(a: Avatar, tamanho: int = 48, rotulo: str = "") -> str:
@@ -121,7 +193,7 @@ def img(a: Avatar, tamanho: int = 48, rotulo: str = "") -> str:
     import html as _html
 
     dados = base64.b64encode(svg(a, tamanho, rotulo).encode()).decode()
-    return (f'<img src="data:image/svg+xml;base64,{dados}" width="{12 * tamanho / 16:.0f}" height="{tamanho}" '
+    return (f'<img src="data:image/svg+xml;base64,{dados}" width="{12 * tamanho / _ALTURA:.0f}" height="{tamanho}" '
             f'alt="{_html.escape(rotulo)}" style="image-rendering:pixelated">')
 
 
@@ -136,10 +208,18 @@ def retrato(avatar_json: str | None, foto: str | None, semente: str, tamanho: in
     import html as _html
 
     if foto:
+        a = Avatar.de_json(avatar_json)
+        borda = MOLDURAS.get(a.moldura if a else "nenhuma", MOLDURAS["nenhuma"])
         return (f'<img src="{_html.escape(foto)}" width="{tamanho}" height="{tamanho}" alt="{_html.escape(rotulo)}" '
-                f'style="border-radius:50%;object-fit:cover;border:2px solid #E9E1C8;box-shadow:0 0 0 2px #0B1040">')
+                f'style="border-radius:50%;object-fit:cover;{borda}">')
     return img(Avatar.de_json(avatar_json) or sortear(semente), tamanho, rotulo)
 
+
+MOLDURAS = {
+    "nenhuma": "border:2px solid #E9E1C8;box-shadow:0 0 0 2px #0B1040",
+    "moldura_ouro": "border:3px solid #F2C14E;box-shadow:0 0 0 2px #7A5A10,0 0 10px rgba(242,193,78,.7)",
+    "moldura_neon": "border:3px solid #4FD1C5;box-shadow:0 0 0 2px #0B1040,0 0 12px #4FD1C5",
+}
 
 LADO_FOTO = 192
 

@@ -8,6 +8,7 @@ from chronotrade import calculos, estado, primeiros_passos, tema
 from chronotrade.calculos import brl, pct
 
 st.title("Portal")
+tema.subtitulo("Onde a sua carteira está hoje e quanto falta para a renda que você quer.")
 c = estado.carteira()
 primeiros_passos.mostrar()
 

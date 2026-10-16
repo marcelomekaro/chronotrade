@@ -8,9 +8,10 @@ from chronotrade.carteira import pasta_dados
 from chronotrade.mercado import ticker_curto
 
 ICONES = {"sentinela": "🛡️", "provento": "📅", "ordem": "🔌", "assinatura": "💳", "admin": "🔔", "alerta": "🎯",
-          "zona": "🟢", "mencao": "💬", "privada": "✉️", "conexao": "🔗"}
+          "zona": "🟢", "mencao": "💬", "privada": "✉️", "conexao": "🔗", "pontos": "🏆"}
 
 st.title("Avisos")
+tema.subtitulo("Dicas do Sentinela, alertas de preço, menções e mensagens, num lugar só.")
 email = estado.email_avisos()
 caixa = estado.caixa_avisos()
 banco_alertas = alertas_mod.Alertas(pasta_dados() / "contas.db")
@@ -66,6 +67,7 @@ with alertas_tab:
                 ticker = outro if ativo == "Outro…" else ativo
                 try:
                     a = banco_alertas.criar(email, ticker, tipo, preco)
+                    estado.conquistar("primeiro_alerta")
                     atual = estado.ativo(a.ticker).preco
                     texto_ok = f"Alerta criado: {a.descricao}." + (f" Hoje está em {brl(atual)}." if atual else "")
                     st.success(texto_ok.replace("$", "\\$"))
@@ -104,3 +106,31 @@ with canais_tab:
             st.markdown("1. Toque no botão abaixo e aperte **Começar** no Telegram.  \n"
                         "2. Pronto: em até uma hora o Sentinela vincula e manda uma confirmação.")
             st.link_button("Ligar avisos no Telegram", telegram.link(email), type="primary")
+
+with canais_tab:
+    st.subheader("Discord, Slack, Teams, Google Chat, Zapier ou Make")
+    if not estado.permite("avisos_telegram"):
+        estado.liberado("avisos_telegram")
+    else:
+        from chronotrade import webhooks
+
+        wh = webhooks.Webhooks(pasta_dados() / "contas.db")
+        atual = wh.de(email)
+        if atual:
+            st.success(f"Avisos indo também para o {webhooks.servico(atual)}.")
+            c1, c2 = st.columns(2)
+            if c1.button("Mandar um teste"):
+                st.info("Resultado: " + webhooks.enviar(atual, "Teste do Chrono Trade", "Se você está lendo isto, funcionou!"))
+            if c2.button("Desligar o webhook"):
+                wh.remover(email)
+                st.rerun()
+        with st.form("webhook"):
+            url = st.text_input("Endereço do webhook", placeholder="https://discord.com/api/webhooks/…",
+                                help="No Discord: Configurações do canal → Integrações → Webhooks → Copiar URL.")
+            if st.form_submit_button("Salvar webhook"):
+                try:
+                    st.success(f"Pronto: avisos também no {wh.salvar(email, url)}.")
+                except webhooks.ErroWebhook as erro:
+                    st.error(str(erro))
+        tema.legenda("Use para levar as dicas do Sentinela ao grupo do seu clube de investimentos ou para automações "
+                     "(planilhas, e-mail, CRM) no Zapier ou Make.")

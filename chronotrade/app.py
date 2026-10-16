@@ -47,6 +47,7 @@ SECOES = {
     ],
     "Comunidade": [
         PREGAO,
+        st.Page(_P / "loja.py", title="Pontos e loja", icon="🏆"),
         st.Page(_P / "jarvis.py", title="Jarvis (voz)", icon="🎙️"),
         st.Page(_P / "compartilhar.py", title="Compartilhar", icon="📜"),
     ],
@@ -84,9 +85,18 @@ def _retrato_lateral() -> None:
     from chronotrade.avatar import retrato
 
     p = estado.perfil_atual()
+    pontos = f"{estado.jogo().saldo(p.email):,}".replace(",", ".")
     st.html(f'<div style="display:flex;align-items:center;gap:10px;margin:2px 0 6px">'
             f'{retrato(p.avatar, p.foto, p.email, 40, p.apelido)}<div style="font-size:.9rem;color:var(--suave)">'
-            f'No Pregão: <b style="color:var(--ouro)">{html.escape(p.apelido)}</b></div></div>')
+            f'No Pregão: <b style="color:var(--ouro)">{html.escape(p.apelido)}</b><br>'
+            f'🏆 {pontos} pontos</div></div>')
+    if not estado.visitante() and not estado.jogo().fez_checkin(p.email) and \
+            st.button("✅ Check-in do dia", key="checkin_lateral", width="stretch",
+                      help="Ganhe pontos todo dia e troque por itens para o seu avatar."):
+        r = estado.jogo().checkin(p.email)
+        if r:
+            st.toast(f"Check-in feito: +{r[0]} pontos. Sequência de {r[1]} dias!", icon="✅")
+        st.rerun()
 
 
 def _cartao_usuario() -> None:
@@ -107,19 +117,23 @@ def _cartao_usuario() -> None:
         if pendentes:
             st.markdown(f"🔔 {pendentes} cadastro(s) aguardando liberação")
         return
-    linha = f"**{u.nome.split()[0]}**  \nPlano {contas.PLANOS[u.plano]}"
+    linha = f"**{u.nome.split()[0]}**  \n{'Teste do plano' if u.teste else 'Plano'} {contas.PLANOS[u.plano]}"
     dias = u.dias_restantes()
     if u.status == "pendente":
         linha = f"**{u.nome.split()[0]}**  \nCadastro aguardando liberação"
     elif dias is not None:
         linha += f", até {u.validade:%d/%m}" if dias >= 0 else ", vencido"
     st.markdown(linha)
-    if dias is not None and 0 <= dias <= 5:
+    if u.teste and dias is not None and dias >= 0:
+        st.markdown(f"🎁 **Teste grátis**: {'último dia' if dias == 0 else f'faltam {dias} dias'}.")
+        st.page_link(CONTA, label="Gostou? Assine aqui", icon="💳")
+    elif dias is not None and 0 <= dias <= 5:
         st.markdown(f"⏰ Faltam {dias} dias. Renove em Minha conta.")
 
 
 if estado.servidor():
     estado.restaurar_sessao()
+tema.aplicar_paleta(estado.tema_atual())
 paginas = _paginas()
 navegacao = st.navigation(paginas, position="hidden")
 

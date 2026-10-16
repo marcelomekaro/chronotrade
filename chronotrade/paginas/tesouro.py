@@ -9,6 +9,7 @@ from chronotrade.calculos import brl, pct
 from chronotrade.mercado import ticker_curto
 
 st.title("Tesouro")
+tema.subtitulo("Os proventos que caíram e vão cair, mês a mês.")
 c = estado.carteira()
 if not c.posicoes:
     tema.fala("Cadastre a sua carteira no Inventário para ver os proventos aqui.")

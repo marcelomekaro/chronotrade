@@ -11,6 +11,7 @@ from chronotrade.calculos import brl
 from chronotrade.mercado import ticker_curto
 
 st.title("Agenda de proventos")
+tema.subtitulo("As próximas datas com e quanto deve entrar na sua conta.")
 estado.exigir("agenda")
 c = estado.carteira()
 if not c.posicoes:

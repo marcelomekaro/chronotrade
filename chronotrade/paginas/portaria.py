@@ -19,7 +19,8 @@ form, vitrine = st.columns([1, 1.25], gap="large")
 with form:
     entrar, criar = st.tabs(["Entrar", "Criar conta"])
     with entrar, st.form("entrar"):
-        email = st.text_input("E-mail", autocomplete="email")
+        email = st.text_input("E-mail ou usuário", autocomplete="username",
+                              help="Quem recebeu uma conta de teste entra com o usuário (ex.: Teste).")
         senha = st.text_input("Senha", type="password", autocomplete="current-password")
         lembrar = st.checkbox("Manter conectado neste aparelho", value=True,
                               help="Não marque em computadores de uso público.")

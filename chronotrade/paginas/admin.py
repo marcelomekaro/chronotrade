@@ -25,7 +25,8 @@ ind = banco.indicadores()
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     tema.janela("Assinantes ativos", str(ind["ativos"]),
-                ", ".join(f"{planos.NOMES[p]} {n}" for p, n in ind["por_plano"].items()), ouro=True)
+                ", ".join(f"{planos.NOMES[p]} {n}" for p, n in ind["por_plano"].items())
+                + (f". Em teste: {len(ind['em_teste'])}" if ind["em_teste"] else ""), ouro=True)
 with col2:
     tema.janela("Receita recorrente", brl(ind["receita_recorrente"], 0), "Por mês, pelos planos ativos")
 with col3:
@@ -58,7 +59,45 @@ def _formulario_liberar(email: str, chave: str, rotulo: str, plano_atual: str = 
             st.rerun()
 
 
-abas = st.tabs(["Pendentes", "Assinantes", "Cobrança", "Pagamentos", "Agente", "Loja e integrações", "Comunidade"])
+with st.expander("🎁 Criar conta de teste (a pessoa experimenta e decide se assina)",
+                 expanded=bool(st.session_state.get("teste_criado"))):
+    st.caption("A conta já nasce liberada, sem pagamento. A pessoa entra com o usuário (ou o e-mail) e a senha que "
+               "você escolher. Quando o prazo acaba, ela vê os planos para assinar e não perde nada do que fez.")
+    with st.form("conta_teste", clear_on_submit=False):
+        c1, c2, c3 = st.columns(3)
+        usuario_t = c1.text_input("Usuário", value="Teste", help="É o que a pessoa digita para entrar.")
+        senha_t = c2.text_input("Senha", type="password", help="Pelo menos 8 caracteres, com letras e números.")
+        dias_t = c3.number_input("Dias de teste", min_value=1, max_value=90, value=30, step=1)
+        c4, c5, c6 = st.columns(3)
+        plano_t = c4.selectbox("Plano liberado", planos.ORDEM, index=planos.ORDEM.index("premium"),
+                               format_func=planos.NOMES.get)
+        nome_t = c5.text_input("Nome (opcional)")
+        email_t = c6.text_input("E-mail (opcional)", help="Se preencher, a pessoa entra pelo e-mail em vez do usuário.")
+        whats_t = st.text_input("WhatsApp da pessoa (opcional, para mandar o acesso)")
+        if st.form_submit_button("Criar conta de teste", type="primary"):
+            try:
+                novo = banco.criar_teste(usuario_t, senha_t, int(dias_t), plano_t, nome_t, email_t, whats_t)
+                st.session_state.teste_criado = (novo.login, novo.validade.strftime("%d/%m/%Y"),
+                                                 planos.NOMES[novo.plano], whats_t)
+                estado.caixa_avisos().criar(novo.email, "assinatura", "Bem-vindo ao seu teste grátis",
+                                            f"Você tem acesso ao plano {planos.NOMES[novo.plano]} até "
+                                            f"{novo.validade:%d/%m/%Y}. Comece pelos Primeiros passos no Portal.")
+                st.rerun()
+            except contas.ErroConta as erro:
+                st.error(str(erro))
+    if st.session_state.get("teste_criado"):
+        login_t, ate_t, plano_nome, whats_dest = st.session_state.teste_criado
+        st.success(f"Conta de teste criada. Usuário: {login_t}, plano {plano_nome}, até {ate_t}.")
+        convite = (f"Olá! Liberei para você um teste grátis do Chrono Trade, plano {plano_nome}, até {ate_t}.\n"
+                   f"Endereço: {cfg.get('url_publica') or 'o link do app'}\nUsuário: {login_t}\n"
+                   "Senha: a que eu te passar à parte.\nQualquer dúvida, me chame aqui.")
+        if whats_dest:
+            st.link_button("Mandar o convite pelo WhatsApp", pix.link_whatsapp(whats_dest, convite))
+        st.code(convite, language=None, wrap_lines=True)
+        st.caption("Por segurança, a senha não vai no convite: mande em outra mensagem.")
+
+abas = st.tabs(["Pendentes", "Assinantes", "Cobrança", "Pagamentos", "Agente", "Loja e integrações", "Comunidade",
+                "Pontos"])
 
 # --- Pendentes ------------------------------------------------------------------------
 with abas[0]:
@@ -230,10 +269,16 @@ with abas[5]:
         nome_ = c6.text_input("Nome do recebedor", cfg["pix_nome"], help="Como aparece no seu banco, até 25 letras.")
         cidade_ = c7.text_input("Cidade", cfg["pix_cidade"])
         whats_ = st.text_input("WhatsApp de atendimento (com DDD)", cfg["whatsapp_admin"])
+        from chronotrade.tema import TEMAS as _TEMAS
+
+        tema_ = st.selectbox("Tema de cores padrão (cada pessoa pode trocar em Meu perfil)", list(_TEMAS),
+                             index=list(_TEMAS).index(cfg.get("tema_padrao", "retro")) if cfg.get("tema_padrao") in _TEMAS else 0,
+                             format_func=lambda k: _TEMAS[k]["nome"])
         if st.form_submit_button("Salvar configurações", type="primary"):
             banco.salvar_config({"preco_basico": basico_.replace(",", "."), "preco_medio": medio_.replace(",", "."),
                                  "preco_premium": premium_.replace(",", "."), "desconto_anual": desconto_.replace(",", "."),
-                                 "pix_chave": chave_, "pix_nome": nome_, "pix_cidade": cidade_, "whatsapp_admin": whats_})
+                                 "pix_chave": chave_, "pix_nome": nome_, "pix_cidade": cidade_, "whatsapp_admin": whats_,
+                                 "tema_padrao": tema_})
             st.success("Configurações salvas.")
             st.rerun()
     if cfg.get("pix_chave"):
@@ -315,3 +360,41 @@ with abas[6]:
             st.rerun()
     st.caption("Notícias e vídeos vêm de feeds RSS públicos e gratuitos. Respeite os direitos de cada site: o app "
                "mostra título, resumo e link para a matéria original.")
+
+# --- Pontos: pacotes pagos pelo PIX e presentes ----------------------------------------------
+with abas[7]:
+    from chronotrade import jogo as jg
+
+    db_jogo = estado.jogo()
+    pedidos = db_jogo.pedidos("aguardando")
+    st.markdown("**Pacotes de pontos aguardando confirmação do PIX**")
+    if not pedidos:
+        st.info("Nenhum pedido aguardando.")
+    for ped in pedidos:
+        c1, c2, c3 = st.columns([4, 1, 1], vertical_alignment="center")
+        c1.markdown(f"Pedido **{ped.id}**: {ped.email}, {ped.pontos} pontos por {brl(ped.valor)}, "
+                    f"{ped.criado_em:%d/%m %H:%M}".replace("$", "\\$"))
+        if c2.button("Confirmar", key=f"okp{ped.id}", type="primary"):
+            feito = db_jogo.confirmar_pedido(ped.id)
+            banco.registrar_pagamento_avulso(feito.email, feito.valor, f"Pontos: pacote {feito.pontos}")
+            estado.caixa_avisos().criar(feito.email, "pontos", f"+{feito.pontos} Chrono Pontos",
+                                        "Pagamento confirmado. Os pontos já estão na sua conta.")
+            st.rerun()
+        if c3.button("Cancelar", key=f"cxp{ped.id}"):
+            db_jogo.cancelar_pedido(ped.id)
+            st.rerun()
+    st.markdown("**Dar pontos ou um item de presente** (campanhas, sorteios, quem indicou amigos)")
+    with st.form("presente"):
+        g1, g2, g3 = st.columns([2, 1, 2])
+        alvo = g1.selectbox("Para", [x.email for x in banco.listar()])
+        qtd = g2.number_input("Pontos", min_value=0, max_value=100000, value=100, step=50)
+        item = g3.selectbox("Item (opcional)", ["—"] + list(jg.CATALOGO), format_func=lambda k: jg.CATALOGO[k][0] if k in jg.CATALOGO else "Nenhum")
+        motivo = st.text_input("Motivo", value="Presente do Chrono Trade")
+        if st.form_submit_button("Dar presente"):
+            if qtd:
+                db_jogo.creditar(alvo, int(qtd), motivo)
+            if item in jg.CATALOGO:
+                db_jogo.dar_item(alvo, item)
+            estado.caixa_avisos().criar(alvo, "pontos", "Você ganhou um presente!",
+                                        f"{motivo}: {int(qtd)} pontos" + (f" e o item {jg.CATALOGO[item][0]}" if item in jg.CATALOGO else "") + ".")
+            st.success("Presente entregue.")

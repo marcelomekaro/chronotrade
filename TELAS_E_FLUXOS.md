@@ -138,6 +138,17 @@ flowchart LR
 | ![](docs/telas/37_chat_bot.png) **Conversa e robô** | Respostas, reações, @menções com aviso, $ativos, comandos /cotacao /grafico /proventos | Básico |
 | ![](docs/telas/38_privadas.png) **Mensagens privadas** | Conversa um a um, aviso de mensagem nova, denúncia | Básico |
 | ![](docs/telas/42_pregao_celular.png) **Salão no celular** | Toque para andar; balões e telão ajustados à tela | Básico |
+| ![](docs/telas/50_admin_conta_teste.png) **Criar conta de teste** | Usuário, senha, dias e plano; convite pronto para o WhatsApp | Admin |
+| ![](docs/telas/51_admin_pontos.png) **Admin: pontos** | Confirmar pacotes pagos pelo PIX e dar pontos ou itens de presente | Admin |
+| ![](docs/telas/52_teste_logado.png) **Cliente em teste** | Entrou com "Teste"; contagem de dias e link para assinar | Teste |
+| ![](docs/telas/53_teste_minha_conta.png) **Minha conta (teste)** | Até quando vale o teste e os planos para continuar | Teste |
+| ![](docs/telas/54_loja_avatar.png) **Pontos e loja** | Check-in, sequência, loja de trajes, chapéus, acessórios e molduras | Básico |
+| ![](docs/telas/55_tema_verde.png) **Tema Verde investidor** | Paleta verde comercial | Todos |
+| ![](docs/telas/56_tema_laranja.png) **Tema Laranja energia** | Paleta laranja | Todos |
+| ![](docs/telas/57_tema_classico.png) **Tema Clássico** | Azul-marinho e dourado, títulos com serifa | Todos |
+| ![](docs/telas/58_perfil_temas.png) **Aparência do app** | Escolha do tema em Meu perfil | Todos |
+| ![](docs/telas/59_pregao_terno.png) **Avatar de terno no Pregão** | Itens comprados aparecem no salão | Básico |
+| ![](docs/telas/60_webhook.png) **Webhook** | Avisos no Discord, Slack, Teams, Google Chat, Zapier ou Make | Médio |
 | ![](docs/telas/39_alertas.png) **Alertas de preço** | Preço-alvo abaixo ou acima; zona de compra automática; Telegram grátis | Básico (Telegram no Médio) |
 | ![](docs/telas/40_importar_b3.png) **Importar da B3** | Posição de todas as corretoras pela Área do Investidor, com prévia | Todos |
 | ![](docs/telas/41_agenda_ics.png) **Agenda no calendário** | Arquivo .ics com as datas com e lembrete um dia antes | Básico |
@@ -145,6 +156,7 @@ flowchart LR
 O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) é do plano Premium, com 30 análises por mês.
 
 ## Avisos legais no app
+- Pontos e itens do avatar não têm valor monetário nem são prêmio por desempenho; pacotes têm 7 dias de arrependimento enquanto não usados.
 - Cadastro só com duas confirmações: termos de uso e "o Chrono Trade não faz recomendação; as decisões e os riscos são meus".
 - Aviso legal no fim das telas com números de investimento, na vitrine e na barra lateral.
 - Toda dica do Sentinela termina com o aviso, inclusive quando escrita pela IA (o app confere e acrescenta se faltar).

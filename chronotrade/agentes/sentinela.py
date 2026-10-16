@@ -167,6 +167,8 @@ def _entregar(caixa: avisos.CaixaDeAvisos, p: Pessoa, tipo: str, titulo: str, te
         return
     envios = []
     destino_email = os.environ.get("CHRONOTRADE_AVISO_EMAIL") if p.email == EMAIL_LOCAL else p.email
+    if destino_email and destino_email.endswith("@teste.chronotrade"):  # conta de teste sem e-mail real
+        destino_email = None
     if p.aviso_email and destino_email and planos.libera(p.plano, "avisos_email"):
         envios.append("e-mail: " + avisos.enviar_email(destino_email, f"Chrono Trade: {titulo}", texto))
     if p.aviso_whatsapp and p.whatsapp and planos.libera(p.plano, "avisos_whatsapp"):
@@ -177,6 +179,11 @@ def _entregar(caixa: avisos.CaixaDeAvisos, p: Pessoa, tipo: str, titulo: str, te
         tg = telegram.Telegram(caixa.caminho)
         if tg.chat_de(p.email):
             envios.append("Telegram: " + tg.enviar(p.email, f"{titulo}\n\n{texto}"))
+        from chronotrade.webhooks import Webhooks
+
+        resultado = Webhooks(caixa.caminho).avisar(p.email, titulo, texto)
+        if resultado:
+            envios.append("webhook: " + resultado)
     if envios:
         caixa.anotar_envio(id_, "; ".join(envios))
 
@@ -195,7 +202,7 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
         return memoria[ticker]
 
     resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0, "sincronizadas": 0,
-              "alertas": 0, "zonas": 0}
+              "alertas": 0, "zonas": 0, "pontos": 0}
 
     # 1. Pagamentos
     if cobrancas is not None and contas is not None:
@@ -253,6 +260,17 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
         carteira = _carteira_de(p.pasta)
         if carteira is None:
             continue
+        try:  # pontos da semana pela valorização das posições (gamificação)
+            from chronotrade.jogo import Jogo
+
+            ganhos = Jogo(caixa.caminho).desempenho(p.email, [(x.ticker, x.quantidade) for x in carteira.posicoes],
+                                                    buscar, p.pasta, agora.date())
+            if ganhos:
+                caixa.criar(p.email, "pontos", f"+{ganhos} Chrono Pontos",
+                            "A sua carteira valorizou na semana. Troque os pontos por itens na loja do avatar.")
+                resumo["pontos"] += ganhos
+        except Exception as erro:
+            log.info("Pontos da semana falharam para %s: %s", p.email, erro)
         try:
             if planos.libera(p.plano, "aporte"):
                 radar = radar_mod.montar(carteira, buscar, hoje=agora.date())

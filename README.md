@@ -21,6 +21,10 @@
 - **Corretora**: carteira simulada com ordens e conexão com MetaTrader 5, numa estrutura pronta para outras corretoras.
 - **Conexões**: assistente para MetaTrader 5 e Profit (ProfitDLL) com teste, prévia, sincronização automática e cofre de senhas; Conector do PC para a versão online.
 - **Pregão ao vivo**: salão onde os avatares (com foto) andam, conversam, mandam mensagens privadas e mostram gráficos no telão; robô com comandos, reações, respostas e menções.
+- **Pontos e loja**: check-in diário, conquistas e pontos pela valorização semanal da carteira, trocados por terno, cartola e molduras para o avatar; pacotes pelo PIX.
+- **Temas de cor**: Retrô, Verde investidor, Laranja energia e Clássico.
+- **Conta de teste**: o admin cria um usuário (ex.: `Teste`) com senha e prazo de 30 dias.
+- **Webhooks**: avisos no Discord, Slack, Teams, Google Chat, Zapier e Make.
 - **Alertas**: preço-alvo e zona de compra, no app, e-mail, WhatsApp ou Telegram (grátis).
 - **Importar da B3** (Área do Investidor) e **agenda .ics** para o seu calendário.
 - **Notícias e vídeos**: B3, negócios e canais do YouTube por RSS, filtrados pela carteira.

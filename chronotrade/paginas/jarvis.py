@@ -11,6 +11,7 @@ from chronotrade.carteira import pasta_dados
 from chronotrade.corretoras import ErroCorretora, Ordem, abrir
 
 st.title("Jarvis")
+tema.subtitulo("Fale com o app: cotações, proventos, alertas e a dica do aporte, por voz ou texto.")
 estado.exigir("jarvis")
 
 url = st.session_state.get("openjarvis_url") or estado.config_loja().get("openjarvis_url") \

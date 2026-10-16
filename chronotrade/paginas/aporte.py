@@ -12,6 +12,7 @@ from chronotrade.carteira import CLASSES
 from chronotrade.mercado import normalizar_ticker, ticker_curto
 
 st.title("Próximo Aporte")
+tema.subtitulo("Onde colocar o aporte do mês pelas suas regras, em cotas, com o preço de entrada de cada ativo.")
 estado.exigir("aporte")
 c = estado.carteira()
 

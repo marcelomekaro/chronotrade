@@ -79,7 +79,7 @@
   @media (max-width: 560px) {
     .balao { width:112px; font-size:10.5px; -webkit-line-clamp:2; margin-bottom:4px; }
     .salao.estreito .balao.velho { display:none; }
-    .pessoa .sprite { width:36px; height:48px; } .pessoa .foto { width:34px; height:34px; }
+    .pessoa .sprite { width:30px; height:48px; } .pessoa .foto { width:34px; height:34px; }
     .pessoa .nome { font-size:10.5px; max-width:86px; padding:0 5px; }
     .monitor { width:58px; height:40px; bottom:12px; } .monitor svg { height:24px; } .monitor .mt { font-size:9px; }
     .telao { width:84%; height:19%; padding:4px 8px; } .telao .t { font-size:16px; }
@@ -261,7 +261,7 @@
       el.dataset.id = p.id;
       el.classList.toggle('eu', p.id === eu);
       el.setAttribute('aria-label', p.apelido + (p.fala ? ': ' + p.fala : ''));
-      const imagem = p.foto ? `<img class="foto" src="${p.foto}" alt="">` : `<img class="sprite" src="${p.avatar}" width="48" height="64" alt="">`;
+      const imagem = p.foto ? `<img class="foto" src="${p.foto}" alt="">` : `<img class="sprite" src="${p.avatar}" width="40" height="64" alt="">`;
       const monitor = p.quadro ? `<div class="monitor" title="Gráfico de ${esc(p.quadro.ticker)}"><div class="mt"><span>${esc(p.quadro.ticker)}</span>` +
         `<span class="${(p.quadro.var || 0) >= 0 ? 's' : 'd'}">${p.quadro.var == null ? '' : fmt(p.quadro.var * 100, 1) + '%'}</span></div>${linha(p.quadro.serie, 80, 38, false)}</div>` : '';
       const chave = imagem + monitor;

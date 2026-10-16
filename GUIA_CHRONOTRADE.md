@@ -210,6 +210,42 @@ No servidor: suba o serviço `api` junto (`docker compose up -d chronotrade agen
   família) ou qualquer conversa. Os contatos ficam em **Conexões → Contatos do WhatsApp**. Gratuito: usa
   o link `wa.me`, sem API paga.
 
+### Conta de teste grátis (para o cliente experimentar)
+No **Painel do admin → 🎁 Criar conta de teste**: informe o usuário (por exemplo `Teste`), a senha que você
+escolher (mínimo 8 caracteres, com letras e números), os dias (30 = 1 mês) e o plano liberado (Premium mostra
+tudo). O cliente entra na tela inicial com **"Teste" no campo "E-mail ou usuário"** e a senha. O painel gera
+o convite pronto para o WhatsApp, **sem a senha** (mande a senha separada). Pelo terminal:
+
+```
+chronotrade-admin teste Teste SUASENHA --dias 30 --plano premium
+```
+
+Durante o teste a barra lateral mostra "🎁 Teste grátis: faltam N dias" e o link para assinar. Contas de teste
+não contam na receita nem nos assinantes ativos e não recebem e-mail do Sentinela. Ao vencer, os dados ficam
+guardados: basta pagar um plano em **Minha conta** para continuar.
+
+### Cores do app (temas)
+Quatro temas: **Retrô** (o original), **Verde investidor**, **Laranja energia** e **Clássico** (azul-marinho e
+dourado, títulos com serifa). Cada pessoa escolhe em **Meu perfil → Aparência do app**; o admin define o
+tema padrão em **Painel do admin → Loja**.
+
+### Chrono Pontos, check-in e loja do avatar
+- **Check-in diário** (botão na barra lateral ou em **Pontos e loja**): 10 pontos + 2 por dia de sequência
+  (até +14); a cada 7 dias seguidos, +30.
+- **Carteira valorizou na semana:** o Sentinela dá 1 ponto a cada 0,1% de alta das posições que já existiam
+  (mesmas quantidades no começo e no fim da semana, então aporte novo não conta), até 50 por semana.
+- **Conquistas:** primeiro check-in, carteira montada, foto no perfil, primeira conversa, primeiro gráfico no
+  telão, primeiro alerta, 7 dias seguidos.
+- **Loja:** ternos, smoking, cartola, panamá, coroa, óculos, relógio de ouro, maleta, troféu e molduras para a
+  foto. Comprou, toca em **Usar** e o avatar aparece assim no Pregão.
+- **Pacotes pelo PIX:** 500 (R$ 4,90), 1.500 (R$ 12,90) e 4.000 pontos (R$ 29,90). O cliente paga e toca em
+  "Já paguei"; você confere o PIX (identificador `PONTOSnúmero`) e confirma em **Painel do admin → Pontos**,
+  onde também dá pontos ou itens de presente. Pontos não valem dinheiro (está nos termos).
+
+### Webhooks (Discord, Slack, Teams, Google Chat, Zapier, Make)
+Em **Avisos → Onde receber**, cole o endereço do webhook do canal e toque em **Mandar um teste**. Os avisos
+do Sentinela, alertas de preço e pontos chegam lá também. Só endereços HTTPS desses serviços são aceitos.
+
 ### Jarvis: comando de voz com o OpenJarvis
 O [OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (Stanford, código aberto) é um assistente de IA
 que roda no computador da pessoa. O Chrono Trade conversa com ele de dois jeitos:

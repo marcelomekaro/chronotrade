@@ -8,6 +8,7 @@ from chronotrade.calculos import brl, pct
 from chronotrade.carteira import CLASSES, ler_csv
 
 st.title("Inventário")
+tema.subtitulo("Os ativos que você tem, com quantidade, preço médio e quanto cada um rende.")
 c = estado.carteira()
 
 

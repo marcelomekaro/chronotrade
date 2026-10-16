@@ -47,6 +47,9 @@ tempo mostra a prosperidade se acumulando no longo prazo.
 - **Comunidade segura:** Pregão com regras, denúncia, moderação e aviso legal em cada mensagem.
 - **Voz e IA local:** o Jarvis roda no PC do cliente com o OpenJarvis; privacidade como argumento.
 - **Visual que ninguém tem:** estética retrô de jogo, que vira assunto e print nas redes.
+- **Volta todo dia:** check-in, sequência e Chrono Pontos trocados por terno, cartola e molduras no avatar.
+- **Do jeito da marca do cliente:** temas Retrô, Verde investidor, Laranja energia e Clássico.
+- **Teste grátis de 30 dias:** o admin cria a conta em segundos e manda o convite pelo WhatsApp.
 - **Pagamento simples:** PIX com liberação automática; sem cartão, sem fidelidade.
 - **Dentro das regras:** não é recomendação (Resoluções CVM 19 e 20); a decisão é sempre do investidor.
 

@@ -8,6 +8,7 @@ from chronotrade import calculos, estado, tema
 from chronotrade.calculos import brl, brl_curto, pct
 
 st.title("Linha do Tempo")
+tema.subtitulo("A prosperidade no longo prazo: quanto o patrimônio e a renda podem crescer, em cenários.")
 c = estado.carteira()
 if c.posicoes:
     tabela, r, _ = estado.tabela_e_resumo()

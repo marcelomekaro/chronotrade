@@ -18,6 +18,7 @@ import os
 import re
 import secrets
 import sqlite3
+import unicodedata
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -48,6 +49,7 @@ CONFIG_PADRAO = {
     "fontes_noticias": "",
     "canais_youtube": "",
     "url_publica": "",
+    "tema_padrao": "retro",
     "openjarvis_url": "",
 }
 
@@ -97,6 +99,18 @@ def senha_temporaria() -> str:
     """Uma senha fácil de ditar por telefone: 3 blocos de letras e números sem confusões (0/O, 1/l)."""
     alfabeto = "abcdefghjkmnpqrstuvwxyz23456789"
     return "-".join("".join(secrets.choice(alfabeto) for _ in range(4)) for _ in range(3))
+
+
+DOMINIO_TESTE = "teste.chronotrade"
+
+
+def email_de_login(login: str) -> str:
+    """Aceita e-mail ou nome de usuário (contas de teste): 'Teste' vira 'teste@teste.chronotrade'."""
+    login = (login or "").strip().lower()
+    if "@" in login or not login:
+        return login
+    usuario = re.sub(r"[^a-z0-9._-]", "", unicodedata.normalize("NFKD", login).encode("ascii", "ignore").decode())
+    return f"{usuario}@{DOMINIO_TESTE}" if usuario else login
 
 
 def normalizar_email(email: str) -> str:
@@ -180,6 +194,15 @@ class Usuario:
     aviso_app: bool = True
     aviso_email: bool = True
     aviso_whatsapp: bool = False
+
+    @property
+    def teste(self) -> bool:
+        """Conta de teste criada pelo administrador (por usuário ou com a anotação 'Conta de teste')."""
+        return self.email.endswith("@" + DOMINIO_TESTE) or self.observacao.startswith("Conta de teste")
+
+    @property
+    def login(self) -> str:
+        return self.email.split("@")[0] if self.email.endswith("@" + DOMINIO_TESTE) else self.email
 
     @property
     def admin(self) -> bool:
@@ -306,10 +329,10 @@ class Contas:
     def entrar(self, email: str, senha: str, agora: datetime | None = None) -> Usuario:
         """Confere e-mail e senha. Devolve o usuário mesmo pendente ou vencido: a tela decide o que mostrar."""
         agora = agora or datetime.now()
-        email = (email or "").strip().lower()
+        email = email_de_login(email)
         with self._con() as con:
             linha = con.execute("SELECT * FROM usuarios WHERE email = ?", (email,)).fetchone()
-            erro = ErroConta("E-mail ou senha incorretos.")
+            erro = ErroConta("E-mail (ou usuário) ou senha incorretos.")
             if linha is None:
                 conferir_senha(senha, hash_senha("x"))  # mesmo tempo de resposta com e sem cadastro
                 raise erro
@@ -375,7 +398,9 @@ class Contas:
             con.execute("DELETE FROM sessoes WHERE email = ?", (email,))
             con.execute("DELETE FROM tokens_api WHERE email = ?", (email,))
             for tabela, onde in (("presenca", "email = ?"), ("perfis_pregao", "email = ?"), ("reacoes", "email = ?"),
-                                 ("privadas", "de = ? OR para = ?"), ("alertas_preco", "email = ?")):
+                                 ("privadas", "de = ? OR para = ?"), ("alertas_preco", "email = ?"),
+                                 ("pontos", "email = ?"), ("itens_avatar", "email = ?"), ("pedidos_pontos", "email = ?"),
+                                 ("webhooks", "email = ?"), ("telegram_vinculos", "email = ?")):
                 # dados do Pregão e alertas (LGPD), se as tabelas existirem
                 if con.execute("SELECT 1 FROM sqlite_master WHERE name = ?", (tabela,)).fetchone():
                     con.execute(f"DELETE FROM {tabela} WHERE {onde}", (email,) * onde.count("?"))
@@ -401,6 +426,32 @@ class Contas:
                             (u.email, float(valor), int(dias), plano, forma,
                              datetime.now().isoformat(timespec="seconds"), observacao))
         return self.buscar(email)
+
+    def criar_teste(self, usuario: str, senha: str, dias: int = 30, plano: str = "premium", nome: str = "",
+                    email: str = "", whatsapp: str = "") -> Usuario:
+        """Conta de teste liberada na hora, sem pagamento, pelo prazo escolhido (padrão: 30 dias).
+
+        Com e-mail, a pessoa entra pelo e-mail; sem e-mail, entra pelo nome de usuário (ex.: Teste).
+        """
+        destino = normalizar_email(email) if email.strip() else email_de_login(usuario)
+        if not destino.endswith("@" + DOMINIO_TESTE) and "@" not in destino:
+            raise ErroConta("Informe um usuário com letras ou números.")
+        if destino == email_admin():
+            raise ErroConta("Este e-mail é do administrador.")
+        if self.buscar(destino):
+            raise ErroConta("Já existe uma conta com esse usuário ou e-mail. Use outro, ou renove em Assinantes.")
+        dias = max(1, min(int(dias), 90))
+        self.cadastrar(nome.strip() or usuario.strip() or "Teste", destino, senha, whatsapp, interno=True)
+        self.liberar(destino, plano, dias, 0.0, "Cortesia", "Conta de teste")
+        self.anotar(destino, f"Conta de teste criada em {date.today():%d/%m/%Y}, {dias} dias, plano {planos.NOMES[planos.normalizar(plano)]}")
+        return self.buscar(destino)
+
+    def registrar_pagamento_avulso(self, email: str, valor: float, observacao: str, forma: str = "PIX") -> None:
+        """Pagamento que não mexe na assinatura (ex.: pacote de pontos), para entrar na receita do mês."""
+        with self._con() as con:
+            con.execute("INSERT INTO pagamentos (email, valor, dias, plano, forma, registrado_em, observacao) "
+                        "VALUES (?, ?, 0, 'avulso', ?, ?, ?)",
+                        (email, float(valor), forma, datetime.now().isoformat(timespec="seconds"), observacao))
 
     def mudar_status(self, email: str, status: str) -> None:
         if status not in STATUS:
@@ -508,7 +559,9 @@ class Contas:
     def indicadores(self, hoje: date | None = None) -> dict:
         hoje = hoje or date.today()
         usuarios = [u for u in self.listar() if not u.admin]
-        ativos = [u for u in usuarios if u.pode_usar(hoje)]
+        todos_ativos = [u for u in usuarios if u.pode_usar(hoje)]
+        em_teste = [u for u in todos_ativos if u.teste]
+        ativos = [u for u in todos_ativos if not u.teste]  # testes não contam como assinantes pagantes
         mes = hoje.strftime("%Y-%m")
         receita_mes = sum(p["valor"] for p in self.pagamentos() if p["registrado_em"].startswith(mes))
         cfg = self.config()
@@ -521,6 +574,7 @@ class Contas:
             "vencendo": [u for u in ativos if (u.dias_restantes(hoje) or 99) <= 7],
             "vencidos": [u for u in usuarios if u.status == "ativo" and u.vencido(hoje)],
             "receita_mes": receita_mes,
+            "em_teste": em_teste,
         }
 
 
@@ -540,6 +594,12 @@ def main() -> None:
     s = sub.add_parser("senha", help="Gera uma senha temporária para uma conta (inclusive a do administrador).")
     s.add_argument("email")
     sub.add_parser("listar", help="Lista as contas.")
+    t = sub.add_parser("teste", help="Cria uma conta de teste: chronotrade-admin teste Teste SuaSenha123 --dias 30")
+    t.add_argument("usuario")
+    t.add_argument("senha")
+    t.add_argument("--dias", type=int, default=30)
+    t.add_argument("--plano", default="premium", choices=list(PLANOS))
+    t.add_argument("--email", default="")
     args = parser.parse_args()
 
     contas = Contas(pasta_dados() / "contas.db")
@@ -551,6 +611,10 @@ def main() -> None:
             print(f"Conta de administrador criada. Senha temporária: {senha}")
             return
         print(f"Senha temporária de {email}: {contas.redefinir_senha(email)}")
+    elif args.acao == "teste":
+        u = contas.criar_teste(args.usuario, args.senha, args.dias, args.plano, email=args.email)
+        print(f"Conta de teste pronta: entre com '{u.login}' e a senha informada, até {u.validade:%d/%m/%Y} "
+              f"(plano {PLANOS[u.plano]}).")
     else:
         for u in contas.listar():
             validade = f"{u.validade:%d/%m/%Y}" if u.validade else "-"

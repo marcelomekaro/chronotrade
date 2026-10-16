@@ -48,7 +48,14 @@ ficam guardadas no servidor e podem ser analisadas pela moderação quando há d
 **6. Assinatura.** Os planos Básico, Médio e Premium são pagos antecipadamente por PIX e liberam o acesso
 pelo período contratado (mensal ou anual). Não há renovação automática nem cobrança recorrente. Você pode
 desistir em até 7 dias após o pagamento e receber o valor de volta (direito de arrependimento, art. 49
-do Código de Defesa do Consumidor).
+do Código de Defesa do Consumidor). Contas de teste grátis valem pelo prazo informado, não geram cobrança
+e, ao fim do teste, a carteira e o avatar ficam guardados até você assinar ou excluir a conta.
+
+**6.1 Chrono Pontos e loja do avatar.** Pontos são ganhos com check-in diário, conquistas e valorização
+semanal da carteira, ou comprados em pacotes pelo PIX. Eles servem só para personalizar o avatar (trajes,
+chapéus, acessórios e molduras): não têm valor monetário, não são transferíveis nem resgatáveis em dinheiro e
+não são recomendação nem prêmio por desempenho de investimento. Pacotes comprados podem ser cancelados em até
+7 dias, com devolução do valor, enquanto os pontos não forem usados.
 
 **7. Seus dados (LGPD).** Guardamos nome, e-mail, WhatsApp, senha (só em forma criptografada, que
 ninguém consegue ler), a carteira que você cadastra e os avisos enviados. Eles servem para o app

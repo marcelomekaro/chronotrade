@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS quadros (
 _MIGRACOES = [
     ("perfis_pregao", "foto", "TEXT"),
     ("perfis_pregao", "bio", "TEXT DEFAULT ''"),
+    ("perfis_pregao", "tema", "TEXT"),
     ("presenca", "x", "REAL"),
     ("presenca", "y", "REAL"),
     ("mensagens", "resposta_a", "INTEGER"),
@@ -270,6 +271,27 @@ class Pregao:
             linhas = con.execute("SELECT email, apelido FROM perfis_pregao WHERE instr(lower(?), '@' || lower(apelido)) > 0 "
                                  "ORDER BY length(apelido) DESC", (texto or "",)).fetchall()
         return list(dict.fromkeys(ln["email"] for ln in linhas))[:5]
+
+    def tema_de(self, email: str) -> str | None:
+        with self._con() as con:
+            ln = con.execute("SELECT tema FROM perfis_pregao WHERE email = ?", (email,)).fetchone()
+        return ln["tema"] if ln else None
+
+    def salvar_tema(self, email: str, tema: str, nome_padrao: str = "") -> None:
+        if not self.tem_perfil(email):
+            p = self.perfil_completo(email, nome_padrao)
+            with self._con() as con:
+                con.execute("INSERT OR IGNORE INTO perfis_pregao (email, apelido, avatar) VALUES (?, ?, ?)",
+                            (email, self._apelido_livre(p.apelido, email), p.avatar))
+        with self._con() as con:
+            con.execute("UPDATE perfis_pregao SET tema = ? WHERE email = ?", (tema, email))
+
+    def _apelido_livre(self, apelido: str, email: str) -> str:
+        base, n = apelido[:15] or "Investidor", 2
+        candidato = base
+        while (dono := self.email_por_apelido(candidato)) and dono != email:
+            candidato, n = f"{base} {n}", n + 1
+        return candidato
 
     def remover_foto(self, email: str) -> None:
         with self._con() as con:

@@ -1,5 +1,6 @@
 """Meu perfil: foto, apelido, bio e o bonequinho do Pregão."""
 
+import dataclasses
 import html
 
 import streamlit as st
@@ -7,6 +8,7 @@ import streamlit as st
 from chronotrade import avatar as av, estado, pregao as pg, tema
 
 st.title("Meu perfil")
+tema.subtitulo("Como você aparece no Pregão e as cores do seu app.")
 db = estado.pregao()
 eu, nome = estado.identidade()
 p = db.perfil_completo(eu, nome)
@@ -60,13 +62,15 @@ with col_form:
                                format_func=lambda c: str(av.CORES_CABELO.index(c) + 1))
         acessorio = st.selectbox("Acessório", av.ACESSORIOS, index=av.ACESSORIOS.index(atual.acessorio),
                                  format_func=av.NOMES.get)
-    boneco = av.Avatar(pele, cabelo, cor, roupa, acessorio)
+    boneco = dataclasses.replace(atual, pele=pele, cabelo=cabelo, cor_cabelo=cor, roupa=roupa, acessorio=acessorio)
 
     foto_final = st.session_state.foto_nova or p.foto
     b1, b2 = st.columns(2)
     if b1.button("Salvar perfil", type="primary", disabled=not pode, width="stretch"):
         try:
             db.salvar_perfil(eu, apelido, boneco.json(), foto=st.session_state.foto_nova or False, bio=bio)
+            if st.session_state.foto_nova:
+                estado.conquistar("perfil_foto")
             st.session_state.foto_nova = None
             st.session_state.foto_salva_marca = st.session_state.get("foto_marca")
             st.toast("Perfil salvo. É assim que o Pregão te vê agora.", icon="✅")
@@ -88,3 +92,29 @@ with col_prev:
     if st.session_state.foto_nova:
         st.caption("Foto nova ainda não salva.")
     st.page_link("paginas/pregao.py", label="Ir para o Pregão", icon="🏛️")
+
+st.divider()
+st.subheader("Aparência do app")
+from chronotrade import tema as _tema  # noqa: E402
+
+atual_tema = estado.tema_atual()
+opcoes = list(_tema.TEMAS)
+cols = st.columns(len(opcoes))
+for col, chave in zip(cols, opcoes, strict=True):
+    t = _tema.TEMAS[chave]
+    with col:
+        st.html(f'<div style="border:3px solid {t["borda"]};border-radius:8px;overflow:hidden;'
+                f'box-shadow:0 0 0 {"3px " + t["ouro"] if chave == atual_tema else "0"}">'
+                f'<div style="background:{t["ceu"]};padding:10px 12px;color:{t["texto"]};font-weight:700">'
+                f'<span style="color:{t["ouro"]}">●</span> {t["nome"]}</div>'
+                f'<div style="background:linear-gradient(180deg,{t["janela_topo"]},{t["janela_base"]});height:34px"></div>'
+                f'<div style="background:{t["ceu_2"]};color:{t["suave"]};padding:8px 12px;font-size:.85rem;min-height:58px">'
+                f'{t["descricao"]}</div></div>')
+        if st.button("Em uso" if chave == atual_tema else "Usar este", key=f"tema_{chave}", width="stretch",
+                     disabled=chave == atual_tema, type="secondary" if chave == atual_tema else "primary"):
+            if estado.visitante():
+                st.session_state.tema_visitante = chave
+            else:
+                db.salvar_tema(eu, chave, nome)
+            st.rerun()
+tema.legenda("O tema vale para você, em todos os aparelhos. O salão do Pregão mantém o visual de jogo.")

@@ -8,6 +8,7 @@ from chronotrade import compartilhar_whats, estado, noticias, tema
 from chronotrade.mercado import ticker_curto
 
 st.title("Notícias")
+tema.subtitulo("O que saiu sobre os seus ativos, a B3 e o mundo dos negócios.")
 estado.exigir("noticias")
 c = estado.carteira()
 pasta = estado.pasta_social()

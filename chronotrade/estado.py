@@ -173,6 +173,8 @@ def salvar() -> bool:
     if arquivo is None:
         return False
     carteira().salvar(arquivo)
+    if carteira().posicoes:
+        conquistar("carteira")
     return True
 
 
@@ -326,3 +328,35 @@ def avisar(email: str, tipo: str, titulo: str, texto: str) -> None:
     """Aviso dentro do app para outra pessoa (menção, resposta, mensagem privada)."""
     if email and not email.startswith(("visitante:", "demo-", "bot:")):
         caixa_avisos().criar(email, tipo, titulo, texto)
+
+
+def tema_atual() -> str:
+    """Tema de cores desta pessoa: o escolhido no perfil, senão o padrão do administrador."""
+    from chronotrade.tema import TEMAS
+
+    escolhido = st.session_state.get("tema_visitante") if visitante() else None
+    if not escolhido and (not servidor() or (usuario() is not None)):
+        try:
+            escolhido = pregao().tema_de(identidade()[0])
+        except Exception:
+            escolhido = None
+    escolhido = escolhido or config_loja().get("tema_padrao") or "retro"
+    return escolhido if escolhido in TEMAS else "retro"
+
+
+@st.cache_resource
+def jogo():
+    from chronotrade.jogo import Jogo
+
+    return Jogo(cart.pasta_dados() / "contas.db")
+
+
+def conquistar(conquista: str) -> None:
+    """Dá a conquista (uma vez só) e mostra o aviso de pontos."""
+    if visitante() or not pode_conversar():
+        return
+    pontos = jogo().conquistar(identidade()[0], conquista)
+    if pontos:
+        from chronotrade.jogo import CONQUISTAS
+
+        st.toast(f"🏆 Conquista: {CONQUISTAS[conquista][0]} (+{pontos} pontos)")

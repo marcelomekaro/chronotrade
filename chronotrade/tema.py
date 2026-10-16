@@ -44,6 +44,7 @@ _CSS = f"""
   --borda: {CORES['borda']}; --ouro: {CORES['ouro']}; --jade: {CORES['jade']};
   --brasa: {CORES['brasa']}; --portal: {CORES['portal']};
   --texto: {CORES['texto']}; --suave: {CORES['suave']};
+  --tinta: #0A0E26; --tinta-2: #0B1040;
   --pixel: 'Pixelify Sans', 'Courier New', monospace;
   --corpo: 'Atkinson Hyperlegible', 'Segoe UI', sans-serif;
 }}
@@ -64,12 +65,15 @@ button, input, textarea, select, label {{ font-family: var(--corpo); }}
   background-attachment: fixed;
 }}
 [data-testid="stHeader"] {{ background: transparent; }}
+[data-testid="stPlotlyChart"], [data-testid="stPlotlyChart"] > div, .js-plotly-plot .plotly .main-svg {{
+  background: transparent !important; }}
+.js-plotly-plot .plotly rect.bg {{ fill: var(--tinta-2) !important; fill-opacity: .55 !important; }}
 [data-testid="stAppDeployButton"] {{ display: none; }}
 [data-testid="stSidebar"] {{ background: var(--ceu-2); border-right: 2px solid rgba(233,225,200,.18); }}
 
 h1 {{ font-family: var(--pixel) !important; letter-spacing: .5px; }}
 h2, h3 {{ font-family: var(--corpo) !important; font-weight: 700 !important; color: var(--texto); }}
-h1 {{ font-size: 2.2rem !important; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; }}
+h1 {{ font-size: 2.2rem !important; color: var(--ouro); text-shadow: 3px 3px 0 var(--tinta); }}
 h2 {{ font-size: 1.45rem !important; }}
 h3 {{ font-size: 1.15rem !important; }}
 p, li {{ max-width: 75ch; }}
@@ -78,7 +82,7 @@ p, li {{ max-width: 75ch; }}
   background: linear-gradient(180deg, var(--janela-topo) 0%, var(--janela-base) 100%);
   border: 3px solid var(--borda);
   border-radius: 8px;
-  box-shadow: inset 0 0 0 3px #0B1040, 4px 4px 0 #0A0E26;
+  box-shadow: inset 0 0 0 3px var(--tinta-2), 4px 4px 0 var(--tinta);
   padding: 18px 22px;
   color: var(--texto);
   margin-bottom: 14px;
@@ -98,8 +102,8 @@ p, li {{ max-width: 75ch; }}
 .ct-tempo {{ margin: 6px 0 4px; }}
 .ct-tempo .trilho {{
   position: relative; height: 26px; border: 3px solid var(--borda); border-radius: 4px;
-  background: repeating-linear-gradient(90deg, #0B1040 0 22px, #10165A 22px 24px);
-  box-shadow: 4px 4px 0 #0A0E26; overflow: hidden;
+  background: repeating-linear-gradient(90deg, var(--tinta-2) 0 22px, var(--ceu-2) 22px 24px);
+  box-shadow: 4px 4px 0 var(--tinta); overflow: hidden;
 }}
 .ct-tempo .preenchido {{
   height: 100%;
@@ -122,27 +126,28 @@ p, li {{ max-width: 75ch; }}
 .ct-aviso {{ border: 2px dashed var(--ouro); border-radius: 6px; padding: 8px 12px; color: var(--ouro);
   background: rgba(242,193,78,.06); margin-bottom: 12px; }}
 
-[data-testid="stMetric"] {{ background: rgba(11,16,64,.55); border: 2px solid rgba(233,225,200,.35);
+[data-testid="stMetric"] {{ background: var(--tinta-2); border: 2px solid rgba(233,225,200,.35);
   border-radius: 6px; padding: 10px 14px; }}
 [data-testid="stMetricValue"] {{ font-family: var(--corpo); font-weight: 800; }}
 
 .stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"] {{
   background: var(--ouro); color: #1B1606; border: 3px solid var(--borda); font-family: var(--pixel);
-  box-shadow: 3px 3px 0 #0A0E26; border-radius: 6px;
+  box-shadow: 3px 3px 0 var(--tinta); border-radius: 6px;
 }}
 .stButton > button[kind="primary"]:hover {{ filter: brightness(1.08); }}
 button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid var(--portal) !important; outline-offset: 2px; }}
 
 [data-testid="stSidebar"] [data-testid="stPageLink"] p {{ font-family: var(--corpo); font-weight: 600; font-size: 1rem; }}
-.ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 #0A0E26; line-height: 1.1; margin-bottom: 14px; }}
+.ct-marca {{ font-family: var(--pixel); font-size: 1.6rem; color: var(--ouro); text-shadow: 3px 3px 0 var(--tinta); line-height: 1.1; margin-bottom: 14px; }}
 .ct-secao {{ font-family: var(--pixel); font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--suave); margin: 12px 0 2px; }}
 .ct-marca small {{ display: block; font-family: var(--corpo); font-size: .85rem; color: var(--suave); text-shadow: none; margin-top: 4px; }}
 
 /* Portaria (tela de entrada) */
 .ct-heroi {{ margin: 8px 0 6px; }}
-.ct-slogan {{ font-family: var(--pixel); font-size: clamp(1.2rem, 2.8vw, 1.7rem); color: var(--texto); margin-top: 10px; text-shadow: 2px 2px 0 #0A0E26; }}
+.ct-subtitulo {{ color: var(--suave); font-size: 1.05rem; margin: -6px 0 14px; }}
+.ct-slogan {{ font-family: var(--pixel); font-size: clamp(1.2rem, 2.8vw, 1.7rem); color: var(--texto); margin-top: 10px; text-shadow: 2px 2px 0 var(--tinta); }}
 .ct-heroi-titulo {{ font-family: var(--pixel); font-size: clamp(2.6rem, 7vw, 4.6rem); color: var(--ouro);
-  line-height: 1; text-shadow: 4px 4px 0 #0A0E26; }}
+  line-height: 1; text-shadow: 4px 4px 0 var(--tinta); }}
 .ct-heroi p {{ font-size: clamp(1.05rem, 2.2vw, 1.35rem); color: var(--texto); margin: 14px 0 8px; max-width: 40ch; }}
 
 /* Celular: menos margem, números menores, nada estoura a largura da tela */
@@ -151,7 +156,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid
   h1 {{ font-size: 1.65rem !important; }}
   h2 {{ font-size: 1.2rem !important; }}
   h3 {{ font-size: 1.02rem !important; }}
-  .ct-janela {{ padding: 12px 14px; margin-bottom: 10px; box-shadow: inset 0 0 0 2px #0B1040, 3px 3px 0 #0A0E26; }}
+  .ct-janela {{ padding: 12px 14px; margin-bottom: 10px; box-shadow: inset 0 0 0 2px var(--tinta-2), 3px 3px 0 var(--tinta); }}
   .ct-janela .valor {{ font-size: 1.6rem; }}
   .ct-fala {{ font-size: 1rem; line-height: 1.5; }}
   .ct-tempo .marcas {{ font-size: .8rem; }}
@@ -165,6 +170,64 @@ def aplicar() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
     _registrar_plotly()
     _instalavel()
+
+
+# ---------------------------------------------------------------------------
+# Temas de cores: cada pessoa escolhe em Meu perfil; o administrador define o padrão
+# ---------------------------------------------------------------------------
+
+TEMAS = {
+    "retro": {"nome": "Retrô noite", "descricao": "O original: céu estrelado, janelas de RPG e ouro.",
+              "ceu": "#121838", "ceu_2": "#1A2150", "janela_topo": "#2B3BA0", "janela_base": "#17206A",
+              "borda": "#E9E1C8", "ouro": "#F2C14E", "jade": "#5FD39A", "brasa": "#F06A5D", "portal": "#A48BFF",
+              "texto": "#EDE6D2", "suave": "#A9B0D6", "tinta": "#0A0E26", "tinta_2": "#0B1040",
+              "estrelas": True, "titulo": "pixel"},
+    "verde": {"nome": "Verde investidor", "descricao": "Verde de mercado com detalhes dourados. Sóbrio e comercial.",
+              "ceu": "#0C1F17", "ceu_2": "#10291F", "janela_topo": "#1E6B4B", "janela_base": "#124532",
+              "borda": "#D9EBDD", "ouro": "#F2C14E", "jade": "#7BE0A6", "brasa": "#F06A5D", "portal": "#8FD3FF",
+              "texto": "#EAF4EC", "suave": "#A3C7B2", "tinta": "#06140E", "tinta_2": "#0A1C14",
+              "estrelas": False, "titulo": "pixel"},
+    "laranja": {"nome": "Laranja energia", "descricao": "Grafite com laranja vibrante, cara de corretora moderna.",
+                "ceu": "#1A1410", "ceu_2": "#231A14", "janela_topo": "#B4561C", "janela_base": "#7A3410",
+                "borda": "#F3E2CF", "ouro": "#FFB347", "jade": "#5FD39A", "brasa": "#FF6B5B", "portal": "#FFD08A",
+                "texto": "#F7EDE2", "suave": "#CDB6A0", "tinta": "#120B06", "tinta_2": "#1C120A",
+                "estrelas": False, "titulo": "pixel"},
+    "classico": {"nome": "Clássico", "descricao": "Azul-marinho e dourado, títulos com serifa. Cara de private bank.",
+                 "ceu": "#0B1B2E", "ceu_2": "#0F2440", "janela_topo": "#173A63", "janela_base": "#102A4A",
+                 "borda": "#C9A227", "ouro": "#D4AF37", "jade": "#4CC38A", "brasa": "#E5675A", "portal": "#9DB7D9",
+                 "texto": "#F1F4F8", "suave": "#A7B4C6", "tinta": "#06101C", "tinta_2": "#0A1830",
+                 "estrelas": False, "titulo": "serifa"},
+}
+TEMA_PADRAO = "retro"
+
+
+def aplicar_paleta(nome: str | None) -> None:
+    """Troca as cores do app pelo tema escolhido (vem depois do CSS base, então vence)."""
+    t = TEMAS.get(nome or "", TEMAS[TEMA_PADRAO])
+    if t is TEMAS["retro"]:
+        return
+    titulo = "Georgia, 'Times New Roman', serif" if t["titulo"] == "serifa" else "var(--pixel)"
+    fundo = (f"linear-gradient(180deg, {t['tinta_2']} 0%, {t['ceu']} 45%, {t['ceu_2']} 100%)")
+    st.markdown(f"""<style>
+:root {{
+  --ceu: {t['ceu']}; --ceu-2: {t['ceu_2']}; --janela-topo: {t['janela_topo']}; --janela-base: {t['janela_base']};
+  --borda: {t['borda']}; --ouro: {t['ouro']}; --jade: {t['jade']}; --brasa: {t['brasa']}; --portal: {t['portal']};
+  --texto: {t['texto']}; --suave: {t['suave']}; --tinta: {t['tinta']}; --tinta-2: {t['tinta_2']};
+  --primary-color: {t['ouro']};
+}}
+[data-testid="stAppViewContainer"] {{ background: {fundo} !important; background-attachment: fixed !important; }}
+[data-testid="stSidebar"] {{ background: {t['ceu_2']} !important; }}
+[data-testid="stBottomBlockContainer"], [data-testid="stBottom"] > div {{ background: {t['ceu']} !important; }}
+[data-baseweb="input"] > div, [data-baseweb="select"] > div, [data-baseweb="textarea"], [data-baseweb="base-input"],
+[data-testid="stChatInput"] > div, [data-testid="stFileUploaderDropzone"], [data-testid="stNumberInputContainer"] {{
+  background-color: {t['tinta_2']} !important; }}
+[data-testid="stExpander"] details, [data-testid="stPopoverBody"] {{ background-color: {t['ceu_2']} !important; }}
+h1, .ct-marca, .ct-heroi-titulo, .ct-slogan {{ font-family: {titulo} !important; }}
+h1 {{ color: var(--ouro) !important; }}
+.stButton > button[kind="primary"], .stFormSubmitButton > button[kind="primary"],
+[data-testid="stBaseButton-primary"] {{ background: var(--ouro) !important; color: {t['tinta']} !important; }}
+[data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {{ background: {t['janela_base']} !important; }}
+</style>""", unsafe_allow_html=True)
 
 
 _CABECALHO = """
@@ -222,6 +285,11 @@ def janela(rotulo: str, valor: str, detalhe: str = "", ouro: bool = False) -> No
         f'<div class="detalhe">{detalhe}</div></div>',
         unsafe_allow_html=True,
     )
+
+
+def subtitulo(texto: str) -> None:
+    """Uma linha logo abaixo do título dizendo para que serve a tela."""
+    st.markdown(f'<p class="ct-subtitulo">{html.escape(texto)}</p>', unsafe_allow_html=True)
 
 
 def fala(texto_html: str) -> None:

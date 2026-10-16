@@ -11,6 +11,7 @@ from chronotrade.carteira import pasta_dados
 from chronotrade.mercado import ticker_curto
 
 st.title("Conexões")
+tema.subtitulo("Traga a carteira da corretora ou da B3 e ligue os seus canais.")
 tema.fala("Ligue aqui a sua <b>plataforma de negociação</b>, os <b>contatos</b> para compartilhar ideias e o "
           "<b>Jarvis</b> de voz. Três passos por plataforma: escolher, preencher, testar.")
 

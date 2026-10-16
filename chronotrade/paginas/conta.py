@@ -19,6 +19,16 @@ if u is None:
         st.rerun()
     st.stop()
 
+if u.teste:
+    dias_teste = u.dias_restantes()
+    if dias_teste is not None and dias_teste >= 0:
+        tema.fala(f"🎁 Você está no <b>teste grátis</b> do plano <b>{contas.PLANOS[u.plano_efetivo]}</b> até "
+                  f"<b>{u.validade:%d/%m/%Y}</b>. Aproveite tudo. Gostou? Escolha um plano abaixo e continue "
+                  "sem perder a carteira, os alertas nem o seu avatar.")
+    else:
+        tema.fala("🎁 O seu <b>teste grátis terminou</b>. A sua carteira, os alertas e o seu avatar estão guardados: "
+                  "escolha um plano abaixo para continuar de onde parou.")
+
 if u.senha_temporaria:
     tema.aviso("Você entrou com uma senha temporária. Crie a sua senha definitiva no fim desta página.")
 
@@ -26,7 +36,7 @@ dias = u.dias_restantes()
 col1, col2, col3 = st.columns(3)
 with col1:
     nome_plano = "Administrador" if u.admin else ("A escolher" if u.status == "pendente" else contas.PLANOS[u.plano_efetivo])
-    tema.janela("Plano", nome_plano, u.email, ouro=True)
+    tema.janela("Plano", nome_plano, f"Usuário: {u.login}" if u.teste and u.login != u.email else u.email, ouro=True)
 with col2:
     curto = {"pendente": "Pendente", "ativo": "Ativo", "bloqueado": "Bloqueado"}
     situacao = "Vencido" if u.status == "ativo" and u.vencido() else curto[u.status]
@@ -63,8 +73,12 @@ if not u.admin:
     if pagos:
         with st.expander("Meus pagamentos"):
             for p in pagos:
-                st.markdown(f"{p['registrado_em'][:10]}: {brl(p['valor'])}, {p['dias']} dias, plano "
-                            f"{contas.PLANOS.get(planos.normalizar(p['plano']), p['plano'])}".replace("$", "\\$"))
+                if p["plano"] == "avulso":
+                    linha_pg = f"{p['registrado_em'][:10]}: {brl(p['valor'])}, {p['observacao']}"
+                else:
+                    linha_pg = (f"{p['registrado_em'][:10]}: {brl(p['valor'])}, {p['dias']} dias, plano "
+                                f"{contas.PLANOS.get(planos.normalizar(p['plano']), p['plano'])}")
+                st.markdown(linha_pg.replace("$", "\\$"))
 
 # --- Avisos do agente Sentinela ----------------------------------------------------------
 if u.pode_usar():

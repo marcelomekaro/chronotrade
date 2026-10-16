@@ -18,6 +18,7 @@ from chronotrade import (
 from chronotrade.mercado import normalizar_ticker, ticker_curto
 
 st.title("Pregão ao vivo")
+tema.subtitulo("Encontre quem investe como você: ande pelo salão, converse e mostre os seus gráficos.")
 estado.exigir("pregao")
 db = estado.pregao()
 eu, meu_nome = estado.identidade()
@@ -49,6 +50,7 @@ with topo2:
             try:
                 db.compartilhar_grafico(sala, eu, perfil.apelido, perfil.avatar, escolhido or "", periodo or "6m", nota)
                 st.toast("Gráfico na sua mesa e no telão.", icon="📈")
+                estado.conquistar("primeiro_grafico")
             except pg.ErroPregao as erro:
                 st.error(str(erro))
     b2.page_link("paginas/perfil.py", label="Perfil", icon="🧑")
@@ -279,9 +281,11 @@ if aba == "sala":
                     if resp and resp.email not in (eu, pg.BOT_EMAIL) and resp.email not in avisados:
                         estado.avisar(resp.email, "mencao", f"{perfil.apelido} respondeu você no Pregão", texto[:300])
                     st.session_state.responder_a = None
+                    estado.conquistar("primeira_conversa")
                 elif comando.acao == "grafico":
                     d = comando.dados
                     db.compartilhar_grafico(sala, eu, perfil.apelido, perfil.avatar, d["ticker"], d["periodo"], d["nota"])
+                    estado.conquistar("primeiro_grafico")
                 else:
                     pergunta = db.enviar(sala, eu, perfil.apelido, perfil.avatar, texto)
                     db.enviar(sala, pg.BOT_EMAIL, pg.BOT_APELIDO, None, comando.texto, resposta_a=pergunta.id, tipo="bot")
