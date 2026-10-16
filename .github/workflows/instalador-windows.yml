@@ -1,0 +1,38 @@
+# Gera e testa o instalador do Windows num Windows de verdade (GitHub Actions).
+# Rodar: aba Actions → "Instalador do Windows" → Run workflow. O .exe fica em "Artifacts" no fim.
+name: Instalador do Windows
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: NSIS
+        run: choco install nsis -y --no-progress
+      - name: Gerar o instalador
+        shell: pwsh
+        run: |
+          $env:Path += ";${env:ProgramFiles(x86)}\NSIS"
+          ./instalador/gerar_instalador.ps1
+      - name: Testar (instala, abre e confere se responde)
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem instalador/dist/ChronoTrade-Setup-*.exe | Select-Object -First 1
+          Start-Process $exe.FullName -ArgumentList "/S" -Wait
+          $dir = "$env:LOCALAPPDATA\Programs\Chrono Trade"
+          & "$dir\python\python.exe" -c "import numpy, pandas, pyarrow, plotly, streamlit, yfinance; import chronotrade.simulador, chronotrade.ir, chronotrade.estado; print('imports ok')"
+          Start-Process "$dir\python\pythonw.exe" -ArgumentList "`"$dir\ChronoTrade.pyw`""
+          $ok = $false
+          foreach ($i in 1..60) { Start-Sleep 3; try { if ((Invoke-WebRequest http://localhost:8501/_stcore/health -UseBasicParsing).Content -eq "ok") { $ok = $true; break } } catch {} }
+          Get-Content "$env:USERPROFILE\.chronotrade\chronotrade.log" -Tail 20
+          if (-not $ok) { throw "O app não respondeu" }
+          Write-Host "Chrono Trade respondeu em http://localhost:8501"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ChronoTrade-Setup
+          path: instalador/dist/*.exe

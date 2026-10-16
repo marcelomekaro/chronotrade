@@ -227,3 +227,7 @@ chronotrade/static/musicas/
 .dados_local/
 .dados_servidor/
 .dados_render/
+
+# instalador do Windows (gerado)
+instalador/build/
+instalador/dist/

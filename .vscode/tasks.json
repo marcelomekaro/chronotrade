@@ -55,6 +55,20 @@
       "problemMatcher": []
     },
     {
+      "label": "9. Gerar o instalador do Windows (.exe)",
+      "type": "shell",
+      "command": "sh instalador/gerar_instalador.sh",
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File instalador\\gerar_instalador.ps1" },
+      "problemMatcher": []
+    },
+    {
+      "label": "10. Gerar o instalador com a MINHA chave (só para os meus PCs)",
+      "type": "shell",
+      "command": "CHAVE_GEMINI=$(grep -E '^GOOGLE_API_KEY=' .env | cut -d= -f2-) sh instalador/gerar_instalador.sh",
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File instalador\\gerar_instalador.ps1 -UsarMinhaChave" },
+      "problemMatcher": []
+    },
+    {
       "label": "8. Admin: senha do administrador igual ao e-mail",
       "type": "shell",
       "command": "./.venv/bin/chronotrade-admin senha-email",

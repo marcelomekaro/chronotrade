@@ -1,9 +1,10 @@
 # Publicar o Chrono Trade: pelo VS Code e no Render
 
-Este guia tem dois caminhos:
+Este guia tem três caminhos:
 
 1. **VS Code**: rodar, testar e publicar sem decorar comandos (tarefas e botões prontos).
 2. **Render**: colocar o app online com HTTPS, disco para os dados e deploy automático a cada `git push`.
+3. **Instalador do Windows**: um `.exe` para instalar em outros computadores, sem precisar de Python.
 
 Os arquivos já estão no projeto:
 
@@ -115,6 +116,41 @@ No Render: serviço → **Disks** → os snapshots diários são automáticos. P
 | "Out of memory" nos logs | Suba o plano para `1c-2g` |
 | Esqueceu a senha do admin | **Shell** do serviço: `chronotrade-admin senha-email` |
 | Agente não manda avisos | Logs devem mostrar `Sentinela: {...}` a cada ciclo; confira e-mail/Telegram no `.env` do Render |
+
+## 3. Instalador para Windows (.exe para outros computadores)
+
+O instalador leva tudo dentro (um Python portátil e as dependências): a pessoa **não precisa instalar Python**.
+Ele instala só para o usuário (não pede administrador), cria o atalho **Chrono Trade** na área de trabalho e no
+menu Iniciar, e guarda carteira e chaves em `%USERPROFILE%\.chronotrade` (desinstalar não apaga os dados).
+
+### Gerar no seu PC Windows, pelo VS Code
+1. Instale o NSIS uma vez: abra o PowerShell e rode `winget install NSIS.NSIS`.
+2. Abra a pasta do projeto no VS Code e, no terminal (PowerShell), rode:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File instalador\gerar_instalador.ps1
+   ```
+   Ou use a tarefa **9. Gerar o instalador do Windows** (`Ctrl+Shift+P` → Tasks: Run Task).
+3. Em uns 5 minutos sai `instalador\dist\ChronoTrade-Setup-0.6.0.exe` (uns 80 MB). Copie para o outro PC
+   (pendrive, Google Drive, WhatsApp Web) e dê dois cliques.
+
+### Chaves (Gemini) no instalador
+- **Para clientes e outras pessoas:** use o instalador normal. Na instalação aparece uma tela pedindo a chave do
+  Gemini de cada um (opcional). Assim ninguém usa a sua cota.
+- **Para os seus próprios computadores:** use a tarefa **10. Gerar o instalador com a MINHA chave**, ou
+  `gerar_instalador.ps1 -UsarMinhaChave`. Ele lê a `GOOGLE_API_KEY` do seu `.env` e já deixa preenchida.
+  O arquivo sai como `ChronoTrade-Setup-X.Y.Z-PESSOAL.exe`. **Não envie esse arquivo a ninguém:** quem tiver o
+  instalador consegue extrair a chave e gastar a sua cota do Google.
+- Depois de instalado, dá para trocar a chave no atalho **Meus dados e chaves** → arquivo `.env`.
+
+### Gerar sem Windows (GitHub Actions)
+Com o projeto no GitHub: aba **Actions → Instalador do Windows → Run workflow**. Ele gera o instalador num
+Windows de verdade, **instala, abre e testa** se o app responde, e deixa o `.exe` em **Artifacts**.
+Também roda sozinho quando você cria uma tag `v1.0.0`.
+
+### Avisos do Windows na primeira vez
+O instalador não tem assinatura digital paga, então o Windows SmartScreen pode mostrar "O Windows protegeu o
+computador": clique em **Mais informações → Executar assim mesmo**. Para tirar esse aviso é preciso um
+certificado de assinatura de código (vendido por empresas certificadoras), aplicado com `signtool`.
 
 ---
 
