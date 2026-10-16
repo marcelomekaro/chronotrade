@@ -354,12 +354,26 @@ class Contas:
         return self.buscar(email)
 
     def garantir_admin(self, senha_inicial: str | None) -> None:
-        """Cria a conta do administrador na primeira vez, com a senha de CHRONOTRADE_ADMIN_SENHA."""
-        if self.buscar(email_admin()) or not senha_inicial:
+        """Cria a conta do administrador na primeira vez.
+
+        A senha é a de CHRONOTRADE_ADMIN_SENHA; sem ela, a senha inicial é o próprio e-mail do administrador
+        (pedido do dono do app). Dá para trocar depois em Minha conta.
+        """
+        if self.buscar(email_admin()):
             return
-        self.cadastrar("Administrador", email_admin(), senha_inicial, interno=True)
+        self.cadastrar("Administrador", email_admin(), senha_inicial or email_admin(), interno=True)
+        if senha_inicial:
+            with self._con() as con:
+                con.execute("UPDATE usuarios SET senha_temporaria = 1 WHERE email = ?", (email_admin(),))
+
+    def senha_do_admin_igual_ao_email(self) -> None:
+        """Volta a senha do administrador para o próprio e-mail (comando: chronotrade-admin senha-email)."""
+        if self.buscar(email_admin()) is None:
+            self.cadastrar("Administrador", email_admin(), email_admin(), interno=True)
+            return
         with self._con() as con:
-            con.execute("UPDATE usuarios SET senha_temporaria = 1 WHERE email = ?", (email_admin(),))
+            con.execute("UPDATE usuarios SET senha_hash = ?, senha_temporaria = 0, tentativas = 0, bloqueado_ate = NULL "
+                        "WHERE email = ?", (hash_senha(email_admin()), email_admin()))
 
     def trocar_senha(self, email: str, atual: str, nova: str) -> None:
         self.entrar(email, atual)
@@ -484,6 +498,16 @@ class Contas:
         with self._con() as con:
             con.execute("DELETE FROM usuarios WHERE email = ?", (email,))
             con.execute("DELETE FROM sessoes WHERE email = ?", (email,))
+            tabelas = {ln[0] for ln in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+            if "cv_carteiras" in tabelas:
+                ids = [ln[0] for ln in con.execute("SELECT id FROM cv_carteiras WHERE email = ?", (email,))]
+                for id_ in ids:
+                    con.execute("DELETE FROM cv_operacoes WHERE carteira_id = ?", (id_,))
+                    con.execute("DELETE FROM cv_historico WHERE carteira_id = ?", (id_,))
+                con.execute("DELETE FROM cv_carteiras WHERE email = ?", (email,))
+            for tabela in ("patrimonio_diario", "darf_lembretes"):
+                if tabela in tabelas:
+                    con.execute(f"DELETE FROM {tabela} WHERE email = ?", (email,))
 
     def preferencias(self, email: str, app: bool, email_: bool, whatsapp: bool, numero: str | None = None) -> None:
         with self._con() as con:
@@ -594,6 +618,7 @@ def main() -> None:
     s = sub.add_parser("senha", help="Gera uma senha temporária para uma conta (inclusive a do administrador).")
     s.add_argument("email")
     sub.add_parser("listar", help="Lista as contas.")
+    sub.add_parser("senha-email", help="Define a senha do administrador igual ao e-mail do administrador.")
     t = sub.add_parser("teste", help="Cria uma conta de teste: chronotrade-admin teste Teste SuaSenha123 --dias 30")
     t.add_argument("usuario")
     t.add_argument("senha")
@@ -611,6 +636,9 @@ def main() -> None:
             print(f"Conta de administrador criada. Senha temporária: {senha}")
             return
         print(f"Senha temporária de {email}: {contas.redefinir_senha(email)}")
+    elif args.acao == "senha-email":
+        contas.senha_do_admin_igual_ao_email()
+        print(f"Pronto: entre com {email_admin()} e a senha {email_admin()}.")
     elif args.acao == "teste":
         u = contas.criar_teste(args.usuario, args.senha, args.dias, args.plano, email=args.email)
         print(f"Conta de teste pronta: entre com '{u.login}' e a senha informada, até {u.validade:%d/%m/%Y} "

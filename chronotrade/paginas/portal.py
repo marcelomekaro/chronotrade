@@ -12,9 +12,9 @@ from chronotrade.calculos import brl, pct
 st.title("Portal")
 tema.subtitulo("Onde a sua carteira está hoje e quanto falta para a renda que você quer.")
 c = estado.carteira()
-atalhos = [("paginas/aporte.py", "Próximo aporte", "🧭"), ("paginas/simulador.py", "Simular uma crise", "🌪️"),
-           ("paginas/pregao.py", "Pregão ao vivo", "🏛️"), ("paginas/loja.py", "Check-in e loja", "✅"),
-           ("paginas/jarvis.py", "Jarvis mãos livres", "🎙️")]
+atalhos = [("paginas/aporte.py", "Próximo aporte", "🧭"), ("paginas/crescimento.py", "Crescimento", "📈"),
+           ("paginas/simulador.py", "Simular crise", "🌪️"), ("paginas/virtuais.py", "Carteiras virtuais", "🧪"),
+           ("paginas/impostos.py", "Imposto (IR)", "🧾"), ("paginas/pregao.py", "Pregão", "🏛️")]
 for col, (pagina, rotulo, icone) in zip(st.columns(len(atalhos)), atalhos, strict=True):
     with col, contextlib.suppress(Exception):  # tela fora do plano: o atalho some
         st.page_link(pagina, label=rotulo, icon=icone, width="stretch")
@@ -34,6 +34,14 @@ if not c.posicoes:
     st.stop()
 
 tabela, r, dados = estado.tabela_e_resumo()
+estado.registrar_patrimonio(r)
+_var = tabela["variacao_dia"].fillna(0)
+_ontem = float((tabela["valor"] / (1 + _var)).sum()) if not tabela.empty else 0.0
+variacao_carteira_dia = float(tabela["valor"].sum()) / _ontem - 1 if _ontem else 0.0
+if variacao_carteira_dia >= 0.01:
+    estado.trilha("euforia")
+elif variacao_carteira_dia <= -0.02:
+    estado.trilha("tensao")
 estado.avisar_fontes(dados)
 
 # --- A linha do tempo até a meta ------------------------------------------------

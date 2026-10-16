@@ -128,6 +128,8 @@ _MIGRACOES = [
     ("perfis_pregao", "foto", "TEXT"),
     ("perfis_pregao", "bio", "TEXT DEFAULT ''"),
     ("perfis_pregao", "tema", "TEXT"),
+    ("perfis_pregao", "musica", "TEXT"),
+    ("perfis_pregao", "musica_nome", "TEXT"),
     ("presenca", "x", "REAL"),
     ("presenca", "y", "REAL"),
     ("mensagens", "resposta_a", "INTEGER"),
@@ -333,6 +335,18 @@ class Pregao:
                             (email, self._apelido_livre(p.apelido, email), p.avatar))
         with self._con() as con:
             con.execute("UPDATE perfis_pregao SET tema = ? WHERE email = ?", (tema, email))
+
+    def musica_de(self, email: str) -> tuple[str | None, str | None]:
+        with self._con() as con:
+            ln = con.execute("SELECT musica, musica_nome FROM perfis_pregao WHERE email = ?", (email,)).fetchone()
+        return (ln["musica"], ln["musica_nome"]) if ln else (None, None)
+
+    def salvar_musica(self, email: str, url: str | None, nome: str | None = None, nome_padrao: str = "") -> None:
+        if not self.tem_perfil(email):
+            self.salvar_tema(email, self.tema_de(email) or "", nome_padrao)
+        with self._con() as con:
+            con.execute("UPDATE perfis_pregao SET musica = ?, musica_nome = ? WHERE email = ?",
+                        (url, (nome or "")[:40] or None, email))
 
     def _apelido_livre(self, apelido: str, email: str) -> str:
         base, n = apelido[:15] or "Investidor", 2

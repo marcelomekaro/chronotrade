@@ -67,6 +67,9 @@ if aba == "estresse":
                              help="Quem segue aportando compra mais barato na queda. Ponha 0 para ver sem aportes.")
     r = simulador.estresse(posicoes, cen, c.caixa, aporte)
     estado.conquistar("estresse")
+    if st.session_state.get("_trilha_cenario") != escolha:
+        st.session_state._trilha_cenario = escolha
+        estado.trilha("tensao")
 
     k1, k2, k3, k4 = st.columns(4)
     with k1:

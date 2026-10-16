@@ -357,6 +357,38 @@ def conquistar(conquista: str) -> None:
         return
     pontos = jogo().conquistar(identidade()[0], conquista)
     if pontos:
+        trilha("euforia")
         from chronotrade.jogo import CONQUISTAS
 
         st.toast(f"🏆 Conquista: {CONQUISTAS[conquista][0]} (+{pontos} pontos)")
+
+
+@st.cache_resource
+def patrimonio():
+    from chronotrade.patrimonio import Patrimonio
+
+    return Patrimonio(cart.pasta_dados() / "contas.db")
+
+
+@st.cache_resource
+def carteiras_virtuais():
+    from chronotrade.carteiras_virtuais import CarteirasVirtuais
+
+    return CarteirasVirtuais(cart.pasta_dados() / "contas.db")
+
+
+def registrar_patrimonio(resumo) -> None:
+    """Foto do patrimônio de hoje (o Sentinela também tira, mesmo com o app fechado)."""
+    if visitante() or modo_demo() or (servidor() and usuario() is None):
+        return
+    import contextlib
+
+    with contextlib.suppress(Exception):
+        patrimonio().registrar(identidade()[0], resumo.patrimonio, resumo.custo, resumo.caixa, resumo.renda_12m)
+
+
+def trilha(humor: str, forcar: bool = False) -> None:
+    """Pede para a trilha sonora mudar de clima (só toca se a pessoa ligou a trilha automática, ou se forcar)."""
+    import time as _t
+
+    st.session_state.trilha_evento = {"humor": humor, "n": int(_t.time() * 1000), "forcar": forcar}

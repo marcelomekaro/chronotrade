@@ -138,6 +138,7 @@ def gerar(carteira: Carteira, tabela: pd.DataFrame, resumo: Resumo, ocultar_valo
 <p class="nota">Projeção com valorização real de 3% ao ano e proventos reinvestidos, em reais de hoje.
 Dados do Yahoo Finance; proventos estimados pela quantidade atual. Material de estudo, não é recomendação de investimento.</p>
 <p class="acoes"><button onclick="window.print()">Imprimir ou salvar em PDF</button></p>
+<p class="nota">Chrono Trade, desenvolvido por Marcelo Mekaro · marcelomekaro@gmail.com · WhatsApp (19) 99965-0436</p>
 </main></body></html>"""
 
 

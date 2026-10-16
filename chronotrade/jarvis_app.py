@@ -81,6 +81,7 @@ def _checkin(_cmd) -> str:
         return erro
     j = estado.jogo()
     r = j.checkin(_eu())
+    estado.trilha("felicidade")
     if r is None:
         return f"Você já fez o check-in hoje. Seu saldo é de {j.saldo(_eu())} pontos. Volte amanhã para manter a sequência."
     return f"Check-in feito: mais {r[0]} pontos. Sequência de {r[1]} {'dia' if r[1] == 1 else 'dias'}."
@@ -224,6 +225,62 @@ def _repetir(_cmd) -> jarvis.Resposta:
     return jarvis.Resposta("Ainda não falei nada.")
 
 
+def _musica(cmd) -> str:
+    humor = cmd.extra or "incentivo"
+    estado.trilha(humor, forcar=True)
+    if humor == "parar":
+        return "Música pausada."
+    nomes = {"incentivo": "incentivo", "tensao": "tensão", "euforia": "euforia", "felicidade": "felicidade"}
+    return f"Tocando a trilha de {nomes.get(humor, humor)}. Ajuste o volume no botão de música."
+
+
+def _carteira_virtual(cmd) -> jarvis.Resposta:
+    from chronotrade import carteiras_virtuais as cv
+
+    capital = float(cmd.extra) if cmd.extra else 10_000.0
+    db = estado.carteiras_virtuais()
+    try:
+        nova = db.criar(_eu(), f"Carteira por voz {len(db.listar(_eu())) + 1}", capital)
+    except cv.ErroCarteira as erro:
+        return jarvis.Resposta(str(erro))
+    st.session_state.cv_sel = nova.id
+    estado.trilha("incentivo")
+    return jarvis.Resposta(f"Criei a {nova.nome} com {jarvis._brl(capital)}. Agora é só comprar e acompanhar ao vivo.",
+                           pagina="paginas/virtuais.py", abrir=True)
+
+
+def _crescimento(_cmd) -> jarvis.Resposta:
+    from datetime import date, timedelta
+
+    from chronotrade import patrimonio as pt
+
+    cres = pt.crescimento(estado.patrimonio().serie(_eu(), date.today() - timedelta(days=31)))
+    if cres is None:
+        return jarvis.Resposta("Ainda estou juntando as fotos diárias do patrimônio. Em poucos dias eu consigo dizer "
+                               "quanto veio dos aportes e quanto o dinheiro rendeu.", pagina="paginas/crescimento.py",
+                               abrir=True)
+    sinal = "cresceu" if cres.fim >= cres.inicio else "recuou"
+    return jarvis.Resposta(f"Nos últimos 30 dias o patrimônio {sinal} {jarvis._brl(abs(cres.fim - cres.inicio))} e está em "
+                           f"{jarvis._brl(cres.fim)}. Seus aportes foram {jarvis._brl(cres.aportes)} e o dinheiro "
+                           f"trabalhando rendeu {jarvis._brl(cres.trabalho)}.", pagina="paginas/crescimento.py", abrir=True)
+
+
+def _imposto(_cmd) -> jarvis.Resposta:
+    from datetime import date
+
+    from chronotrade import ir
+
+    pendentes = [x for x in ir.Lembretes(pasta_dados() / "contas.db").listar(_eu())
+                 if date.fromisoformat(x["vencimento"]) >= date.today()]
+    if pendentes:
+        x = pendentes[0]
+        return jarvis.Resposta(f"O próximo DARF é de {jarvis._brl(x['valor'])}, código {ir.CODIGO_DARF}, e vence em "
+                               f"{date.fromisoformat(x['vencimento']):%d/%m}. Confira na calculadora.",
+                               pagina="paginas/impostos.py", abrir=True)
+    return jarvis.Resposta("Abri a calculadora de imposto: digite as operações ou importe a planilha da B3, e eu mostro "
+                           "o DARF e o vencimento.", pagina="paginas/impostos.py", abrir=True)
+
+
 def contexto() -> jarvis.Contexto:
     c = estado.carteira()
     saude_ = saude()
@@ -257,7 +314,8 @@ def contexto() -> jarvis.Contexto:
 
     acoes = {"checkin": _checkin, "estresse": _estresse, "intencao": _intencao, "emoji": _emoji, "frase": _frase,
              "tema": _tema, "avisos": _avisos, "confirmar": _confirmar, "cancelar": _cancelar, "parar": _parar,
-             "repetir": _repetir}
+             "repetir": _repetir, "musica": _musica, "carteira_virtual": _carteira_virtual,
+             "crescimento": _crescimento, "imposto": _imposto}
     return jarvis.Contexto(carteira=c, obter=estado.ativo, dica=dica if (c.posicoes or c.observar) else None,
                            noticias=manchetes, conversar=cliente().conversar if saude_["online"] else None,
                            resumo=resumo, criar_alerta=criar_alerta if estado.permite("alertas") else None,
@@ -299,7 +357,7 @@ def _comp():
 
 
 # Comandos que mudam o que aparece na tela inteira (os outros só atualizam o botão)
-_RECARREGAR_TUDO = {"tema", "checkin", "confirmar", "cancelar", "avisos", "ordem", "alerta"}
+_RECARREGAR_TUDO = {"tema", "checkin", "confirmar", "cancelar", "avisos", "ordem", "alerta", "musica"}
 
 
 def _responder(n: int, ouvido: str = "", texto: str = "", silencioso: bool = False, parar: bool = False) -> None:

@@ -34,6 +34,7 @@ PERFIL = st.Page(_P / "perfil.py", title="Meu perfil", icon="🧑")
 SECOES = {
     "Carteira": [
         st.Page(_P / "portal.py", title="Portal", icon="🌀", default=True),
+        st.Page(_P / "crescimento.py", title="Crescimento", icon="📈"),
         st.Page(_P / "inventario.py", title="Inventário", icon="🎒"),
         st.Page(_P / "tesouro.py", title="Tesouro", icon="💰"),
         st.Page(_P / "agenda.py", title="Agenda de proventos", icon="📅"),
@@ -43,6 +44,8 @@ SECOES = {
     "Mercado": [
         st.Page(_P / "noticias.py", title="Notícias e vídeos", icon="📰"),
         st.Page(_P / "simulador.py", title="Simulador de mercado", icon="🌪️"),
+        st.Page(_P / "virtuais.py", title="Carteiras virtuais", icon="🧪"),
+        st.Page(_P / "impostos.py", title="Imposto de renda", icon="🧾"),
         st.Page(_P / "oraculo.py", title="Oráculo", icon="🔮"),
         st.Page(_P / "corretora.py", title="Corretora", icon="🔌"),
     ],
@@ -95,6 +98,7 @@ def _retrato_lateral() -> None:
             st.button("✅ Check-in do dia", key="checkin_lateral", width="stretch",
                       help="Ganhe pontos todo dia e troque por itens para o seu avatar."):
         r = estado.jogo().checkin(p.email)
+        estado.trilha("felicidade")
         if r:
             st.toast(f"Check-in feito: +{r[0]} pontos. Sequência de {r[1]} dias!", icon="✅")
         st.rerun()
@@ -168,6 +172,7 @@ if paginas[0] is not PORTARIA:
                       help="Usa cotações e proventos fictícios. Útil para conhecer o app sem internet.")
         st.caption("Ferramenta de estudo. Não é recomendação de investimento. "
                    "As decisões e os riscos dos aportes são do investidor.")
+        st.html(marca.credito_html())
 
 if AVISOS in paginas:  # pop-up dos avisos novos (dica do Sentinela, data com, pagamento confirmado)
     for aviso in estado.caixa_avisos().para_mostrar(estado.email_avisos())[:3]:
@@ -176,7 +181,8 @@ if AVISOS in paginas:  # pop-up dos avisos novos (dica do Sentinela, data com, p
 estado.iniciar_agente()
 st.session_state.pagina_atual = navegacao.url_path
 if paginas[0] is not PORTARIA:
-    from chronotrade import jarvis_app
+    from chronotrade import jarvis_app, trilha
 
     jarvis_app.botao_flutuante()  # Jarvis mãos livres: o mesmo botão em todas as telas
+    trilha.botao()                # trilha sonora (incentivo, tensão, euforia, felicidade)
 navegacao.run()

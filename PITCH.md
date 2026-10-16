@@ -47,6 +47,10 @@ tempo mostra a prosperidade se acumulando no longo prazo.
 - **Comunidade segura:** Pregão com regras, denúncia, moderação e aviso legal em cada mensagem.
 - **Voz e IA local:** o Jarvis roda no PC do cliente com o OpenJarvis; privacidade como argumento.
 - **Visual que ninguém tem:** estética retrô de jogo, que vira assunto e print nas redes.
+- **Imposto sem susto:** calculadora de day trade e swing trade com DARF, vencimento e lembrete automático.
+- **Treino sem risco:** carteiras virtuais ao vivo com o capital que a pessoa quiser.
+- **Ver o dinheiro trabalhar:** crescimento do patrimônio separando aportes de rendimento.
+- **Clima de jogo:** trilha sonora que muda com o dia (incentivo, tensão, euforia, felicidade).
 - **E se vier 2008 de novo?** Teste de estresse com as crises da B3, simulação de compras antes de fazer e futuros possíveis.
 - **Mãos livres de verdade:** “Jarvis, …” comanda o app inteiro, de qualquer tela.
 - **Pregão vivo:** emojis e frases faladas pelos avatares, com a voz da pessoa.
@@ -93,3 +97,7 @@ viram acesso ao app, pessoas online no Pregão no horário do pregão, cancelame
 ## O que dizer sempre
 > "O Chrono Trade é uma ferramenta de estudo e organização. Não é recomendação de investimento. A decisão
 > e a responsabilidade pelo aporte são suas."
+
+
+---
+Desenvolvido por **Marcelo Mekaro** · marcelomekaro@gmail.com · WhatsApp (19) 99965-0436

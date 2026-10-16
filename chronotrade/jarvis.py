@@ -150,6 +150,9 @@ PAGINAS = {
     "simulador": ("paginas/simulador.py", ["simulador", "simulacao", "simulacoes", "teste de estresse", "estresse"]),
     "jarvis": ("paginas/jarvis.py", ["jarvis", "conversa com o jarvis"]),
     "compartilhar": ("paginas/compartilhar.py", ["relatorio", "relatorios"]),
+    "crescimento": ("paginas/crescimento.py", ["crescimento", "evolucao do patrimonio", "evolucao"]),
+    "virtuais": ("paginas/virtuais.py", ["carteiras virtuais", "carteira virtual", "virtuais"]),
+    "impostos": ("paginas/impostos.py", ["imposto", "impostos", "imposto de renda", "darf", "calculadora de imposto"]),
 }
 
 EMPRESAS = {
@@ -309,8 +312,36 @@ _NUM_FRASE = {"um": 1, "uma": 1, "primeira": 1, "dois": 2, "duas": 2, "segunda":
               "quatro": 4, "quarta": 4, "cinco": 5, "quinta": 5, "seis": 6, "sexta": 6}
 
 
+HUMORES_FALADOS = [("parar", r"\b(par[ae]r?|pausa\w*|deslig\w*|silencio|chega de)\b"),
+                   ("tensao", r"\b(tens\w*|suspense|nervos\w*|drama\w*)\b"),
+                   ("euforia", r"\b(eufor\w*|balada|agitad\w*|empolga\w*)\b"),
+                   ("felicidade", r"\b(feliz|felicidade|alegr\w*|leve)\b"),
+                   ("incentivo", r"\b(incentiv\w*|motiva\w*|anim\w*|foco|forca)\b")]
+
+
+def _capital_falado(t: str) -> float | None:
+    m = re.search(r"\b(\d{1,3}(?:[.,]\d{3})*|\d+)(?:[.,](\d+))?\s*(mil|milhao|milhoes|k)?\b", t)
+    if not m:
+        return None
+    numero = float(m.group(1).replace(".", "").replace(",", "") + ("." + m.group(2) if m.group(2) else ""))
+    escala = {"mil": 1e3, "k": 1e3, "milhao": 1e6, "milhoes": 1e6}.get(m.group(3) or "", 1)
+    return numero * escala
+
+
 def _entender_app(t: str, texto: str) -> Comando | None:
     """Comandos que mexem no app: parar, confirmar, check-in, emojis, frases, tema, avisos, simulações."""
+    if re.search(r"\b(music\w*|trilha|som de fundo)\b", t) and not re.search(r"\b(abr[ae]|abrir)\b", t):
+        for humor, padrao in HUMORES_FALADOS:
+            if re.search(padrao, t):
+                return Comando("musica", texto, extra=humor)
+        return Comando("musica", texto, extra="incentivo")
+    if re.search(r"\b(cri\w*|nova|novo|mont\w*)\b.*\bcarteira virtual\b", t):
+        capital = _capital_falado(t)
+        return Comando("carteira_virtual", texto, extra=str(capital) if capital else None)
+    if re.search(r"\b(quanto|como)\b.*\b(patrimonio|carteira|dinheiro)\b.*\b(cresc\w*|rend\w*|evolu\w*)\b", t):
+        return Comando("crescimento", texto)
+    if re.search(r"\b(imposto|darf|quanto (eu )?pago de ir)\b", t) and not re.search(r"\b(abr[ae]|abrir|ir para)\b", t):
+        return Comando("imposto", texto)
     if re.search(r"\b(para de ouvir|pare de ouvir|parar de ouvir|desliga\w* (o )?(microfone|jarvis|maos livres)|"
                  r"pode descansar|tchau jarvis|ate mais jarvis|dormir)\b", t):
         return Comando("parar", texto)
@@ -387,8 +418,10 @@ def entender(texto: str) -> Comando:
     if re.search(r"\b(whats|whatsapp|zap|compartilh|mand[ae] pro|envi[ae] pr)\w*", t):
         return Comando("compartilhar", texto, ticker)
     if re.search(r"\b(abr[ae]|abrir|ir para|vai para|va para|mostr[ae]|leva|entra)\w*", t):
-        for chave, (_, termos) in PAGINAS.items():
-            if any(re.search(rf"\b{termo}\b", t) for termo in termos):
+        termos = sorted(((termo, chave) for chave, (_, lista) in PAGINAS.items() for termo in lista),
+                        key=lambda x: -len(x[0]))  # o termo mais específico ganha ("carteira virtual" > "carteira")
+        for termo, chave in termos:
+            if re.search(rf"\b{termo}\b", t):
                 return Comando("navegar", texto, ticker, pagina=chave)
     if re.search(r"\b(estresse|stress|crise|crash|covid|pandemia|recessao|joesley|greve|choque de juros)\b|"
                  r"\be se (o mercado|a bolsa|o ibovespa|tudo)\b|\b(simul\w*) (uma )?(queda|crise)", t):
@@ -424,7 +457,8 @@ class Resposta:
     silencioso: bool = False               # não falar nada (ruído, sem palavra de ativação)
 
 
-AJUDA = ("Diga \"Jarvis\" e o comando. Posso fazer o check-in do dia, simular uma crise (\"e se vier uma crise como a da Covid?\"), "
+AJUDA = ("Diga \"Jarvis\" e o comando. Posso tocar música (\"tocar música de euforia\"), criar uma carteira virtual "
+         "(\"criar carteira virtual de 50 mil\"), dizer quanto o patrimônio cresceu, calcular o imposto da bolsa, fazer o check-in do dia, simular uma crise (\"e se vier uma crise como a da Covid?\"), "
          "simular uma compra (\"simular compra de 100 TAEE11\"), soltar emojis e falar as suas frases no Pregão, trocar o tema "
          "do app, ler os seus avisos, criar alertas (\"me avise quando a Taesa ficar abaixo de 34 reais\"), abrir telas (\"abrir agenda\"), dar cotação (\"cotação da Petrobras\"), montar a dica do próximo "
          "aporte (\"qual a dica do aporte?\"), listar proventos, dizer o patrimônio, trazer notícias de um ativo, "
@@ -464,7 +498,7 @@ def _resumo_texto(ctx: Contexto) -> str:
 
 
 ACOES_DO_APP = ("parar", "repetir", "confirmar", "cancelar", "checkin", "emoji", "frase", "tema", "avisos",
-                "estresse", "intencao")
+                "estresse", "intencao", "musica", "carteira_virtual", "crescimento", "imposto")
 
 
 def executar(cmd: Comando, ctx: Contexto, historico: list[dict] | None = None) -> Resposta:

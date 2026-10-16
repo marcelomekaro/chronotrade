@@ -170,3 +170,51 @@ def _ativo_demo(ticker: str) -> DadosAtivo:
         dividendos=dividendos,
         fonte="demo",
     )
+
+
+# ---------------------------------------------------------------------------
+# Cotação ao vivo (carteiras virtuais): preço de agora, com cache curto
+# ---------------------------------------------------------------------------
+
+_AO_VIVO: dict[str, tuple[float, float, float | None]] = {}   # ticker -> (quando, preço, variação do dia)
+AO_VIVO_CACHE = 20.0
+_BASE_DEMO: dict[tuple[str, str], DadosAtivo] = {}
+
+
+def preco_ao_vivo(ticker: str, demo: bool = False, agora: float | None = None) -> tuple[float | None, float | None]:
+    """(preço, variação do dia). No Yahoo vem com o atraso da B3 (uns 15 minutos); no modo demonstração o preço
+    oscila de leve a cada poucos segundos, para a tela parecer um pregão de verdade."""
+    import math
+    import time
+
+    ticker = normalizar_ticker(ticker)
+    agora = agora if agora is not None else time.time()
+    if demo:
+        chave = (ticker, time.strftime("%Y-%m-%d"))
+        if chave not in _BASE_DEMO:
+            _BASE_DEMO[chave] = _ativo_demo(ticker)
+        base = _BASE_DEMO[chave]
+        s = _semente(ticker)
+        onda = 0.006 * math.sin(agora / 47 + s % 97) + 0.003 * math.sin(agora / 9 + s % 13)
+        preco = round(base.preco * (1 + onda), 2)
+        anterior = base.fechamento_anterior or base.preco
+        return preco, preco / anterior - 1
+    guardado = _AO_VIVO.get(ticker)
+    if guardado and agora - guardado[0] < AO_VIVO_CACHE:
+        return guardado[1], guardado[2]
+    try:
+        import yfinance as yf
+
+        info = yf.Ticker(ticker).fast_info
+        preco = _numero(info.get("last_price") or info.get("lastPrice"))
+        anterior = _numero(info.get("previous_close") or info.get("previousClose"))
+    except Exception:
+        preco = anterior = None
+    if not preco:
+        d = carregar_ativo(ticker)
+        preco, anterior = d.preco, d.fechamento_anterior
+    if not preco:
+        return None, None
+    variacao = preco / anterior - 1 if anterior else None
+    _AO_VIVO[ticker] = (agora, float(preco), variacao)
+    return float(preco), variacao

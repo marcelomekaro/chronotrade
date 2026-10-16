@@ -39,6 +39,7 @@ with c3:
         tema.janela("Check-in de hoje", f"+{proximo} pontos", "Toque no botão abaixo")
         if st.button("✅ Fazer check-in do dia", type="primary", width="stretch"):
             r = db_jogo.checkin(eu)
+            estado.trilha("felicidade")
             if r:
                 st.toast(f"Check-in feito: +{r[0]} pontos. Sequência de {r[1]} dias!", icon="✅")
             st.rerun()
@@ -96,6 +97,7 @@ for aba, categoria in zip(abas, jg.CATEGORIAS, strict=True):
                     if st.button(rotulo, key=f"comprar_{item}", width="stretch", disabled=not pode or saldo < preco):
                         try:
                             db_jogo.comprar(eu, item)
+                            estado.trilha("felicidade")
                             st.toast(f"{nome_item} é seu! Toque em Usar para vestir.", icon="🛍️")
                             st.rerun()
                         except jg.ErroJogo as erro:

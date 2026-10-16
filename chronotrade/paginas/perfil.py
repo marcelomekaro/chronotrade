@@ -186,3 +186,31 @@ for inicio in range(0, len(opcoes), 3):
                 st.rerun()
 tema.legenda("O tema vale para você, em todos os aparelhos. Dá para trocar por voz: “Jarvis, mudar o tema para verde”. "
              "O salão do Pregão mantém o visual de jogo.")
+
+st.subheader("Trilha sonora")
+st.markdown("O botão **♪** no canto da tela toca música gerada pelo app em quatro climas: 💪 Incentivo, ⚡ Tensão, "
+            "🚀 Euforia e 😊 Felicidade. Ligue a **trilha automática** para a música mudar com o que acontece (euforia "
+            "quando a carteira sobe forte, tensão no teste de estresse, felicidade no check-in). Você também pode "
+            "colocar uma música sua:")
+musica_atual, musica_nome = db.musica_de(eu)
+m1, m2 = st.columns([2, 1], vertical_alignment="bottom")
+enviada = m1.file_uploader("Minha música (MP3, OGG, WAV ou M4A, até 12 MB)", type=["mp3", "ogg", "wav", "m4a"],
+                           disabled=not pode, key="musica_up")
+if enviada is not None and pode and st.session_state.get("musica_marca") != enviada.file_id:
+    from chronotrade import trilha
+
+    try:
+        url = trilha.guardar_musica(enviada.getvalue(), enviada.name)
+        db.salvar_musica(eu, url, enviada.name.rsplit(".", 1)[0], nome)
+        st.session_state.musica_marca = enviada.file_id
+        st.toast("Música salva. Escolha 🎵 no botão ♪.", icon="🎵")
+        st.rerun()
+    except (ValueError, OSError) as erro:
+        st.error(f"Não consegui guardar a música: {erro}")
+if musica_atual:
+    m1.audio(musica_atual)
+    if m2.button("Remover minha música", width="stretch"):
+        db.salvar_musica(eu, None)
+        st.rerun()
+tema.legenda("Use só músicas que você tem direito de usar. A trilha gerada pelo app é livre para usar.")
+

@@ -88,8 +88,13 @@ with vitrine:
         "privada e mostra os seus gráficos no telão. Com notícias da B3 e do YouTube.\n"
         "- 🎯 **Alertas que trabalham por você**: preço-alvo, zona de compra e datas com no app, e-mail, "
         "WhatsApp ou Telegram.\n"
-        "- 🎙️ **Jarvis, o assistente de voz**: \"cotação da Taesa\", \"próximos dividendos\", com IA rodando no "
-        "seu PC (OpenJarvis).\n"
+        "- 🎙️ **Jarvis, mãos livres em todas as telas**: \"Jarvis, faz o check-in\", \"e se vier uma crise como a "
+        "de 2008?\", \"tocar música de euforia\".\n"
+        "- 🌪️ **Simulador de mercado**: teste a carteira contra as crises da B3 e simule compras antes de fazer.\n"
+        "- 🧪 **Carteiras virtuais ao vivo**: treine com R$ 10 mil ou R$ 1 milhão, sem arriscar nada.\n"
+        "- 🧾 **Imposto de renda na bolsa**: day trade e swing trade, DARF e lembrete do vencimento.\n"
+        "- 📈 **Crescimento do patrimônio**: quanto veio dos aportes e quanto o dinheiro rendeu sozinho.\n"
+        "- 🎵 **Trilha sonora**: incentivo, tensão, euforia e felicidade, que mudam com o seu dia.\n"
         "- 💬 **Ideia no WhatsApp em um toque**: mande a dica para um amigo ou para o seu consultor."
     )
     st.subheader("Quanto vale comprar com desconto")
@@ -107,3 +112,4 @@ loja.mostrar_planos()
 with st.expander("Comparar tudo o que cada plano inclui"):
     loja.comparativo()
 st.caption(AVISO_LEGAL)
+st.html(marca.credito_html())

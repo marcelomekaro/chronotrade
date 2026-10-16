@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --cor: #34D399; --cor2: #F2C14E; --fundo: rgba(12,17,28,.94); --texto: #EEF2F7; --suave: #9AA6B8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: transparent; overflow: hidden; color: var(--texto);
+    font-family: 'Plus Jakarta Sans', 'Atkinson Hyperlegible', 'Segoe UI', system-ui, sans-serif; }
+  .raiz { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; padding: 4px; }
+  .painel { width: 300px; max-width: calc(100vw - 24px); background: var(--fundo); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 18px; padding: 12px 14px; box-shadow: 0 18px 50px rgba(0,0,0,.45); backdrop-filter: blur(14px);
+    animation: entrar .25s cubic-bezier(.2,.8,.2,1); }
+  .painel[hidden] { display: none; }
+  @keyframes entrar { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+  .cab { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; }
+  .cab small { color: var(--suave); font-weight: 500; display: block; font-size: 11.5px; margin-top: 2px; }
+  .cab button { background: none; border: 0; color: var(--suave); font-size: 16px; cursor: pointer; border-radius: 6px; }
+  .humores { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .humores button { font: inherit; font-size: 13px; padding: 9px 8px; border-radius: 12px; cursor: pointer; color: var(--texto);
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); transition: all .15s ease; text-align: left; }
+  .humores button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.3); }
+  .humores button.ativo { background: linear-gradient(135deg, var(--cor), color-mix(in srgb, var(--cor) 60%, black));
+    color: #06110C; font-weight: 700; border-color: transparent; }
+  .humores .minha { grid-column: span 2; }
+  .linha { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 12.5px; color: var(--suave); }
+  input[type=range] { flex: 1; accent-color: var(--cor); }
+  .interruptor { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 10px; font-size: 12.5px; color: var(--suave); }
+  .interruptor input { accent-color: var(--cor); width: 16px; height: 16px; }
+  .botao { position: relative; width: 52px; height: 52px; border-radius: 50%; border: 0; cursor: pointer;
+    background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.25), transparent 45%), linear-gradient(145deg, #3B4658, #1C2331);
+    box-shadow: 0 10px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.16) inset; display: grid; place-items: center;
+    transition: transform .18s ease; color: #DCE3EE; font-size: 22px; }
+  .botao:hover { transform: translateY(-2px) scale(1.05); }
+  .botao.tocando { background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 45%), linear-gradient(145deg, var(--cor2), color-mix(in srgb, var(--cor2) 55%, black)); color: #1B1606; }
+  .eq { display: flex; gap: 2px; align-items: flex-end; height: 18px; }
+  .eq i { width: 3px; background: currentColor; border-radius: 2px; height: 30%; }
+  .tocando .eq i { animation: eq .8s ease-in-out infinite alternate; }
+  .eq i:nth-child(2) { animation-delay: -.3s !important; } .eq i:nth-child(3) { animation-delay: -.55s !important; } .eq i:nth-child(4) { animation-delay: -.15s !important; }
+  @keyframes eq { from { height: 20%; } to { height: 100%; } }
+  .dica { font-size: 11.5px; color: var(--suave); margin-top: 8px; line-height: 1.4; }
+  @media (prefers-reduced-motion: reduce) { .tocando .eq i { animation: none; height: 70%; } .painel { animation: none; } }
+</style>
+<script src="motor.js"></script>
+</head>
+<body>
+<div class="raiz" id="raiz">
+  <div class="painel" id="painel" hidden>
+    <div class="cab"><div>Trilha sonora<small id="estado">Escolha um clima</small></div><button id="fechar" aria-label="Fechar">✕</button></div>
+    <div class="humores" id="humores"></div>
+    <div class="linha">🔈<input type="range" id="vol" min="0" max="100" value="35" aria-label="Volume">🔊</div>
+    <label class="interruptor"><input type="checkbox" id="auto"> Trilha automática (muda com o que acontece no app)</label>
+    <div class="dica">Música gerada na hora pelo app. Diga “Jarvis, tocar música de euforia”.</div>
+  </div>
+  <button class="botao" id="botao" aria-label="Trilha sonora" title="Trilha sonora"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const enviar = (tipo, d) => window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type: tipo }, d), '*');
+  const guardar = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const lido = (k, p) => { try { const v = localStorage.getItem(k); return v == null ? p : v; } catch (e) { return p; } };
+  const H = window.ChronoTrilha.HUMORES;
+  let ctx = null, toca = null, audioProprio = null, args = {}, primeiro = true, ultimoEvento = +lido('ct_tr_ev', '0');
+  let humor = lido('ct_tr_humor', 'incentivo'), volume = +lido('ct_tr_vol', '35') / 100, auto = lido('ct_tr_auto', '0') === '1';
+  let tocando = false;
+
+  const fe = window.frameElement;
+  function posicionar() {
+    if (!fe) return;
+    const doc = window.parent.document, chat = doc.querySelector('[data-testid="stChatInput"]');
+    const baixo = (chat ? Math.max(16, window.parent.innerHeight - chat.getBoundingClientRect().top + 10) : 16) + 5;
+    const temJarvis = !!doc.querySelector('iframe[title*="jarvis"]');
+    const largura = $('painel').hidden ? 64 : Math.min(320, window.parent.innerWidth - 90);
+    fe.style.cssText = `position:fixed;right:${temJarvis ? 84 : 12}px;bottom:${baixo}px;width:${largura}px;z-index:999989;border:0;background:transparent;color-scheme:normal;`;
+    const caixa = fe.closest('[data-testid="stElementContainer"], .element-container');
+    if (caixa) {
+      caixa.style.cssText = 'height:0;min-height:0;margin:0;padding:0;overflow:visible;';
+      let e = caixa;
+      for (let i = 0; e && i < 8 && e !== doc.body; i++, e = e.parentElement) {
+        const s = window.parent.getComputedStyle(e);
+        if (s.transform !== 'none' || s.filter !== 'none' || (s.contain && s.contain !== 'none')) {
+          e.style.setProperty('transform', 'none', 'important'); e.style.setProperty('animation', 'none', 'important'); }
+      }
+    }
+    enviar('streamlit:setFrameHeight', { height: $('raiz').offsetHeight + 8 });
+  }
+  setInterval(posicionar, 1200); new ResizeObserver(posicionar).observe($('raiz'));
+  function cores() { try { const s = window.parent.getComputedStyle(window.parent.document.documentElement);
+    const a = s.getPropertyValue('--ouro').trim(), b = s.getPropertyValue('--jade').trim();
+    if (a) document.documentElement.style.setProperty('--cor', a); if (b) document.documentElement.style.setProperty('--cor2', b); } catch (e) {} }
+
+  function desenhar() {
+    const lista = Object.keys(H).map(k => `<button data-h="${k}" class="${tocando && humor === k ? 'ativo' : ''}">${H[k].emoji} ${H[k].nome}</button>`);
+    if (args.minha_musica) lista.push(`<button data-h="minha" class="minha ${tocando && humor === 'minha' ? 'ativo' : ''}">🎵 ${args.minha_nome || 'Minha música'}</button>`);
+    $('humores').innerHTML = lista.join('');
+    $('humores').querySelectorAll('button').forEach(b => b.onclick = () => {
+      if (tocando && humor === b.dataset.h) pausar(); else tocar(b.dataset.h); });
+    $('botao').classList.toggle('tocando', tocando);
+    $('estado').textContent = tocando ? `Tocando: ${humor === 'minha' ? (args.minha_nome || 'sua música') : H[humor].nome}` : 'Pausada. Escolha um clima.';
+    $('vol').value = Math.round(volume * 100); $('auto').checked = auto;
+  }
+  function garantirCtx() {
+    if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); toca = window.ChronoTrilha.tocador(ctx); toca.volume(volume); }
+    if (ctx.state === 'suspended') ctx.resume();
+  }
+  function tocar(novo) {
+    humor = novo || humor; guardar('ct_tr_humor', humor);
+    if (humor === 'minha') {
+      if (toca) toca.parar();
+      if (!audioProprio || audioProprio.dataset.url !== args.minha_musica) {
+        if (audioProprio) audioProprio.pause();
+        audioProprio = new Audio(args.minha_musica); audioProprio.loop = true; audioProprio.dataset.url = args.minha_musica; }
+      audioProprio.volume = Math.min(1, volume); audioProprio.play().catch(() => {});
+    } else {
+      if (audioProprio) audioProprio.pause();
+      garantirCtx(); toca.saida.gain.cancelScheduledValues(ctx.currentTime); toca.volume(volume);
+      if (toca.humor !== humor) toca.mudar(humor);
+    }
+    tocando = true; guardar('ct_tr_tocando', '1'); desenhar();
+  }
+  function pausar() {
+    if (toca) toca.parar(); if (audioProprio) audioProprio.pause();
+    tocando = false; guardar('ct_tr_tocando', '0'); desenhar();
+  }
+  $('botao').onclick = () => { $('painel').hidden = !$('painel').hidden; if (!$('painel').hidden) desenhar(); posicionar(); };
+  $('fechar').onclick = () => { $('painel').hidden = true; posicionar(); };
+  $('vol').oninput = e => { volume = e.target.value / 100; guardar('ct_tr_vol', e.target.value);
+    if (toca) toca.volume(volume); if (audioProprio) audioProprio.volume = Math.min(1, volume); };
+  $('auto').onchange = e => { auto = e.target.checked; guardar('ct_tr_auto', auto ? '1' : '0'); };
+
+  function evento(ev) {
+    if (!ev || !ev.n || ev.n <= ultimoEvento) return;
+    ultimoEvento = ev.n; guardar('ct_tr_ev', String(ev.n));
+    if (ev.humor === 'parar') { pausar(); return; }
+    if (ev.forcar || (auto && tocando) || (auto && ev.comecar)) { tocar(ev.humor); }
+  }
+  window.addEventListener('message', e => {
+    if (!e.data || e.data.type !== 'streamlit:render') return;
+    args = e.data.args || {}; cores();
+    if (primeiro) {
+      primeiro = false;
+      if (lido('ct_tr_tocando', '0') === '1') {   // continua tocando ao trocar de tela ou recarregar
+        const retomar = () => { tocar(humor); window.parent.document.removeEventListener('pointerdown', retomar, true); };
+        try { garantirCtx(); if (ctx.state === 'running' || humor === 'minha') tocar(humor);
+          else window.parent.document.addEventListener('pointerdown', retomar, true); } catch (er) {}
+      }
+    }
+    evento(args.evento); desenhar(); posicionar();
+  });
+  enviar('streamlit:componentReady', { apiVersion: 1 }); posicionar();
+})();
+</script>
+</body>
+</html>

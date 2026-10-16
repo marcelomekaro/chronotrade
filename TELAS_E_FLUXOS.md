@@ -160,6 +160,15 @@ flowchart LR
 | ![](docs/telas/69_temas.png) **Temas** | Seis temas, com o Esmeralda moderno como padrão | Todos |
 | ![](docs/telas/70_pregao_emoji.png) **Emojis no salão** | Barra de emojis; eles sobem do avatar para todos verem | Básico |
 | ![](docs/telas/72_pregao_frase_falada.png) **Frase falada** | O avatar fala a frase com balão 🔊 | Básico |
+| ![](docs/telas/73_portal_atalhos.png) **Portal com atalhos** | Aporte, Crescimento, Crise, Carteiras virtuais, IR e Pregão a um toque | Todos |
+| ![](docs/telas/74_crescimento.png) **Crescimento do patrimônio** | Aportes x dinheiro trabalhando, foto diária pelo agente | Básico |
+| ![](docs/telas/75_virtuais.png) **Carteiras virtuais** | Capital à escolha, posições ao vivo, resultado | Básico |
+| ![](docs/telas/76_virtuais_operar.png) **Comprar e vender** | Preço de agora ou simulado, por quantidade ou por valor | Básico |
+| ![](docs/telas/77_impostos.png) **Imposto de renda** | Day trade e swing trade, DARF 6015 e vencimento | Médio |
+| ![](docs/telas/78_impostos_meses.png) **IR mês a mês** | Isenção de R$ 20 mil, prejuízos, IRRF e lembrete | Médio |
+| ![](docs/telas/79_trilha.png) **Trilha sonora** | Incentivo, tensão, euforia e felicidade; trilha automática | Todos |
+| ![](docs/telas/80_credito_lateral.png) **Crédito** | Desenvolvido por Marcelo Mekaro, e-mail e WhatsApp | Todos |
+| ![](docs/telas/81_portaria_credito.png) **Tela de entrada** | Novidades em destaque e crédito no rodapé | Todos |
 | ![](docs/telas/39_alertas.png) **Alertas de preço** | Preço-alvo abaixo ou acima; zona de compra automática; Telegram grátis | Básico (Telegram no Médio) |
 | ![](docs/telas/40_importar_b3.png) **Importar da B3** | Posição de todas as corretoras pela Área do Investidor, com prévia | Todos |
 | ![](docs/telas/41_agenda_ics.png) **Agenda no calendário** | Arquivo .ics com as datas com e lembrete um dia antes | Básico |
@@ -167,6 +176,7 @@ flowchart LR
 O **Oráculo: conselho de agentes de IA** (vários agentes debatem uma ação) é do plano Premium, com 30 análises por mês.
 
 ## Avisos legais no app
+- Calculadora de IR é conferência, não consultoria tributária; carteiras virtuais não enviam ordens; músicas enviadas são de responsabilidade de quem envia.
 - Simulador: crises com quedas aproximadas, para estudo; não é previsão nem recomendação. Mãos livres não guarda áudio; frases do avatar são públicas e moderadas.
 - Pontos e itens do avatar não têm valor monetário nem são prêmio por desempenho; pacotes têm 7 dias de arrependimento enquanto não usados.
 - Cadastro só com duas confirmações: termos de uso e "o Chrono Trade não faz recomendação; as decisões e os riscos são meus".

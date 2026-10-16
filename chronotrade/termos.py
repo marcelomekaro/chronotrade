@@ -63,6 +63,11 @@ botão do Jarvis estiver ligado; o áudio é transformado em texto pela voz loca
 não é guardado. As frases do avatar (texto e, se você gravar, a sua voz) ficam guardadas no servidor, são
 públicas no Pregão, podem ser denunciadas e apagadas pela moderação, e você pode apagá-las quando quiser.
 
+**6.3 Imposto, carteiras virtuais e música.** A calculadora de imposto de renda é uma ferramenta de conferência
+com as regras públicas vigentes; não é consultoria tributária, e o valor a pagar deve ser confirmado com um contador
+ou com a Receita Federal. As carteiras virtuais não enviam ordens a corretoras e os preços simulados são escolhas
+suas. A trilha sonora gerada pelo app é livre de direitos; músicas enviadas por você devem ser de uso permitido a você.
+
 **7. Seus dados (LGPD).** Guardamos nome, e-mail, WhatsApp, senha (só em forma criptografada, que
 ninguém consegue ler), a carteira que você cadastra e os avisos enviados. Eles servem para o app
 funcionar, para enviar os avisos que você escolher (no app, por e-mail ou WhatsApp) e para falar com
@@ -72,7 +77,8 @@ Mercado Pago (pagamentos) e os serviços de e-mail e WhatsApp. No Pregão, os ou
 seu apelido, o avatar e as mensagens que você enviar. Você pode baixar os seus dados, mudar as
 preferências de aviso ou excluir a conta a qualquer momento em **Minha conta**.
 
-**8. Contato.** {contato}{f", WhatsApp {whatsapp}" if whatsapp else ""}
+**8. Contato.** {contato}{f", WhatsApp {whatsapp}" if whatsapp else ""}. Desenvolvido por Marcelo Mekaro
+(marcelomekaro@gmail.com, WhatsApp (19) 99965-0436).
 
 **Aviso de risco.** {AVISO_LEGAL}
 

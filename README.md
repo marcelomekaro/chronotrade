@@ -26,6 +26,10 @@
 - **Simulador de mercado**: teste de estresse com crises da B3 (2008, Covid, 2015, juros, greve, Joesley), simulação de intenções de compra e venda e futuros possíveis (Monte Carlo).
 - **Jarvis mãos livres**: botão em todas as telas, palavra de ativação “Jarvis”, conversa contínua e confirmação por voz.
 - **Emojis e frases no Pregão**: emojis que sobem do avatar e frases faladas com a voz da pessoa, do Jarvis ou do navegador.
+- **Imposto de renda**: day trade e swing trade (regras de 2026), FIIs, IRRF, DARF 6015, vencimento e lembrete pelo agente.
+- **Carteiras virtuais ao vivo**: várias carteiras com o capital que quiser, a preço de agora ou simulado.
+- **Crescimento do patrimônio**: foto diária automática, aportes x rendimento, resumo semanal.
+- **Trilha sonora**: música gerada no app (incentivo, tensão, euforia, felicidade) e música própria.
 - **Conta de teste**: o admin cria um usuário (ex.: `Teste`) com senha e prazo de 30 dias.
 - **Webhooks**: avisos no Discord, Slack, Teams, Google Chat, Zapier e Make.
 - **Alertas**: preço-alvo e zona de compra, no app, e-mail, WhatsApp ou Telegram (grátis).
@@ -474,3 +478,6 @@ Please reference our work if you find *TradingAgents* provides you with some hel
       url={https://arxiv.org/abs/2412.20138}, 
 }
 ```
+
+
+Desenvolvido por **Marcelo Mekaro** · marcelomekaro@gmail.com · WhatsApp (19) 99965-0436

@@ -202,7 +202,7 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
         return memoria[ticker]
 
     resumo = {"liberadas": 0, "dicas": 0, "proventos": 0, "ordens": 0, "erros": 0, "sincronizadas": 0,
-              "alertas": 0, "zonas": 0, "pontos": 0}
+              "alertas": 0, "zonas": 0, "pontos": 0, "automacoes": 0}
 
     # 1. Pagamentos
     if cobrancas is not None and contas is not None:
@@ -257,9 +257,17 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
         except Exception as erro:
             resumo["erros"] += 1
             log.exception("Alertas falharam para %s: %s", p.email, erro)
+        try:  # carteiras virtuais e lembretes de DARF valem mesmo sem carteira cadastrada
+            resumo["automacoes"] += automacoes_sem_carteira(caixa, p, buscar, agora)
+        except Exception as erro:
+            log.info("Automações (virtuais/DARF) falharam para %s: %s", p.email, erro)
         carteira = _carteira_de(p.pasta)
         if carteira is None:
             continue
+        try:  # foto do patrimônio, resumo da semana e marcos da meta de renda
+            resumo["automacoes"] += automacoes_patrimonio(caixa, p, carteira, buscar, agora)
+        except Exception as erro:
+            log.info("Foto do patrimônio falhou para %s: %s", p.email, erro)
         try:  # pontos da semana pela valorização das posições (gamificação)
             from chronotrade.jogo import Jogo
 
@@ -317,6 +325,63 @@ def ciclo(contas=None, caixa: avisos.CaixaDeAvisos | None = None, cobrancas=None
             resumo["erros"] += 1
             log.exception("Sentinela falhou para %s: %s", p.email, erro)
     return resumo
+
+
+MARCOS_META = (0.25, 0.5, 0.75, 1.0)
+
+
+def automacoes_patrimonio(caixa: avisos.CaixaDeAvisos, p: Pessoa, carteira: Carteira, buscar, agora: datetime) -> int:
+    """Foto diária do patrimônio, resumo semanal do crescimento e comemoração dos marcos da meta de renda."""
+    from chronotrade import carteira as cart_mod, patrimonio as pt
+
+    feitos = 0
+    dados = {pos.ticker: buscar(pos.ticker) for pos in carteira.posicoes}
+    tabela = cart_mod.montar_tabela(carteira, dados)
+    r = cart_mod.resumir(tabela, carteira.caixa)
+    banco = pt.Patrimonio(caixa.caminho)
+    banco.registrar(p.email, r.patrimonio, r.custo, r.caixa, r.renda_12m, agora.date())
+    feitos += 1
+    ultimo = caixa.ultimo(p.email, "crescimento")
+    if agora.weekday() == 0 and (ultimo is None or agora - ultimo > timedelta(days=5)):
+        cres = pt.crescimento(banco.serie(p.email, agora.date() - timedelta(days=7)))
+        if cres is not None:
+            sinal = "cresceu" if cres.fim >= cres.inicio else "recuou"
+            caixa.criar(p.email, "crescimento", f"Sua semana: patrimônio {sinal} {brl(abs(cres.fim - cres.inicio))}",
+                        f"Patrimônio de {brl(cres.fim)}. Aportes da semana: {brl(cres.aportes)}. O dinheiro trabalhando "
+                        f"(valorização e proventos): {brl(cres.trabalho)}. Veja a evolução em Crescimento. {AVISO_CURTO}")
+            feitos += 1
+    meta = carteira.meta_renda_mensal or 0
+    if meta:
+        fracao = r.renda_mensal_media / meta
+        for marco in MARCOS_META:
+            titulo = f"Meta de renda: {marco:.0%} alcançados!".replace(".", ",")
+            if fracao >= marco and not caixa.ja_avisado(p.email, "meta", titulo):
+                caixa.criar(p.email, "meta", titulo,
+                            f"A sua carteira já paga {brl(r.renda_mensal_media)} por mês em proventos, {marco:.0%} da meta "
+                            f"de {brl(meta)}. Buy and hold diário, prosperidade no longo prazo!")
+                feitos += 1
+    return feitos
+
+
+def automacoes_sem_carteira(caixa: avisos.CaixaDeAvisos, p: Pessoa, buscar, agora: datetime) -> int:
+    """Valor do dia das carteiras virtuais e lembrete do DARF perto do vencimento."""
+    from chronotrade import carteiras_virtuais as cv, ir
+
+    feitos = 0
+    banco = cv.CarteirasVirtuais(caixa.caminho)
+    for c in banco.listar(p.email):
+        dinheiro, posicoes, _ = banco.estado(c)
+        total, _ = cv.avaliar(dinheiro, posicoes, {t: buscar(t).preco for t in posicoes})
+        banco.registrar_valor(c.id, total, agora.date())
+        feitos += 1
+    lembretes = ir.Lembretes(caixa.caminho)
+    for mes, valor, venc in lembretes.a_avisar(p.email, agora.date()):
+        _entregar(caixa, p, "darf", f"DARF de {mes[5:]}/{mes[:4]} vence em {venc:%d/%m}",
+                  f"Imposto da bolsa a pagar: {brl(valor)}, código {ir.CODIGO_DARF}, até {venc:%d/%m/%Y}. Gere a guia no "
+                  "Sicalc Web da Receita. Confira os números com o seu contador.")
+        lembretes.marcar_avisado(p.email, mes)
+        feitos += 1
+    return feitos
 
 
 def sincronizar_conexoes(pasta: Path, caixa: avisos.CaixaDeAvisos | None = None, fabrica=None) -> int:

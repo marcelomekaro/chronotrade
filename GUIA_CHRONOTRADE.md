@@ -51,7 +51,7 @@ No `.env`, preencha pelo menos:
 ```
 CHRONOTRADE_MODO=servidor
 CHRONOTRADE_ADMIN_EMAIL=marcelomekaro@gmail.com
-CHRONOTRADE_ADMIN_SENHA=UmaSenhaForte123
+# CHRONOTRADE_ADMIN_SENHA=  (sem isto, a senha inicial do admin é o próprio e-mail)
 GOOGLE_API_KEY=sua-chave
 TRADINGAGENTS_LLM_PROVIDER=google
 CHRONOTRADE_DOMINIO=chronotrade.seudominio.com.br
@@ -65,8 +65,10 @@ Sem domínio, use `docker compose up -d chronotrade agente` e acesse `http://IP-
 (sem HTTPS, as senhas trafegam abertas; use só para testar).
 
 ### Primeiro acesso do administrador
-1. Entre com o e-mail do administrador e a senha de `CHRONOTRADE_ADMIN_SENHA`.
-2. Vá em **Minha conta** e troque a senha.
+1. Entre com o e-mail do administrador (`marcelomekaro@gmail.com`) e a **senha igual ao e-mail**
+   (`marcelomekaro@gmail.com`). Se você definiu `CHRONOTRADE_ADMIN_SENHA`, vale essa senha.
+   Para voltar a senha do admin para o e-mail a qualquer momento: `chronotrade-admin senha-email`.
+2. Recomendado: em **Minha conta**, troque por uma senha só sua (quem souber o seu e-mail saberia a senha).
 3. Vá em **Painel do admin → Loja e integrações** e confira preços (Básico, Médio, Premium e o desconto
    anual), a chave PIX (já vem `marcelomekaro@gmail.com`), o nome do recebedor, a cidade e o WhatsApp
    de atendimento (já vem 19 99965-0436). Tudo pode ser mudado depois.
@@ -285,6 +287,37 @@ Para o reconhecimento entender bem, rode o `chronotrade-voz` com o Whisper `smal
   diga “Jarvis, falar a minha frase 1”: o avatar fala para a sala com balão.
 - Frases passam por um filtro (sem promessa de ganho, links, telefones ou ofensas). Quem ouvir algo errado clica
   no avatar → **Denunciar a última frase**; o admin ouve e apaga em **Painel do admin → Pregão → Moderação**.
+
+### Crescimento do patrimônio (automático)
+Tela **Carteira → Crescimento**. O agente Sentinela tira uma foto do patrimônio por dia (mesmo com o app fechado) e a
+tela separa o que veio dos **aportes** do que foi **o dinheiro trabalhando** (valorização e proventos), com a
+rentabilidade descontando os aportes. Toda segunda chega o resumo da semana, e quando a renda de proventos passa
+de 25%, 50%, 75% e 100% da meta chega um aviso de comemoração.
+
+### Carteiras virtuais ao vivo
+Tela **Mercado → Carteiras virtuais**. Crie até 12 carteiras com o capital que quiser (de R$ 100 a R$ 100 milhões),
+compre e venda **a preço de agora** ou **a um preço simulado**, e acompanhe ao vivo (atualiza a cada 8 segundos).
+Corretagem opcional e emolumentos da B3 já entram na conta. Dá para comparar as carteiras e mandar as operações
+para a calculadora de IR. Por voz: “Jarvis, criar carteira virtual de 50 mil”.
+
+### Calculadora de imposto de renda (plano Médio)
+Tela **Mercado → Imposto de renda**: digite as operações, importe a planilha de negociação da B3 (Área do
+Investidor → Extratos → Negociação) ou use uma carteira virtual. O app separa **day trade** (20%, IRRF 1%) de
+**swing trade** (15%, isento até R$ 20 mil vendidos em ações no mês; ETFs e BDRs sem isenção) e **FIIs** (20%),
+compensa prejuízos dentro de cada modalidade, desconta o IRRF, acumula imposto abaixo de R$ 10 e mostra o DARF
+(código 6015) e o vencimento (último dia útil do mês seguinte). O botão **Me lembrar do vencimento** faz o
+Sentinela avisar 5 dias antes. Regras de 2026 (a MP 1.303/2025 não virou lei). É conferência: confirme com o contador.
+
+### Trilha sonora
+O botão **♪** ao lado do Jarvis toca música **gerada pelo app** (sem direitos de terceiros) em quatro climas:
+💪 Incentivo, ⚡ Tensão, 🚀 Euforia e 😊 Felicidade. Com a **trilha automática**, a música muda com o app: euforia
+quando a carteira sobe 1% no dia ou numa conquista, tensão no teste de estresse ou numa queda de 2%, felicidade no
+check-in e nas compras da loja, incentivo nas compras das carteiras virtuais. Cada pessoa pode enviar uma música
+própria em **Meu perfil → Trilha sonora** (MP3, OGG, WAV ou M4A, até 12 MB). Por voz: “Jarvis, tocar música de tensão”.
+
+### Crédito do desenvolvedor
+O rodapé da barra lateral, a tela de entrada, os termos e os relatórios mostram “Desenvolvido por Marcelo Mekaro”,
+com e-mail e WhatsApp (19) 99965-0436 (link direto para conversa). Os dados ficam em `chronotrade/marca.py`.
 
 ### Jarvis: comando de voz com o OpenJarvis
 O [OpenJarvis](https://github.com/open-jarvis/OpenJarvis) (Stanford, código aberto) é um assistente de IA

@@ -174,6 +174,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {{ outline: 3px solid
 .ct-cartao:hover {{ transform: translateY(-3px); border-color: var(--ouro); }}
 .ct-cartao span {{ color: var(--suave); font-size: .93rem; line-height: 1.45; }}
 .ct-cartao-ico {{ font-size: 1.5rem; }}
+.ct-credito {{ font-size: .8rem; color: var(--suave); line-height: 1.5; margin-top: 6px; padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--borda) 60%, transparent); }}
+.ct-credito a {{ color: var(--ouro); text-decoration: none; }}
+.ct-credito a:hover {{ text-decoration: underline; }}
 kbd {{ background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-bottom-width: 2px; border-radius: 6px;
   padding: 0 6px; font-size: .85em; font-family: var(--corpo); }}
 ::-webkit-scrollbar {{ width: 10px; height: 10px; }}
@@ -343,6 +347,10 @@ h2, h3 { letter-spacing: -.01em; font-family: var(--moderna) !important; }
   background: linear-gradient(92deg, var(--texto), var(--ouro)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .ct-marca small { -webkit-text-fill-color: var(--suave); font-weight: 500; letter-spacing: 0; font-size: .82rem; line-height: 1.35; }
 [data-testid="stMainBlockContainer"] { padding-top: 3.4rem !important; }
+.ct-heroi-titulo { font-weight: 800; letter-spacing: -.035em; text-shadow: none !important;
+  background: linear-gradient(92deg, var(--texto) 0%, var(--ouro) 70%); -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; }
+.ct-slogan { font-weight: 600; text-shadow: none !important; }
 .ct-secao { font-family: var(--moderna) !important; font-weight: 700; font-size: .72rem; letter-spacing: .12em; }
 .ct-tempo .trilho { border: 1px solid color-mix(in srgb, var(--borda) 90%, transparent) !important; border-radius: 999px !important;
   height: 16px !important; background: rgba(255,255,255,.06) !important; box-shadow: inset 0 1px 3px rgba(0,0,0,.4) !important; }
