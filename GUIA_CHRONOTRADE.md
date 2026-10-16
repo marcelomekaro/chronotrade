@@ -31,6 +31,8 @@ conectado ao mesmo Wi-Fi. Se o Windows perguntar sobre o firewall, permita em **
 
 ## 2. Online, para vender assinaturas
 
+> Atalhos: **VS Code** (rodar, testar e publicar com um clique) e **Render** (online com HTTPS e deploy automático) estão no [DEPLOY.md](DEPLOY.md). Abaixo, o caminho com servidor próprio (VPS + Docker).
+
 ### Do que você precisa
 - Um servidor que rode **Docker** e guarde arquivos de forma permanente (um VPS Linux
   barato serve; serviços de nuvem com "volume" ou "disco persistente" também).

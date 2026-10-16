@@ -1,0 +1,52 @@
+# Blueprint do Render: cria o Chrono Trade online com um clique (New → Blueprint → este repositório).
+# Guia completo: DEPLOY.md
+services:
+  - type: web
+    name: chronotrade
+    runtime: docker
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    region: virginia            # mais perto do Brasil entre as opções do Render; não dá para mudar depois
+    # plan: omitido = o menor plano pago (0.5 CPU, 512 MB). Disco persistente NÃO funciona no plano free.
+    # Com muitos usuários ao mesmo tempo, troque para "1c-2g" no painel do Render.
+    healthCheckPath: /_stcore/health
+    autoDeployTrigger: commit   # cada git push na branch publica sozinho
+    disk:
+      name: chronotrade-dados
+      mountPath: /data          # contas, carteiras, Pregão, pontos, músicas: tudo fica aqui
+      sizeGB: 1
+    envVars:
+      - key: CHRONOTRADE_MODO
+        value: servidor
+      - key: CHRONOTRADE_HOME
+        value: /data
+      - key: CHRONOTRADE_ADMIN_EMAIL
+        value: marcelomekaro@gmail.com
+      - key: CHRONOTRADE_ADMIN_SENHA     # deixe vazio para a senha inicial ser o próprio e-mail
+        sync: false
+      - key: TRADINGAGENTS_LLM_PROVIDER
+        value: google
+      - key: GOOGLE_API_KEY              # a sua chave do Gemini (Oráculo, Jarvis, dicas por IA)
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN    # PIX com liberação automática do plano
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USUARIO
+        sync: false
+      - key: CHRONOTRADE_SMTP_HOST
+        sync: false
+      - key: CHRONOTRADE_SMTP_PORTA
+        value: "587"
+      - key: CHRONOTRADE_SMTP_USUARIO
+        sync: false
+      - key: CHRONOTRADE_SMTP_SENHA
+        sync: false
+      - key: CHRONOTRADE_SMTP_REMETENTE
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false
+      - key: CHRONOTRADE_PERMITIR_ORDENS_REAIS   # deixe 0: ordens reais ficam desligadas
+        value: "0"

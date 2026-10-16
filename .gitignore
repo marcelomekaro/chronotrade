@@ -222,3 +222,8 @@ __marimo__/
 .env.enterprise
 reports/
 chronotrade/static/musicas/
+
+# dados locais do VS Code
+.dados_local/
+.dados_servidor/
+.dados_render/

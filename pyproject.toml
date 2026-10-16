@@ -73,7 +73,7 @@ include = ["tradingagents*", "cli*", "chronotrade*"]
 [tool.setuptools.package-data]
 cli = ["static/*"]
 tradingagents = ["assets/*.svg"]
-chronotrade = ["static/*", "componentes/*/*.html"]
+chronotrade = ["static/*", "componentes/*/*.html", "componentes/*/*.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

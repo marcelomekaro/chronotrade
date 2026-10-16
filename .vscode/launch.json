@@ -1,0 +1,71 @@
+{
+  // Chrono Trade no VS Code: abra a aba "Executar e depurar" (Ctrl+Shift+D) e escolha uma das opções. F5 roda.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Chrono Trade: modo pessoal (só você)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "chronotrade/app.py", "--server.port", "8501", "--server.headless", "true"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": { "CHRONOTRADE_MODO": "pessoal", "CHRONOTRADE_HOME": "${workspaceFolder}/.dados_local" },
+      "justMyCode": true,
+      "presentation": { "group": "1-app", "order": 1 }
+    },
+    {
+      "name": "Chrono Trade: modo servidor (contas, planos, PIX)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "chronotrade/app.py", "--server.port", "8502", "--server.headless", "true"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "CHRONOTRADE_MODO": "servidor",
+        "CHRONOTRADE_HOME": "${workspaceFolder}/.dados_servidor",
+        "CHRONOTRADE_ADMIN_EMAIL": "marcelomekaro@gmail.com"
+      },
+      "justMyCode": true,
+      "presentation": { "group": "1-app", "order": 2 }
+    },
+    {
+      "name": "Igual ao Render (agente + app, porta 10000)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "PORT=10000 CHRONOTRADE_HOME=${workspaceFolder}/.dados_render CHRONOTRADE_MODO=servidor sh deploy/render/iniciar.sh",
+      "cwd": "${workspaceFolder}",
+      "presentation": { "group": "1-app", "order": 3 }
+    },
+    {
+      "name": "Agente Sentinela: um ciclo agora",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chronotrade.agentes.sentinela",
+      "args": ["agora", "--forcar", "--sem-ia"],
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "env": { "CHRONOTRADE_HOME": "${workspaceFolder}/.dados_local" },
+      "presentation": { "group": "2-ferramentas", "order": 1 }
+    },
+    {
+      "name": "Voz local do Jarvis (porta 8000)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chronotrade.voz_local",
+      "cwd": "${workspaceFolder}",
+      "envFile": "${workspaceFolder}/.env",
+      "presentation": { "group": "2-ferramentas", "order": 2 }
+    },
+    {
+      "name": "Testes (pytest)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-q", "tests"],
+      "cwd": "${workspaceFolder}",
+      "presentation": { "group": "3-testes", "order": 1 }
+    }
+  ]
+}

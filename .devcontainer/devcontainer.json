@@ -1,0 +1,14 @@
+{
+  // Abre o projeto já pronto dentro de um contêiner (VS Code: "Reopen in Container") ou no GitHub Codespaces.
+  "name": "Chrono Trade",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "pip install -e . && cp -n .env.example .env || true",
+  "forwardPorts": [8501, 10000],
+  "portsAttributes": { "8501": { "label": "Chrono Trade" }, "10000": { "label": "Igual ao Render" } },
+  "containerEnv": { "CHRONOTRADE_HOME": "/workspaces/.dados_chronotrade" },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.debugpy", "charliermarsh.ruff", "redhat.vscode-yaml"]
+    }
+  }
+}

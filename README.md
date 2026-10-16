@@ -480,4 +480,6 @@ Please reference our work if you find *TradingAgents* provides you with some hel
 ```
 
 
+**Publicar:** veja [DEPLOY.md](DEPLOY.md) (VS Code com tarefas prontas e Render com `render.yaml`).
+
 Desenvolvido por **Marcelo Mekaro** · marcelomekaro@gmail.com · WhatsApp (19) 99965-0436

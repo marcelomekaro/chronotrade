@@ -1,0 +1,69 @@
+{
+  // Tarefas prontas: Ctrl+Shift+P → "Tasks: Run Task" (ou Terminal → Executar Tarefa).
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1. Instalar (ambiente .venv + dependências)",
+      "type": "shell",
+      "command": "python -m venv .venv && ./.venv/bin/python -m pip install --upgrade pip && ./.venv/bin/pip install -e .",
+      "windows": {
+        "command": "py -3 -m venv .venv; .\\.venv\\Scripts\\python -m pip install --upgrade pip; .\\.venv\\Scripts\\pip install -e ."
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "2. Rodar o Chrono Trade (modo pessoal)",
+      "type": "shell",
+      "command": "./.venv/bin/chronotrade",
+      "windows": { "command": ".\\.venv\\Scripts\\chronotrade" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "3. Testes e verificação (pytest + ruff)",
+      "type": "shell",
+      "command": "./.venv/bin/python -m pytest -q tests && ./.venv/bin/python -m ruff check chronotrade tests",
+      "windows": { "command": ".\\.venv\\Scripts\\python -m pytest -q tests; .\\.venv\\Scripts\\python -m ruff check chronotrade tests" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "4. Docker: montar a imagem do Render e rodar em http://localhost:10000",
+      "type": "shell",
+      "command": "docker build -f Dockerfile.render -t chronotrade-render . && docker run --rm -p 10000:10000 -e PORT=10000 --env-file .env -v chronotrade_dados:/data chronotrade-render",
+      "problemMatcher": []
+    },
+    {
+      "label": "5. Docker: servidor completo (app + agente + API do Conector)",
+      "type": "shell",
+      "command": "docker compose up -d --build chronotrade agente api && docker compose ps",
+      "problemMatcher": []
+    },
+    {
+      "label": "6. Publicar no Render (git push → deploy automático)",
+      "type": "shell",
+      "command": "git add -A && git commit -m \"${input:mensagem}\" ; git push origin HEAD",
+      "windows": { "command": "git add -A; git commit -m \"${input:mensagem}\"; git push origin HEAD" },
+      "problemMatcher": []
+    },
+    {
+      "label": "7. Render: forçar um deploy agora (Deploy Hook)",
+      "type": "shell",
+      "command": "curl -fsS -X POST \"$RENDER_DEPLOY_HOOK\" && echo ' Deploy pedido ao Render.'",
+      "windows": { "command": "Invoke-RestMethod -Method Post -Uri $env:RENDER_DEPLOY_HOOK; Write-Output 'Deploy pedido ao Render.'" },
+      "options": { "env": { "RENDER_DEPLOY_HOOK": "${input:hook}" } },
+      "problemMatcher": []
+    },
+    {
+      "label": "8. Admin: senha do administrador igual ao e-mail",
+      "type": "shell",
+      "command": "./.venv/bin/chronotrade-admin senha-email",
+      "windows": { "command": ".\\.venv\\Scripts\\chronotrade-admin senha-email" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    { "id": "mensagem", "type": "promptString", "description": "Mensagem do commit", "default": "Atualização do Chrono Trade" },
+    { "id": "hook", "type": "promptString", "description": "Deploy Hook do Render (Settings → Deploy Hook)", "password": true }
+  ]
+}

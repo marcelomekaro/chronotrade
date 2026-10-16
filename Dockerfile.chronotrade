@@ -25,7 +25,9 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 RUN useradd --create-home appuser \
- && install -d -m 0755 -o appuser -g appuser /data
+ && install -d -m 0755 -o appuser -g appuser /data \
+ && python -c "import chronotrade, os; print(os.path.join(os.path.dirname(chronotrade.__file__), 'static', 'musicas'))" \
+    | xargs -I{} sh -c 'mkdir -p {} && chown appuser:appuser {}'   # músicas enviadas pelos usuários
 USER appuser
 WORKDIR /home/appuser/app
 COPY --from=builder --chown=appuser:appuser /build/.streamlit ./.streamlit
@@ -33,4 +35,5 @@ COPY --from=builder --chown=appuser:appuser /build/.streamlit ./.streamlit
 VOLUME /data
 EXPOSE 8501
 HEALTHCHECK --interval=60s --timeout=5s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health')"
-CMD ["chronotrade", "--server.port", "8501", "--server.address", "0.0.0.0", "--server.headless", "true"]
+# Usa a porta da variável PORT quando a hospedagem define uma (Render, Railway, Fly); senão 8501.
+CMD ["sh", "-c", "exec chronotrade --server.port ${PORT:-8501} --server.address 0.0.0.0 --server.headless true"]
