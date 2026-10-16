@@ -171,11 +171,13 @@ def salao_ao_vivo():
             try:
                 db.emote(sala, eu, acao.get("emoji", ""))
                 estado.conquistar("primeiro_emoji")
+                st.rerun(scope="fragment")
             except pg.ErroPregao as erro:
                 st.toast(str(erro), icon="⏳")
         elif acao.get("acao") == "frase" and pode:
             try:
                 db.tocar_frase(sala, eu, int(acao.get("id", 0)))
+                st.rerun(scope="fragment")  # todo mundo (inclusive você) ouve na hora
             except (pg.ErroPregao, ValueError) as erro:
                 st.toast(str(erro), icon="⏳")
         elif acao.get("acao") == "denunciar_frase" and pode:

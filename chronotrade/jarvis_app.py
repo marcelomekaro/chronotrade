@@ -389,7 +389,8 @@ def tratar_fala(wav: bytes, modo: str) -> tuple[jarvis.Comando | None, jarvis.Re
         _responder(n, texto, "Pois não?")
         return None, None
     cmd, resposta = processar(comando, "voz")
-    _responder(n, texto, resposta.texto, parar=bool(resposta.dados.get("parar")))
+    ouvido = f"Jarvis, {comando}" if chamou else texto   # mostra o comando limpo, sem o "Javis/Já vi" do reconhecimento
+    _responder(n, ouvido, resposta.texto, parar=bool(resposta.dados.get("parar")))
     return cmd, resposta
 
 

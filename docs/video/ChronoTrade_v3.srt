@@ -1,0 +1,99 @@
+1
+00:00:00,650 --> 00:00:03,401
+Investir um pouco todo dia, sem ansiedade.
+
+2
+00:00:03,901 --> 00:00:08,400
+Este é o Chrono Trade: buy and hold diário, prosperidade no longo prazo.
+
+3
+00:00:10,400 --> 00:00:15,837
+Num só painel, você vê o patrimônio, quanto os dividendos já pagam por mês e quando chega à sua meta.
+
+4
+00:00:16,337 --> 00:00:18,721
+E tem atalhos para tudo o que importa.
+
+5
+00:00:20,760 --> 00:00:23,997
+Todo dia, o agente tira uma foto do seu patrimônio.
+
+6
+00:00:24,497 --> 00:00:29,019
+E mostra quanto veio dos seus aportes e quanto foi o dinheiro trabalhando por você.
+
+7
+00:00:31,060 --> 00:00:33,650
+E se vier uma crise como a de 2008?
+
+8
+00:00:34,150 --> 00:00:37,925
+O simulador aplica à sua carteira as quedas que a bolsa já viveu.
+
+9
+00:00:38,425 --> 00:00:42,878
+E mostra que quem continua aportando compra mais barato e sai na frente.
+
+10
+00:00:45,260 --> 00:00:49,193
+Quer treinar? Crie carteiras virtuais com o capital que quiser.
+
+11
+00:00:49,693 --> 00:00:53,896
+Compre e venda a preço de agora e acompanhe tudo ao vivo, sem arriscar um real.
+
+12
+00:00:56,927 --> 00:01:01,404
+Day trade ou swing trade? A calculadora de imposto separa tudo.
+
+13
+00:01:01,904 --> 00:01:07,748
+Aplica a isenção de vinte mil reais, desconta o imposto retido na fonte e mostra o DARF e o vencimento.
+
+14
+00:01:08,248 --> 00:01:10,545
+E o agente avisa antes de vencer.
+
+15
+00:01:12,160 --> 00:01:16,754
+E tudo isso também por voz, de qualquer tela. É só chamar o Jarvis.
+
+16
+00:01:17,940 --> 00:01:19,955
+Você: Jarvis, fazer o check-in do dia.
+
+17
+00:01:22,230 --> 00:01:26,064
+Jarvis: Check-in feito: mais dez pontos. Sequência de um dia.
+
+18
+00:01:26,227 --> 00:01:30,161
+No Pregão ao vivo, os avatares andam pelo salão, soltam emojis
+
+19
+00:01:30,661 --> 00:01:33,485
+e falam frases gravadas com a voz de cada um.
+
+20
+00:01:34,277 --> 00:01:37,385
+Bom dia, pregão! Mais um aporte feito!
+
+21
+00:01:38,927 --> 00:01:41,914
+Escolha as cores do app e a trilha sonora do seu dia:
+
+22
+00:01:42,414 --> 00:01:45,333
+incentivo, tensão, euforia ou felicidade.
+
+23
+00:01:47,993 --> 00:01:51,599
+Chrono Trade. Teste grátis por trinta dias.
+
+24
+00:01:52,099 --> 00:01:56,136
+Desenvolvido por Marcelo Mekaro. Fale comigo pelo WhatsApp.
+
+25
+00:01:56,636 --> 00:01:59,864
+Ferramenta de estudo, não é recomendação de investimento.

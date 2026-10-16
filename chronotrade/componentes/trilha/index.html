@@ -33,6 +33,7 @@
     transition: transform .18s ease; color: #DCE3EE; font-size: 22px; }
   .botao:hover { transform: translateY(-2px) scale(1.05); }
   .botao.tocando { background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 45%), linear-gradient(145deg, var(--cor2), color-mix(in srgb, var(--cor2) 55%, black)); color: #1B1606; }
+  .nota { font-size: 24px; line-height: 1; } .tocando .nota { display: none; } .botao:not(.tocando) .eq { display: none; }
   .eq { display: flex; gap: 2px; align-items: flex-end; height: 18px; }
   .eq i { width: 3px; background: currentColor; border-radius: 2px; height: 30%; }
   .tocando .eq i { animation: eq .8s ease-in-out infinite alternate; }
@@ -52,7 +53,7 @@
     <label class="interruptor"><input type="checkbox" id="auto"> Trilha automática (muda com o que acontece no app)</label>
     <div class="dica">Música gerada na hora pelo app. Diga “Jarvis, tocar música de euforia”.</div>
   </div>
-  <button class="botao" id="botao" aria-label="Trilha sonora" title="Trilha sonora"><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+  <button class="botao" id="botao" aria-label="Trilha sonora" title="Trilha sonora"><span class="nota">♪</span><span class="eq"><i></i><i></i><i></i><i></i></span></button>
 </div>
 <script>
 (() => {
