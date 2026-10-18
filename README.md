@@ -8,7 +8,11 @@ Aplicação web em Python que ajuda o investidor pessoa física a acompanhar a c
 
 ## 🎬 Demonstração
 
-<!-- Para o vídeo tocar aqui: edite este arquivo no GitHub, apague esta linha e arraste o arquivo docs/video/ChronoTrade_demo.mp4 para cá. -->
+
+
+https://github.com/user-attachments/assets/6ada0789-659e-4c4f-b86b-90c324a7fff9
+
+
 
 ▶️ [Assistir ao vídeo de demonstração (2 min)](docs/video/ChronoTrade_demo.mp4)
 
